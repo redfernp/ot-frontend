@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import PostCard from "@/components/PostCard.astro";
+import TipCouponCard from "@/components/TipCouponCard.astro";
 import { getCategories, getCategory } from "@/lib/graphql";
 import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
 
@@ -36,17 +36,22 @@ const posts = category.posts?.nodes ?? [];
   </section>
 
   <section class="panel category-value">
-    <h2>Future ACF Category Modules</h2>
+    <h2>Today's 1x2 Coupon Builder</h2>
     <p>
-      This area will become the high-value user section: featured bookmaker offers, comparison tables, FAQs,
-      category-specific guidance, and today’s best tips.
+      Scan each match for kickoff time, recommended pick, and Bet365 odds. Use the full tip page when you want
+      the event notes, value explanation, and responsible gambling detail.
     </p>
   </section>
 
   <section>
-    <h2>Latest Tips</h2>
-    <div class="grid">
-      {posts.length ? posts.map((post) => <PostCard post={post} />) : <PostCard post={placeholderPost} />}
+    <div class="section-heading">
+      <h2>Latest Tips</h2>
+      <p>{posts.length} available picks</p>
+    </div>
+    <div class="coupon-list">
+      {posts.length
+        ? posts.map((post) => <TipCouponCard post={post} />)
+        : <TipCouponCard post={placeholderPost} />}
     </div>
   </section>
 </BaseLayout>
@@ -65,6 +70,30 @@ const posts = category.posts?.nodes ?? [];
   }
 
   .category-value {
-    background: #eef6ff;
+    background: #f1f8f6;
+    border-color: #b9ddd5;
+  }
+
+  .section-heading {
+    align-items: end;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .section-heading h2,
+  .section-heading p {
+    margin: 0;
+  }
+
+  .section-heading p {
+    color: #667085;
+    font-size: 0.92rem;
+  }
+
+  .coupon-list {
+    display: grid;
+    gap: 0.75rem;
   }
 </style>

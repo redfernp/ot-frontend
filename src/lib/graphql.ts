@@ -9,6 +9,7 @@ export type WpPost = {
   uri?: string;
   title?: string;
   excerpt?: string;
+  content?: string;
   date?: string;
   modified?: string;
   seo?: SeoFields;
@@ -176,6 +177,7 @@ export async function getCategory(slug: string) {
             uri
             title
             excerpt
+            content
             date
           }
         }
