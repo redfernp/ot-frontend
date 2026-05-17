@@ -1,0 +1,52 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getPage } from "@/lib/graphql";
+
+const page = await getPage("free-bets");
+---
+
+<BaseLayout
+  title={page?.title || "Free Bets"}
+  description="Free bets evergreen page proof of concept."
+  seo={page?.seo}
+>
+  <section class="panel">
+    <p class="eyebrow">Evergreen template</p>
+    <h1>{page?.title || "Free Bets"}</h1>
+    {page?.content ? (
+      <div class="content" set:html={page.content} />
+    ) : (
+      <p>
+        This placeholder will become the structured ACF-powered free bets page, with bookmaker comparison data,
+        eligibility notes, offer terms, and FAQs.
+      </p>
+    )}
+  </section>
+
+  <section class="panel offer-module">
+    <h2>Future ACF Offer Module</h2>
+    <p>
+      Build this from structured fields rather than Beaver Builder markup: bookmaker, bonus, wagering requirements,
+      expiry, rating, pros, cons, and CTA URL.
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    color: #2563eb;
+    font-size: 0.875rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .offer-module {
+    margin-top: 2rem;
+  }
+
+  .content :global(img) {
+    height: auto;
+    max-width: 100%;
+  }
+</style>

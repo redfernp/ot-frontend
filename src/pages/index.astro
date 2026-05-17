@@ -1,0 +1,84 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PostCard from "@/components/PostCard.astro";
+import { getCategories, getLatestPosts } from "@/lib/graphql";
+
+const [posts, categories] = await Promise.all([
+  getLatestPosts(8),
+  getCategories(8),
+]);
+---
+
+<BaseLayout
+  title="Oddstips Staging Frontend"
+  description="Astro and WPGraphQL staging frontend proof of concept for Oddstips."
+>
+  <section class="panel hero">
+    <p class="eyebrow">Astro + WPGraphQL proof of concept</p>
+    <h1>Oddstips staging frontend</h1>
+    <p>
+      This shell proves Cloudflare Pages deployment and WordPress GraphQL connectivity before the redesign work starts.
+    </p>
+  </section>
+
+  <section>
+    <h2>Latest Tips</h2>
+    {posts.length ? (
+      <div class="grid">
+        {posts.map((post) => <PostCard post={post} />)}
+      </div>
+    ) : (
+      <div class="panel">
+        <p>No WPGraphQL data yet. Add `WPGRAPHQL_ENDPOINT` in Cloudflare Pages to populate this section.</p>
+      </div>
+    )}
+  </section>
+
+  <section>
+    <h2>Categories</h2>
+    {categories.length ? (
+      <div class="category-list">
+        {categories.map((category) => (
+          <a href={`/category/${category.slug}/`}>{category.name || category.slug}</a>
+        ))}
+      </div>
+    ) : (
+      <div class="panel">
+        <p>Category data will appear here once staging WordPress GraphQL is connected.</p>
+      </div>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    color: #2563eb;
+    font-size: 0.875rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+  }
+
+  section + section {
+    margin-top: 2rem;
+  }
+
+  .category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .category-list a {
+    background: #fff;
+    border: 1px solid #d7dde6;
+    border-radius: 999px;
+    color: #172033;
+    padding: 0.5rem 0.85rem;
+    text-decoration: none;
+  }
+</style>

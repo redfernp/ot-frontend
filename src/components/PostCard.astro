@@ -1,0 +1,53 @@
+---
+import type { WpPost } from "@/lib/graphql";
+
+type Props = {
+  post: WpPost;
+};
+
+const { post } = Astro.props;
+const href = post.uri || `/tips/${post.slug}/`;
+const date = post.date ? new Date(post.date).toLocaleString("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+}) : null;
+---
+
+<article class="post-card">
+  <a href={href}>
+    <h3 set:html={post.title || "Untitled tip"} />
+  </a>
+  {date && <p class="date">{date}</p>}
+  {post.excerpt && <div class="excerpt" set:html={post.excerpt} />}
+</article>
+
+<style>
+  .post-card {
+    border: 1px solid #d7dde6;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #fff;
+  }
+
+  .post-card a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .post-card h3 {
+    font-size: 1rem;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .date {
+    color: #627083;
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
+  }
+
+  .excerpt {
+    color: #344054;
+    font-size: 0.9375rem;
+  }
+</style>

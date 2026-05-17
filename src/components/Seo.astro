@@ -1,0 +1,31 @@
+---
+import type { SeoFields } from "@/lib/graphql";
+
+type Props = {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  seo?: SeoFields;
+  noindex?: boolean;
+};
+
+const { title, description, canonical, seo, noindex = true } = Astro.props;
+const pageTitle = seo?.title || title || "Oddstips";
+const pageDescription = seo?.metaDesc || description;
+const canonicalUrl = seo?.canonical || canonical;
+---
+
+<title>{pageTitle}</title>
+{pageDescription && <meta name="description" content={pageDescription} />}
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+{noindex && <meta name="robots" content="noindex,nofollow" />}
+<meta property="og:title" content={seo?.opengraphTitle || pageTitle} />
+{(seo?.opengraphDescription || pageDescription) && (
+  <meta property="og:description" content={seo?.opengraphDescription || pageDescription} />
+)}
+{seo?.opengraphImage?.sourceUrl && <meta property="og:image" content={seo.opengraphImage.sourceUrl} />}
+<meta name="twitter:card" content={seo?.opengraphImage?.sourceUrl ? "summary_large_image" : "summary"} />
+<meta name="twitter:title" content={seo?.twitterTitle || seo?.opengraphTitle || pageTitle} />
+{(seo?.twitterDescription || seo?.opengraphDescription || pageDescription) && (
+  <meta name="twitter:description" content={seo?.twitterDescription || seo?.opengraphDescription || pageDescription} />
+)}
