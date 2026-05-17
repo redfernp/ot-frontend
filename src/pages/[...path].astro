@@ -1,0 +1,89 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import CategoryTipsPage from "@/components/CategoryTipsPage.astro";
+import TipPostPage from "@/components/TipPostPage.astro";
+import { getCategories, getCategory, getLatestPosts, getPost } from "@/lib/graphql";
+import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
+
+export async function getStaticPaths() {
+  const priorityCategoryRoutes = [
+    {
+      path: "football",
+      categorySlug: "football",
+    },
+    {
+      path: "football/united-kingdom/england-premier-league",
+      categorySlug: "england-premier-league",
+    },
+  ];
+  const priorityPostRoutes = [
+    {
+      path: "sunderland-v-chelsea-24-05-2026-free-fixed-odds-tip-football-betting-prediction",
+      postSlug: "sunderland-v-chelsea-24-05-2026-free-fixed-odds-tip-football-betting-prediction",
+    },
+  ];
+  const uriPath = (uri?: string) => uri?.replace(/^\/+|\/+$/g, "");
+  const [categories, posts] = await Promise.all([
+    getCategories(100),
+    getLatestPosts(100),
+  ]);
+  const wpCategoryRoutes = categories
+    .map((category) => ({
+      path: uriPath(category.uri),
+      categorySlug: category.slug,
+      routeType: "category" as const,
+    }))
+    .filter((route): route is { path: string; categorySlug: string; routeType: "category" } =>
+      Boolean(route.path && route.categorySlug));
+  const wpPostRoutes = posts
+    .map((post) => ({
+      path: uriPath(post.uri),
+      postSlug: post.slug,
+      routeType: "post" as const,
+    }))
+    .filter((route): route is { path: string; postSlug: string; routeType: "post" } =>
+      Boolean(route.path && route.postSlug));
+  const routes = [
+    ...priorityCategoryRoutes.map((route) => ({ ...route, routeType: "category" as const })),
+    ...priorityPostRoutes.map((route) => ({ ...route, routeType: "post" as const })),
+    ...wpCategoryRoutes,
+    ...wpPostRoutes,
+  ];
+  const uniqueRoutes = Array.from(new Map(routes.map((route) => [route.path, route])).values());
+
+  return uniqueRoutes.map((route) => ({
+    params: { path: route.path },
+    props: route.routeType === "post"
+      ? { routeType: route.routeType, postSlug: route.postSlug }
+      : { routeType: route.routeType, categorySlug: route.categorySlug },
+  }));
+}
+
+type Props = {
+  routeType: "category" | "post";
+  categorySlug?: string;
+  postSlug?: string;
+};
+
+const { categorySlug, postSlug, routeType } = Astro.props;
+const category = routeType === "category"
+  ? (await getCategory(categorySlug || "")) || {
+      ...placeholderCategory,
+      posts: { nodes: [placeholderPost] },
+    }
+  : null;
+const post = routeType === "post"
+  ? (await getPost(postSlug || "")) || {
+      ...placeholderPost,
+      content: placeholderPost.content || "<p>This placeholder will be replaced by real Paul365 post content.</p>",
+    }
+  : null;
+---
+
+<BaseLayout
+  title={post?.title || `${category?.name || "Category"} Betting Tips`}
+  description={post?.excerpt || category?.description || "Oddstips staging page proof of concept."}
+  seo={post?.seo || category?.seo}
+>
+  {post ? <TipPostPage post={post} /> : category && <CategoryTipsPage category={category} />}
+</BaseLayout>

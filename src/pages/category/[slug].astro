@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import TipCouponCard from "@/components/TipCouponCard.astro";
+import CategoryTipsPage from "@/components/CategoryTipsPage.astro";
 import { getCategories, getCategory } from "@/lib/graphql";
 import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
 
@@ -21,7 +21,6 @@ const category = (slug ? await getCategory(slug) : null) || {
   ...placeholderCategory,
   posts: { nodes: [placeholderPost] },
 };
-const posts = category.posts?.nodes ?? [];
 ---
 
 <BaseLayout
@@ -29,71 +28,5 @@ const posts = category.posts?.nodes ?? [];
   description={category.description || "Category page proof of concept."}
   seo={category.seo}
 >
-  <section class="panel">
-    <p class="eyebrow">Category template</p>
-    <h1>{category.name || "Category"}</h1>
-    {category.description && <p set:html={category.description} />}
-  </section>
-
-  <section class="panel category-value">
-    <h2>Today's 1x2 Coupon Builder</h2>
-    <p>
-      Scan each match for kickoff time, recommended pick, and Bet365 odds. Use the full tip page when you want
-      the event notes, value explanation, and responsible gambling detail.
-    </p>
-  </section>
-
-  <section>
-    <div class="section-heading">
-      <h2>Latest Tips</h2>
-      <p>{posts.length} available picks</p>
-    </div>
-    <div class="coupon-list">
-      {posts.length
-        ? posts.map((post) => <TipCouponCard post={post} />)
-        : <TipCouponCard post={placeholderPost} />}
-    </div>
-  </section>
+  <CategoryTipsPage category={category} />
 </BaseLayout>
-
-<style>
-  .eyebrow {
-    color: #2563eb;
-    font-size: 0.875rem;
-    font-weight: 800;
-    margin: 0 0 0.5rem;
-    text-transform: uppercase;
-  }
-
-  section + section {
-    margin-top: 2rem;
-  }
-
-  .category-value {
-    background: #f1f8f6;
-    border-color: #b9ddd5;
-  }
-
-  .section-heading {
-    align-items: end;
-    display: flex;
-    gap: 1rem;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-
-  .section-heading h2,
-  .section-heading p {
-    margin: 0;
-  }
-
-  .section-heading p {
-    color: #667085;
-    font-size: 0.92rem;
-  }
-
-  .coupon-list {
-    display: grid;
-    gap: 0.75rem;
-  }
-</style>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import TipPostPage from "@/components/TipPostPage.astro";
 import { getLatestPosts, getPost } from "@/lib/graphql";
 import { placeholderPost } from "@/lib/placeholders";
 
@@ -27,33 +28,5 @@ const post = (slug ? await getPost(slug) : null) || {
   description={post.excerpt}
   seo={post.seo}
 >
-  <article class="panel tip">
-    <p class="eyebrow">Tip template</p>
-    <h1 set:html={post.title || "Betting Tip"} />
-    {post.date && <p class="date">Published {new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })}</p>}
-    {post.content ? <div class="content" set:html={post.content} /> : <p set:html={post.excerpt || ""} />}
-  </article>
+  <TipPostPage post={post} />
 </BaseLayout>
-
-<style>
-  .tip {
-    max-width: 840px;
-  }
-
-  .eyebrow {
-    color: #2563eb;
-    font-size: 0.875rem;
-    font-weight: 800;
-    margin: 0 0 0.5rem;
-    text-transform: uppercase;
-  }
-
-  .date {
-    color: #667085;
-  }
-
-  .content :global(img) {
-    height: auto;
-    max-width: 100%;
-  }
-</style>

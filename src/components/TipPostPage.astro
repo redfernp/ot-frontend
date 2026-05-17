@@ -1,0 +1,43 @@
+---
+import type { WpPost } from "@/lib/graphql";
+
+type Props = {
+  post: WpPost;
+};
+
+const { post } = Astro.props;
+---
+
+<article class="panel tip">
+  <p class="eyebrow">Tip template</p>
+  <h1 set:html={post.title || "Betting Tip"} />
+  {post.date && (
+    <p class="date">
+      Published {new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })}
+    </p>
+  )}
+  {post.content ? <div class="content" set:html={post.content} /> : <p set:html={post.excerpt || ""} />}
+</article>
+
+<style>
+  .tip {
+    max-width: 840px;
+  }
+
+  .eyebrow {
+    color: #2563eb;
+    font-size: 0.875rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .date {
+    color: #667085;
+  }
+
+  .content :global(img) {
+    height: auto;
+    max-width: 100%;
+  }
+</style>
