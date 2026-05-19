@@ -12,6 +12,16 @@ const activePick = summary.couponPick;
 const published = post.date
   ? new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })
   : null;
+const signals = [
+  { label: "Game flow", value: summary.gameFlow },
+  { label: "First goal", value: summary.firstGoal },
+  { label: "Goal source", value: summary.sourceOfFirstGoal },
+  { label: "Injury risk", value: summary.riskOfInjuries },
+  { label: "Corners", value: summary.cornerCount },
+  { label: "Bookings", value: summary.bookings },
+  { label: "Penalties", value: summary.penaltiesAwarded },
+  { label: "Key area", value: summary.keyArea },
+].filter((signal) => signal.value);
 ---
 
 <article class="tip-page">
@@ -69,6 +79,32 @@ const published = post.date
   <div class="tip-layout">
     <section class="analysis">
       <h2>Match Tip</h2>
+      {signals.length > 0 && (
+        <div class="signal-grid" aria-label="Match signals">
+          {signals.map((signal) => (
+            <div>
+              <span class="label">{signal.label}</span>
+              <strong>{signal.value}</strong>
+            </div>
+          ))}
+        </div>
+      )}
+      {(summary.returns || summary.value) && (
+        <div class="value-card">
+          {summary.returns && (
+            <div>
+              <span class="label">Returns</span>
+              <p>{summary.returns}</p>
+            </div>
+          )}
+          {summary.value && (
+            <div>
+              <span class="label">Value</span>
+              <p>{summary.value}</p>
+            </div>
+          )}
+        </div>
+      )}
       {post.content ? <div class="content" set:html={post.content} /> : <p set:html={post.excerpt || ""} />}
     </section>
 
@@ -261,6 +297,44 @@ const published = post.date
     margin-top: 0;
   }
 
+  .signal-grid {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 1rem;
+  }
+
+  .signal-grid div {
+    background: #f8fafc;
+    border: 1px solid #e1e7ef;
+    border-radius: 8px;
+    min-width: 0;
+    padding: 0.85rem;
+  }
+
+  .signal-grid strong {
+    color: #101828;
+    display: block;
+    font-size: 0.98rem;
+    line-height: 1.25;
+  }
+
+  .value-card {
+    background: #f1f8f6;
+    border: 1px solid #b9ddd5;
+    border-radius: 8px;
+    display: grid;
+    gap: 0.85rem;
+    margin-bottom: 1.2rem;
+    padding: 1rem;
+  }
+
+  .value-card p {
+    color: #233044;
+    font-weight: 700;
+    margin: 0;
+  }
+
   .coupon-note {
     position: sticky;
     top: 1rem;
@@ -346,10 +420,18 @@ const published = post.date
     .coupon-note {
       position: static;
     }
+
+    .signal-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 520px) {
     .market {
+      grid-template-columns: 1fr;
+    }
+
+    .signal-grid {
       grid-template-columns: 1fr;
     }
   }

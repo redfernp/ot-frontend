@@ -9,8 +9,17 @@ export type TipSummary = {
   event?: string;
   kickoff?: string;
   gameFlow?: string;
+  firstGoal?: string;
+  sourceOfFirstGoal?: string;
+  riskOfInjuries?: string;
+  cornerCount?: string;
+  bookings?: string;
+  penaltiesAwarded?: string;
+  keyArea?: string;
   tip?: string;
   odds?: string;
+  returns?: string;
+  value?: string;
   couponPick: CouponPick;
 };
 
@@ -103,11 +112,20 @@ export function summarizeTip(post: WpPost): TipSummary {
   const event = fieldAfter(lines, /^Event$/i);
   const kickoff = fieldAfter(lines, /^Start Time$/i);
   const gameFlow = fieldAfter(lines, /^Game-Flow$/i);
+  const firstGoal = fieldAfter(lines, /^First Goal$/i);
+  const sourceOfFirstGoal = fieldAfter(lines, /^Source Of First Goal$/i);
+  const riskOfInjuries = fieldAfter(lines, /^Risk Of Injuries$/i);
+  const cornerCount = fieldAfter(lines, /^Corner Count$/i);
+  const bookings = fieldAfter(lines, /^Bookings$/i);
+  const penaltiesAwarded = fieldAfter(lines, /^Penalties Awarded$/i);
+  const keyArea = fieldAfter(lines, /^Key Area$/i);
   const tip =
     valueAfter(text, /OddsTips Top Value Bet:\s*([^\n]+)/i) ||
     valueAfter(text, /Top Value Bet:\s*([^\n]+)/i) ||
     fieldAfter(lines, /^Best Bet$/i);
   const odds = valueAfter(text, /Bet365 Odds At Time Of Publication:\s*([^\n]+)/i);
+  const returns = fieldAfter(lines, /^Returns$/i);
+  const value = fieldAfter(lines, /^Value$/i);
 
   return {
     fixture,
@@ -116,8 +134,17 @@ export function summarizeTip(post: WpPost): TipSummary {
     event,
     kickoff,
     gameFlow,
+    firstGoal,
+    sourceOfFirstGoal,
+    riskOfInjuries,
+    cornerCount,
+    bookings,
+    penaltiesAwarded,
+    keyArea,
     tip,
     odds,
+    returns,
+    value,
     couponPick: couponPick(tip, homeTeam, awayTeam),
   };
 }
