@@ -6,7 +6,9 @@ export type TipSummary = {
   fixture: string;
   homeTeam?: string;
   awayTeam?: string;
+  event?: string;
   kickoff?: string;
+  gameFlow?: string;
   tip?: string;
   odds?: string;
   couponPick: CouponPick;
@@ -98,7 +100,9 @@ export function summarizeTip(post: WpPost): TipSummary {
   const { homeTeam, awayTeam } = splitFixture(fixture);
   const lines = htmlToLines(post.content || post.excerpt || "");
   const text = lines.join("\n");
+  const event = fieldAfter(lines, /^Event$/i);
   const kickoff = fieldAfter(lines, /^Start Time$/i);
+  const gameFlow = fieldAfter(lines, /^Game-Flow$/i);
   const tip =
     valueAfter(text, /OddsTips Top Value Bet:\s*([^\n]+)/i) ||
     valueAfter(text, /Top Value Bet:\s*([^\n]+)/i) ||
@@ -109,7 +113,9 @@ export function summarizeTip(post: WpPost): TipSummary {
     fixture,
     homeTeam,
     awayTeam,
+    event,
     kickoff,
+    gameFlow,
     tip,
     odds,
     couponPick: couponPick(tip, homeTeam, awayTeam),
