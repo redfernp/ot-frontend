@@ -1,6 +1,8 @@
 ---
 import type { WpPost } from "@/lib/graphql";
-import { summarizeTip } from "@/lib/tips";
+import RelatedTips from "@/components/RelatedTips.astro";
+import { placeholderRelatedTips } from "@/lib/relatedTips";
+import { findFirstLink, summarizeTip } from "@/lib/tips";
 
 type Props = {
   post: WpPost;
@@ -12,16 +14,7 @@ const activePick = summary.couponPick;
 const published = post.date
   ? new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })
   : null;
-const signals = [
-  { label: "Game flow", value: summary.gameFlow },
-  { label: "First goal", value: summary.firstGoal },
-  { label: "Goal source", value: summary.sourceOfFirstGoal },
-  { label: "Injury risk", value: summary.riskOfInjuries },
-  { label: "Corners", value: summary.cornerCount },
-  { label: "Bookings", value: summary.bookings },
-  { label: "Penalties", value: summary.penaltiesAwarded },
-  { label: "Key area", value: summary.keyArea },
-].filter((signal) => signal.value);
+const bet365Url = findFirstLink(post.content, /bet365/i);
 ---
 
 <article class="tip-page">
@@ -64,7 +57,7 @@ const signals = [
     </div>
     <div>
       <span class="label">Bet365 odds</span>
-      <strong>{summary.odds || "-"}</strong>
+      {bet365Url ? <a class="odds-link" href={bet365Url} rel="nofollow">{summary.odds || "-"}</a> : <strong>{summary.odds || "-"}</strong>}
     </div>
     <div>
       <span class="label">Game flow</span>
@@ -79,32 +72,6 @@ const signals = [
   <div class="tip-layout">
     <section class="analysis">
       <h2>Match Tip</h2>
-      {signals.length > 0 && (
-        <div class="signal-grid" aria-label="Match signals">
-          {signals.map((signal) => (
-            <div>
-              <span class="label">{signal.label}</span>
-              <strong>{signal.value}</strong>
-            </div>
-          ))}
-        </div>
-      )}
-      {(summary.returns || summary.value) && (
-        <div class="value-card">
-          {summary.returns && (
-            <div>
-              <span class="label">Returns</span>
-              <p>{summary.returns}</p>
-            </div>
-          )}
-          {summary.value && (
-            <div>
-              <span class="label">Value</span>
-              <p>{summary.value}</p>
-            </div>
-          )}
-        </div>
-      )}
       {post.content ? <div class="content" set:html={post.content} /> : <p set:html={post.excerpt || ""} />}
     </section>
 
@@ -124,8 +91,11 @@ const signals = [
           <dd>{summary.odds || "-"}</dd>
         </div>
       </dl>
+      {bet365Url && <a class="coupon-cta" href={bet365Url} rel="nofollow">Back this tip with Bet365</a>}
     </aside>
   </div>
+
+  <RelatedTips heading="More England Premier League tips this weekend" posts={placeholderRelatedTips} />
 </article>
 
 <style>
@@ -277,6 +247,14 @@ const signals = [
     line-height: 1.3;
   }
 
+  .odds-link {
+    color: #0f766e;
+    display: block;
+    font-size: 0.98rem;
+    font-weight: 900;
+    line-height: 1.3;
+  }
+
   .tip-layout {
     align-items: start;
     display: grid;
@@ -295,44 +273,6 @@ const signals = [
   .analysis h2,
   .coupon-note h2 {
     margin-top: 0;
-  }
-
-  .signal-grid {
-    display: grid;
-    gap: 0.65rem;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-bottom: 1rem;
-  }
-
-  .signal-grid div {
-    background: #f8fafc;
-    border: 1px solid #e1e7ef;
-    border-radius: 8px;
-    min-width: 0;
-    padding: 0.85rem;
-  }
-
-  .signal-grid strong {
-    color: #101828;
-    display: block;
-    font-size: 0.98rem;
-    line-height: 1.25;
-  }
-
-  .value-card {
-    background: #f1f8f6;
-    border: 1px solid #b9ddd5;
-    border-radius: 8px;
-    display: grid;
-    gap: 0.85rem;
-    margin-bottom: 1.2rem;
-    padding: 1rem;
-  }
-
-  .value-card p {
-    color: #233044;
-    font-weight: 700;
-    margin: 0;
   }
 
   .coupon-note {
@@ -371,9 +311,34 @@ const signals = [
     margin: 0;
   }
 
+  .coupon-cta {
+    align-items: center;
+    background: #0f766e;
+    border-radius: 6px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.92rem;
+    font-weight: 900;
+    justify-content: center;
+    margin-top: 1rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.9rem;
+    text-align: center;
+    text-decoration: none;
+    width: 100%;
+  }
+
   .content :global(img) {
+    border-radius: 8px;
+    display: block;
     height: auto;
+    margin: 1rem 0;
     max-width: 100%;
+  }
+
+  .content :global(a) {
+    color: #0f766e;
+    font-weight: 800;
   }
 
   .content :global(h2),
@@ -421,18 +386,75 @@ const signals = [
       position: static;
     }
 
-    .signal-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 620px) {
+    .match-copy,
+    .pick-panel,
+    .analysis,
+    .coupon-note {
+      padding: 1rem;
+    }
+
+    .match-copy h1 {
+      font-size: 2rem;
+      line-height: 1.08;
+    }
+
+    .teams {
+      font-size: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .event {
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+
+    .pick-panel > strong {
+      font-size: 1.15rem;
+      margin-bottom: 0.75rem;
+    }
+
     .market {
-      grid-template-columns: 1fr;
+      gap: 0.35rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .signal-grid {
-      grid-template-columns: 1fr;
+    .market-cell {
+      min-height: 3.45rem;
+      padding: 0.45rem 0.25rem;
+    }
+
+    .market-cell b {
+      font-size: 1.05rem;
+    }
+
+    .market-cell small {
+      font-size: 0.66rem;
+      max-height: 1.55rem;
+      overflow: hidden;
+    }
+
+    .summary-strip div {
+      padding: 0.85rem 1rem;
+    }
+
+    .summary-strip strong {
+      font-size: 0.92rem;
+    }
+
+    .content :global(h2),
+    .content :global(h3) {
+      font-size: 1rem;
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+    }
+
+    .content :global(p) {
+      font-size: 0.94rem;
+      line-height: 1.5;
     }
   }
+
 </style>

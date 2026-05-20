@@ -36,6 +36,10 @@ function decodeHtml(value: string) {
     .replace(/&mdash;/gi, "-");
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function htmlToLines(html = "") {
   return decodeHtml(html)
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -80,6 +84,56 @@ function fieldAfter(lines: string[], label: RegExp) {
 function valueAfter(text: string, label: RegExp) {
   const match = text.match(label);
   return match?.[1]?.replace(/\s+/g, " ").trim();
+}
+
+export function findFirstLink(html: string | undefined, matcher: RegExp) {
+  if (!html) {
+    return undefined;
+  }
+
+  const linkPattern = /<a\s+[^>]*href=(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(html))) {
+    const href = decodeHtml(match[2]);
+    const label = decodeHtml(match[3].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+
+    if (matcher.test(href) || matcher.test(label)) {
+      return href;
+    }
+  }
+
+  return undefined;
+}
+
+export function cleanTipContentHtml(html = "") {
+  const structuredLabels = [
+    "Event",
+    "Start Time",
+    "Game-Flow",
+    "First Goal",
+    "Source Of First Goal",
+    "Risk Of Injuries",
+    "Corner Count",
+    "Bookings",
+    "Penalties Awarded",
+    "Key Area",
+    "Best Bet",
+    "Returns",
+    "Value",
+  ];
+
+  return structuredLabels
+    .reduce((content, label) => {
+      const pattern = new RegExp(
+        `<h[2-6][^>]*>\\s*${escapeRegExp(label)}\\s*</h[2-6]>[\\s\\S]*?(?=<h[2-6][^>]*>|$)`,
+        "gi",
+      );
+
+      return content.replace(pattern, "");
+    }, html)
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function couponPick(tip: string | undefined, homeTeam?: string, awayTeam?: string): CouponPick {

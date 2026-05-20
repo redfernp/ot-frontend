@@ -1,4 +1,5 @@
 ---
+import DateRail from "@/components/DateRail.astro";
 import TipCouponCard from "@/components/TipCouponCard.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderPost } from "@/lib/placeholders";
@@ -16,6 +17,8 @@ type Props = {
 const { category } = Astro.props;
 const posts = category.posts?.nodes ?? [];
 ---
+
+<DateRail />
 
 <section class="panel">
   <p class="eyebrow">Category template</p>

@@ -1,0 +1,206 @@
+---
+const today = new Date();
+const dayMs = 24 * 60 * 60 * 1000;
+const items = [
+  { label: "Sun", date: new Date(today.getTime() - 2 * dayMs), caption: "17 May" },
+  { label: "Yesterday", date: new Date(today.getTime() - dayMs) },
+  { label: "Today", date: today, active: true },
+  { label: "Tomorrow", date: new Date(today.getTime() + dayMs) },
+  { label: "Thu", date: new Date(today.getTime() + 2 * dayMs) },
+  { label: "Fri", date: new Date(today.getTime() + 3 * dayMs) },
+  { label: "Sat", date: new Date(today.getTime() + 4 * dayMs) },
+  { label: "Sun", date: new Date(today.getTime() + 5 * dayMs) },
+  { label: "Mon", date: new Date(today.getTime() + 6 * dayMs) },
+];
+
+function shortDate(date: Date) {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+---
+
+<nav class="date-rail" aria-label="Match date selector">
+  <button class="rail-action" type="button" aria-label="Open calendar">
+    <span class="calendar-icon" aria-hidden="true">
+      <span></span>
+    </span>
+    <small>Calendar</small>
+  </button>
+
+  <div class="date-list">
+    {items.map((item) => (
+      <a class:list={["date-item", { active: item.active }]} href="#">
+        <strong>{item.label}</strong>
+        <span>{item.caption || shortDate(item.date)}</span>
+      </a>
+    ))}
+  </div>
+
+  <button class="rail-action search" type="button" aria-label="Search matches">
+    <span class="search-icon" aria-hidden="true"></span>
+    <small>Matches</small>
+  </button>
+</nav>
+
+<style>
+  .date-rail {
+    background: #08224d;
+    border: 1px solid #d7dde6;
+    border-radius: 8px;
+    color: #fff;
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) 66px;
+    margin-bottom: 1rem;
+    min-height: 68px;
+    overflow: hidden;
+  }
+
+  .rail-action {
+    align-items: center;
+    background: #102f67;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    gap: 0.25rem;
+    justify-content: center;
+    padding: 0.45rem;
+  }
+
+  .rail-action:first-child {
+    border-right: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .rail-action:last-child {
+    border-left: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .calendar-icon {
+    border: 1.5px solid #fff;
+    border-radius: 3px;
+    display: block;
+    height: 22px;
+    position: relative;
+    width: 20px;
+  }
+
+  .calendar-icon::before {
+    background: #fff;
+    content: "";
+    height: 1.5px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 6px;
+  }
+
+  .calendar-icon span::after {
+    content: "31";
+    font-size: 0.6rem;
+    font-weight: 900;
+    left: 4px;
+    position: absolute;
+    top: 7px;
+  }
+
+  .search-icon {
+    border: 2px solid #fff;
+    border-radius: 999px;
+    display: block;
+    height: 18px;
+    position: relative;
+    width: 18px;
+  }
+
+  .search-icon::after {
+    background: #fff;
+    content: "";
+    height: 8px;
+    position: absolute;
+    right: -5px;
+    top: 11px;
+    transform: rotate(-45deg);
+    width: 2px;
+  }
+
+  .date-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(92px, 1fr);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .date-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .date-item {
+    align-items: center;
+    color: #c8d7f3;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    justify-content: center;
+    min-width: 92px;
+    padding: 0.65rem 0.55rem 0.55rem;
+    position: relative;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .date-item strong {
+    color: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    line-height: 1;
+  }
+
+  .date-item span {
+    color: #8fa6cf;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    line-height: 1;
+  }
+
+  .date-item.active {
+    color: #fff;
+  }
+
+  .date-item.active::after {
+    background: #d8ad55;
+    bottom: 0;
+    content: "";
+    height: 3px;
+    left: 18%;
+    position: absolute;
+    right: 18%;
+  }
+
+  @media (max-width: 720px) {
+    .date-rail {
+      grid-template-columns: 56px minmax(0, 1fr) 58px;
+      min-height: 62px;
+    }
+
+    .date-list {
+      grid-auto-columns: minmax(82px, 1fr);
+    }
+
+    .date-item {
+      min-width: 82px;
+    }
+
+    .date-item strong {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+    }
+  }
+</style>

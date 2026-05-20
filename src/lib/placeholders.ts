@@ -39,16 +39,21 @@ export const placeholderPost: WpPost = {
     <p>Central</p>
     <h2>Best Bet</h2>
     <p>OddsTips Top Value Bet: Chelsea</p>
-    <p>Bet365 Odds At Time Of Publication: 1.91</p>
+    <p>Bet365 Odds At Time Of Publication: <a href="https://www.bet365.com/dl/~offer?affiliate=365_643257" rel="nofollow">1.91</a></p>
     <h2>Returns</h2>
     <p>A &pound;100 bet on this outcome returns a total of &pound;191, which includes your returned stake.</p>
     <h2>Value</h2>
     <p>Our data indicates that this is a good value bet. For best results, only bet on this outcome if you can get the advised odds or better.</p>
-    <p>Back this tip with Bet365.</p>
+    <p><a href="https://www.bet365.com/dl/~offer?affiliate=365_643257" rel="nofollow">Back this tip with Bet365.</a></p>
     <h2>Related Reading</h2>
-    <p>Best Football Betting Sites UK</p>
-    <p>Recommended Football Tipster - NEW TIPSTER ALERT</p>
-    <p>Join The FOOTBALLER TIPS SERVICE Now - See WINNING GRAPH - UPDATED DAILY.</p>
+    <p><a href="https://www.oddstips.co.uk/best-football-betting-sites-uk/">Best Football Betting Sites UK</a></p>
+    <p><a href="https://www.everytip.co.uk/go/footballer-tips-tipstrr" rel="nofollow">Recommended Football Tipster - NEW TIPSTER ALERT</a></p>
+    <p><a href="https://www.everytip.co.uk/go/footballer-tips-tipstrr" rel="nofollow" target="_blank">Join The FOOTBALLER TIPS SERVICE Now - See WINNING GRAPH - UPDATED DAILY.</a></p>
+    <p>
+      <a href="https://www.everytip.co.uk/go/footballer-tips-tipstrr" rel="nofollow" target="_blank">
+        <img src="https://www.oddstips.co.uk/wp-content/uploads/2021/06/new-football-tipster.jpg" width="1992" height="1083" alt="Recommended football tipster results graph" />
+      </a>
+    </p>
   `,
   date: new Date().toISOString(),
 };
