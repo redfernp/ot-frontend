@@ -1,0 +1,462 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import CouponRow from "@/components/CouponRow.astro";
+import { getCategory, type WpPost } from "@/lib/graphql";
+import { homeSports } from "@/lib/siteNav";
+import { cleanOdds, extractTime, findFirstLink, splitTipBody, summarizeTip } from "@/lib/tips";
+
+type SportSample = {
+  label: string;
+  path: string;
+  slug: string;
+  categoryName?: string;
+  post?: WpPost;
+  error?: string;
+};
+
+function formatDate(dateIso?: string) {
+  if (!dateIso) {
+    return null;
+  }
+
+  const date = new Date(dateIso);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function fallbackTime(dateIso?: string) {
+  if (!dateIso) {
+    return null;
+  }
+
+  const date = new Date(dateIso);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+const samples: SportSample[] = await Promise.all(
+  homeSports.map(async (sport) => {
+    const slug = sport.path.replace(/^\/+|\/+$/g, "");
+
+    try {
+      const category = await getCategory(slug, 1);
+
+      return {
+        label: sport.label,
+        path: sport.path,
+        slug,
+        categoryName: category?.name,
+        post: category?.posts?.nodes?.[0],
+      };
+    } catch (error) {
+      return {
+        label: sport.label,
+        path: sport.path,
+        slug,
+        error: errorMessage(error),
+      };
+    }
+  }),
+);
+
+const panels = samples.map((sample) => {
+  const summary = sample.post ? summarizeTip(sample.post) : null;
+  const bet365Url = findFirstLink(sample.post?.content, /bet365/i);
+  const odds = cleanOdds(summary?.odds);
+  const kickoff = extractTime(summary?.kickoff) || fallbackTime(sample.post?.date);
+  const { lede } = splitTipBody(sample.post?.content || "");
+  const flags = [];
+
+  if (sample.error) {
+    flags.push("WP query failed");
+  }
+
+  if (!sample.post) {
+    flags.push("No live post found");
+  }
+
+  if (sample.post && !summary?.tip) {
+    flags.push("Missing parsed pick");
+  }
+
+  if (sample.post && !odds) {
+    flags.push("Missing parsed odds");
+  }
+
+  if (sample.post && !kickoff) {
+    flags.push("Missing kickoff");
+  }
+
+  if (sample.post && !bet365Url) {
+    flags.push("Missing Bet365 link");
+  }
+
+  if (sample.post && !sample.post.content) {
+    flags.push("No content body");
+  }
+
+  return {
+    ...sample,
+    summary,
+    bet365Url,
+    odds,
+    kickoff,
+    lede,
+    flags,
+    published: formatDate(sample.post?.date),
+  };
+});
+---
+
+<BaseLayout
+  title="Sport Tip Test Page"
+  description="Internal Oddstips diagnostic page showing one live tip from each sport."
+>
+  <header class="test-hero">
+    <p class="eyebrow">Internal diagnostic</p>
+    <h1>One Live Tip Per Sport</h1>
+    <p>
+      This page pulls the latest live WP tip for each sport category and shows the parsed values used by the frontend.
+      Empty states mean WP did not return a real post for that sport.
+    </p>
+  </header>
+
+  <section class="status-grid" aria-label="Sport status">
+    {panels.map((panel) => (
+      <a class:list={["status-card", { "needs-review": panel.flags.length > 0 }]} href={`#${panel.slug}`}>
+        <span>{panel.label}</span>
+        <strong>{panel.flags.length ? `${panel.flags.length} flag${panel.flags.length === 1 ? "" : "s"}` : "OK"}</strong>
+      </a>
+    ))}
+  </section>
+
+  <div class="tip-panels">
+    {panels.map((panel) => (
+      <section class="tip-panel" id={panel.slug} aria-labelledby={`${panel.slug}-heading`}>
+        <header class="panel-head">
+          <div>
+            <p class="eyebrow">{panel.categoryName || panel.label}</p>
+            <h2 id={`${panel.slug}-heading`}>{panel.label}</h2>
+          </div>
+          <a class="sport-link" href={panel.path}>Sport hub</a>
+        </header>
+
+        {panel.flags.length > 0 && (
+          <ul class="flag-list" aria-label={`${panel.label} flags`}>
+            {panel.flags.map((flag) => <li>{flag}</li>)}
+          </ul>
+        )}
+
+        {panel.error && <p class="error-text">{panel.error}</p>}
+
+        {panel.post && panel.summary ? (
+          <>
+            <div class="source-row">
+              <span>{panel.published || "No publish date"}</span>
+              {panel.post.uri && (
+                <a href={`https://www.oddstips.co.uk${panel.post.uri}`} rel="nofollow noopener" target="_blank">
+                  Source URL
+                </a>
+              )}
+            </div>
+
+            <div class="coupon-preview">
+              <CouponRow post={panel.post} />
+            </div>
+
+            <dl class="parse-grid">
+              <div>
+                <dt>Fixture</dt>
+                <dd>{panel.summary.fixture || "Missing"}</dd>
+              </div>
+              <div>
+                <dt>Pick</dt>
+                <dd>{panel.summary.tip || "Missing"}</dd>
+              </div>
+              <div>
+                <dt>Odds</dt>
+                <dd>{panel.odds || "Missing"}</dd>
+              </div>
+              <div>
+                <dt>Kickoff</dt>
+                <dd>{panel.kickoff || "Missing"}</dd>
+              </div>
+              <div>
+                <dt>Coupon pick</dt>
+                <dd>{panel.summary.couponPick || "None"}</dd>
+              </div>
+              <div>
+                <dt>Bet365 link</dt>
+                <dd>{panel.bet365Url ? "Found" : "Missing"}</dd>
+              </div>
+            </dl>
+
+            {panel.lede && (
+              <details class="lede-preview">
+                <summary>Content preview</summary>
+                <div set:html={panel.lede} />
+              </details>
+            )}
+          </>
+        ) : (
+          <p class="empty-state">No live tip returned for {panel.label}.</p>
+        )}
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .test-hero {
+    background: linear-gradient(135deg, var(--ot-brand-blue) 0%, var(--ot-brand-blue-dark) 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    margin-bottom: 1.25rem;
+    padding: 2rem;
+  }
+
+  .test-hero .eyebrow {
+    color: var(--ot-brand-orange);
+  }
+
+  .test-hero h1 {
+    color: #fff;
+    margin-bottom: 0.65rem;
+  }
+
+  .test-hero p {
+    color: #d5e7f7;
+    margin: 0;
+    max-width: 70ch;
+  }
+
+  .status-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-bottom: 1.25rem;
+  }
+
+  .status-card {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-left: 4px solid var(--ot-brand-blue);
+    border-radius: var(--ot-radius-sm);
+    color: var(--ot-text);
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+  }
+
+  .status-card.needs-review {
+    border-left-color: var(--ot-brand-orange);
+  }
+
+  .status-card span {
+    color: var(--ot-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-card strong {
+    color: var(--ot-brand-blue-dark);
+    font-size: 1.05rem;
+  }
+
+  .status-card.needs-review strong {
+    color: var(--ot-brand-orange);
+  }
+
+  .tip-panels {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tip-panel {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+
+  .panel-head {
+    align-items: center;
+    background: linear-gradient(180deg, #f3f8fd 0%, #fff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+  }
+
+  .panel-head .eyebrow {
+    color: var(--ot-brand-blue);
+    margin-bottom: 0.2rem;
+  }
+
+  .panel-head h2 {
+    margin: 0;
+  }
+
+  .sport-link,
+  .source-row a {
+    color: var(--ot-brand-blue);
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .sport-link:hover,
+  .source-row a:hover {
+    text-decoration: underline;
+  }
+
+  .flag-list {
+    background: #fff7ed;
+    border-bottom: 1px solid #fbd9a8;
+    color: #7a4a0c;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0.8rem 1.25rem;
+  }
+
+  .flag-list li {
+    background: #fff;
+    border: 1px solid #fbd9a8;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0.25rem 0.65rem;
+  }
+
+  .error-text,
+  .empty-state {
+    color: var(--ot-muted);
+    margin: 0;
+    padding: 1.25rem;
+  }
+
+  .error-text {
+    color: var(--ot-danger);
+  }
+
+  .source-row {
+    align-items: center;
+    color: var(--ot-muted);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    gap: 0.5rem 1rem;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+  }
+
+  .coupon-preview {
+    border-top: 1px solid var(--ot-border);
+    border-bottom: 1px solid var(--ot-border);
+  }
+
+  .parse-grid {
+    display: grid;
+    gap: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+  }
+
+  .parse-grid div {
+    border-bottom: 1px solid var(--ot-border);
+    border-right: 1px solid var(--ot-border);
+    min-width: 0;
+    padding: 0.85rem 1rem;
+  }
+
+  .parse-grid div:nth-child(3n) {
+    border-right: 0;
+  }
+
+  .parse-grid dt {
+    color: var(--ot-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .parse-grid dd {
+    color: var(--ot-text);
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .lede-preview {
+    padding: 1rem 1.25rem 1.25rem;
+  }
+
+  .lede-preview summary {
+    color: var(--ot-brand-blue);
+    cursor: pointer;
+    font-weight: 900;
+  }
+
+  .lede-preview div {
+    color: var(--ot-text-2);
+    line-height: 1.65;
+    margin-top: 0.85rem;
+    max-width: 76ch;
+  }
+
+  .lede-preview :global(p) {
+    margin: 0 0 0.75rem;
+  }
+
+  .lede-preview :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .lede-preview :global(a) {
+    color: var(--ot-brand-blue);
+    font-weight: 700;
+  }
+
+  @media (max-width: 760px) {
+    .test-hero {
+      padding: 1.5rem;
+    }
+
+    .panel-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .parse-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .parse-grid div,
+    .parse-grid div:nth-child(3n) {
+      border-right: 0;
+    }
+  }
+</style>
