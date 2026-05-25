@@ -5,9 +5,7 @@ import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderTennisTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
 
-// Tennis hub mirrors the football hub layout but skips Top Divisions / Country Grid /
-// All Top Leagues because the live oddstips.co.uk tennis page does not surface any
-// tournament or country navigation. Only the hero copy + post list exist on live.
+// Simple sport hub mirrors the football hub layout without country or league blocks.
 // SEO text comes from ACF Pro category_top_seo_text + category_bottom_seo_text.
 type CategoryWithSeo = WpCategory & {
   posts?: { nodes: WpPost[] };
@@ -26,13 +24,15 @@ type Props = {
 const { category } = Astro.props;
 const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
-const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderTennisTips;
+const fallbackPosts = category.slug === "tennis" ? placeholderTennisTips : [];
+const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : fallbackPosts;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
 const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
 
 const categoryName = category.name || "Tennis";
+const sportLabel = categoryName.toLowerCase();
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -43,13 +43,13 @@ const categoryName = category.name || "Tennis";
 
 <header class="hub-hero">
   <div class="hub-hero-inner">
-    <p class="hero-eyebrow">Tennis match betting</p>
+    <p class="hero-eyebrow">{categoryName} match betting</p>
     <h1>{categoryName} Betting Tips</h1>
     {topSeo ? (
       <div class="hub-lede" set:html={topSeo} />
     ) : (
       <p class="hub-lede">
-        Today's best ATP, WTA and Challenger tennis predictions, scored through Oddstips' 38-section value algorithm. Scan the picks below or jump straight into a match.
+        Today's best {sportLabel} predictions, scored through Oddstips' 38-section value algorithm. Scan the picks below or jump straight into a match.
       </p>
     )}
   </div>
@@ -60,7 +60,7 @@ const categoryName = category.name || "Tennis";
   <main class="hub-main">
     <section class="post-list tennis-list" aria-labelledby="latest-tennis-heading">
       <header class="post-list-head">
-        <p class="eyebrow on-orange">Tennis tips</p>
+        <p class="eyebrow on-orange">{categoryName} tips</p>
         <h2 id="latest-tennis-heading">Today's {categoryName} Predictions</h2>
         <p class="post-list-meta">{posts.length} {posts.length === 1 ? "match" : "matches"}</p>
       </header>
@@ -69,7 +69,7 @@ const categoryName = category.name || "Tennis";
           {posts.map((post) => <CouponRow post={post} />)}
         </div>
       ) : (
-        <p class="empty-state">No tennis tips published today. Check back later.</p>
+        <p class="empty-state">No {sportLabel} tips published today. Check back later.</p>
       )}
     </section>
 

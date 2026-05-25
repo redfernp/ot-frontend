@@ -28,7 +28,24 @@ const categoryFallbacks: Record<string, { name: string; uri: string; slug: strin
     slug: "tennis",
     posts: placeholderTennisTips,
   },
+  cricket: {
+    name: "Cricket",
+    uri: "/cricket/",
+    slug: "cricket",
+  },
+  darts: {
+    name: "Darts",
+    uri: "/darts/",
+    slug: "darts",
+  },
+  basketball: {
+    name: "Basketball",
+    uri: "/basketball/",
+    slug: "basketball",
+  },
 };
+
+const simpleSportHubSlugs = new Set(["tennis", "cricket", "darts", "basketball"]);
 
 export async function getStaticPaths() {
   const priorityCategoryRoutes = [
@@ -43,6 +60,18 @@ export async function getStaticPaths() {
     {
       path: "tennis",
       categorySlug: "tennis",
+    },
+    {
+      path: "cricket",
+      categorySlug: "cricket",
+    },
+    {
+      path: "darts",
+      categorySlug: "darts",
+    },
+    {
+      path: "basketball",
+      categorySlug: "basketball",
     },
   ];
   const priorityPostRoutes = [
@@ -111,7 +140,7 @@ const post = routeType === "post"
     <TipPostPage post={post} />
   ) : category && categorySlug === "football" ? (
     <FootballHubPage category={category} />
-  ) : category && categorySlug === "tennis" ? (
+  ) : category && simpleSportHubSlugs.has(categorySlug || "") ? (
     <TennisHubPage category={category} />
   ) : (
     category && <CategoryTipsPage category={category} />
