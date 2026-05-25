@@ -6,6 +6,35 @@ For repo, hosting and dev quickstart, see [CLAUDE.md](./CLAUDE.md).
 
 ---
 
+## ⚠️ Read this first: why the first Cloudflare Pages deploy failed
+
+A local reproduction of `npm run build` against staging WP revealed three issues. Two are fixed in the latest commit, one is the architectural one that needs Codex's #1 attention.
+
+### 1. TypeScript error in `BookmakerReviewPage.astro` (FIXED)
+`bookmaker.bonus.minDeposit` referenced a property that didn't exist on the `bonus` type. Build halted at the `astro check` step. Fixed: now reads `bookmaker.minDeposit` directly.
+
+### 2. `bookmakers is not defined` in reviews getStaticPaths (FIXED)
+Astro hoists `getStaticPaths` into an isolated module scope that cannot see top-level page-frontmatter constants. The bookmakers fixture object lived in the page frontmatter, so `getStaticPaths` saw `ReferenceError: bookmakers is not defined`. Fixed: extracted to `src/lib/bookmakers.ts` and the page now imports it. Both routes also pass the `bookmaker` through `props` so each path doesn't re-look it up.
+
+### 3. ECONNRESET from staging WP during static build (NOT FIXED — Codex #1)
+With both fixes above, the build progresses past `astro check`, generates the static entrypoints (~3s), then enters `generating static routes`. The catch-all (`src/pages/[...path].astro`) calls `getCategories(100)` + `getLatestPosts(100)` in `getStaticPaths`, producing up to 200 routes. Each route's render then calls `getCategory(slug)` or `getPost(slug)` (1-3s each on warm staging, longer when slow). Two compounding problems:
+
+- **Build time**. Even healthy staging gives ~2-5s per route. 200 routes × 3s = 10 minutes. Cloudflare Pages builds have a 20-minute hard ceiling on the free tier. The job is borderline before any failures.
+- **Staging Cloudways flakiness**. Mid-build, WP starts returning `ECONNRESET` on tip post queries. Astro static build has no retry — one connection drop kills the whole build.
+
+This is what HANDOFF Codex TODO #5 (hybrid SSR) is for. Until that's done the build will keep failing.
+
+**Two unblock paths Codex can pick from:**
+
+- **Quick (1 day)**: In `src/pages/[...path].astro`, restrict `getStaticPaths` to a small hardcoded priority list (homepage, `/football/`, `/tennis/`, `/football/united-kingdom/england-premier-league/`, the Sunderland-v-Chelsea showcase tip) and **delete** the legacy `src/pages/category/[slug].astro` + `src/pages/tips/[slug].astro` routes. Everything else 404s until proper SSR lands. This ships the design to staging in hours. Also add a retry-with-backoff wrapper in `src/lib/graphql.ts` `wpGraphQL()` so transient ECONNRESETs don't kill builds.
+- **Proper (1-2 weeks)**: Convert to `output: "server"` with `@astrojs/cloudflare` adapter. Tip and category pages render on demand at the edge, cached. No build-time WP traffic. Solves both the time ceiling and the flakiness in one move.
+
+Quick is recommended for the immediate ship + design review; Proper is what should land before going live across all categories.
+
+---
+
+---
+
 ## What has been designed and locked
 
 | Template | File | Notes |
@@ -92,20 +121,28 @@ Once these land, `src/lib/tips.ts` HTML scraping can be deleted; `summarizeTip()
 
 ## What still needs to happen — Codex TODO list
 
-Ordered roughly by priority for a working live deploy:
+Ordered by priority for getting staging live and stable.
 
-1. **Tip post ACF field group** + `getPost` query extension + drop HTML scraping. See table above.
-2. **Real related-tips query** (`TipPostPage.astro`). Currently uses `placeholderRelatedTips` when WP returns nothing. Add a WP query for same category, same kickoff date, exclude current post. ID: same category by `categories.nodes.slug`, kickoff via the new ACF `kickoff` field.
-3. **Today's-internationals filter**. `getInternationalTips()` in `graphql.ts` probes 4 candidate categories — verify the correct slug on Paul365 and add a `where: { dateQuery: { after: ..., before: ... } }` for today only.
-4. **Sport hub routing for cricket / basketball / darts**. Simplest: have the catch-all (`src/pages/[...path].astro`) route any sport-parent category not already mapped through `TennisHubPage`. Add to `categoryFallbacks` and `priorityCategoryRoutes`.
-5. **Hybrid SSR for tip pages**. The catch-all currently generates all paths statically via `getStaticPaths`. With ~1,000 active tip posts and staging WP intermittently 504-ing on bulk queries, on-demand rendering with edge caching will be more resilient. Cloudflare Pages Functions or `@astrojs/cloudflare` adapter.
-6. **Date rail wire-up**. `src/components/DateRail.astro` is visual only — currently unused after the recent redesign but the component exists. Either drop it or wire it to filter `getCategory` posts by ACF `kickoff` date.
-7. **Bookmaker review ACF**. See above.
-8. **Pagination on category pages**. Live shows 50 per page with `/<slug>/page/N/`. Currently we fetch 30 once. Extend `getCategory` to accept `after` cursor and add pagination links to `CategoryTipsPage`.
-9. **Featured images on post cards**. When a WP post has a featured image, surface it where appropriate (homepage "Latest [sport] tips" cards could use them).
-10. **Search results page**. Hero + sidebar search both `GET /?s=…`. Either a `pages/search.astro` route or rely on `?s=` on the homepage with conditional render.
-11. **Yoast SEO meta verification**. `Seo.astro` already reads `post.seo` / `category.seo` from queries. Spot-check each route emits correct title/description/canonical/OG.
-12. **Cloudflare Pages env vars** — set the four env vars (see CLAUDE.md) on the Pages project.
+### 🚨 Build & deploy stability (do first)
+
+1. **Unblock the Cloudflare Pages build** — see "Why the first deploy failed" above. Either patch the catch-all to a priority-only `getStaticPaths` (quick) or move to `@astrojs/cloudflare` SSR (proper). Either way, also delete the legacy `src/pages/category/[slug].astro` + `src/pages/tips/[slug].astro` routes (they walk every WP post/category on top of the catch-all doing the same).
+2. **Retry-with-backoff in `wpGraphQL()`** in `src/lib/graphql.ts`. Wrap the `fetch` so transient `ECONNRESET` / `5xx` get up to 3 retries with 1s/2s/4s backoff before bubbling. Single-line resilience win for both build time and SSR.
+
+### Data wiring
+
+3. **Tip post ACF field group** + `getPost` query extension + drop HTML scraping. See ACF table above. Once this lands, `src/lib/tips.ts` `summarizeTip()` becomes a thin pass-through over ACF fields and `cleanTipContentHtml()` is dead code.
+4. **Real related-tips query** (`TipPostPage.astro`). Currently uses `placeholderRelatedTips` when WP returns nothing. Add a WP query for same category, same kickoff date, exclude current post (identified by `categories.nodes.slug`, kickoff via the new ACF `kickoff` field).
+5. **Today's-internationals filter**. `getInternationalTips()` in `graphql.ts` probes 4 candidate categories — verify the correct slug on Paul365 and add a `where: { dateQuery: { after: ..., before: ... } }` for today only.
+6. **Sport hub routing for cricket / basketball / darts**. Simplest: route any sport-parent category not already mapped through `TennisHubPage`. Add to `categoryFallbacks` and `priorityCategoryRoutes` in the catch-all.
+7. **Pagination on category pages**. Live shows 50 per page with `/<slug>/page/N/`. Currently we fetch 30 once. Extend `getCategory` to accept `after` cursor and add pagination links to `CategoryTipsPage`.
+
+### Design polish & content
+
+8. **Date rail wire-up**. `src/components/DateRail.astro` is visual only and currently unused after the recent redesign but the component exists. Either drop it or wire it to filter `getCategory` posts by ACF `kickoff` date.
+9. **Bookmaker review ACF** (TODO #7 in original list). Move `src/lib/bookmakers.ts` data to ACF on a `bookmaker` CPT.
+10. **Featured images on post cards**. When a WP post has a featured image, surface it on the homepage "Latest [sport] tips" cards.
+11. **Search results page**. Hero + sidebar search both `GET /?s=…`. Either a `pages/search.astro` route or rely on `?s=` on the homepage with conditional render.
+12. **Yoast SEO meta verification**. `Seo.astro` already reads `post.seo` / `category.seo` from queries. Spot-check each route emits correct title/description/canonical/OG.
 
 ## Known quirks
 
@@ -142,6 +179,7 @@ src/
     categorySeoCopy.ts               ← dev-preview SEO copy fallback  (NEW)
     relatedTips.ts                   ← placeholder fixtures: EPL, tennis, international
     topDivisions.ts                  ← 27-country top-division map (currently unused)  (NEW)
+    bookmakers.ts                    ← bookmaker review fixtures (extracted from page for static-paths safety)  (NEW)
     placeholders.ts                  ← global single-post / category placeholders
 HANDOFF.md                           ← this file  (NEW)
 CLAUDE.md                            ← repo overview + ACF field plan
