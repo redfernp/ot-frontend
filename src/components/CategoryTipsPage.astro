@@ -22,10 +22,10 @@ type Props = {
 };
 
 const { category } = Astro.props;
+const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
-// Local-preview fallback: when WPGraphQL is not configured, show the same authentic-looking
-// fixture set used elsewhere. Real Paul365 data will appear once env vars land.
-const posts = livePosts.length ? livePosts : placeholderRelatedTips;
+// Local-preview fallback when WPGraphQL is not configured.
+const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
@@ -82,9 +82,13 @@ const heading = category.name
         <h2 id="latest-heading">{category.name || "Latest"} tips</h2>
         <p class="post-list-meta">{posts.length} {posts.length === 1 ? "tip" : "tips"}</p>
       </header>
-      <div class="post-list-rows">
-        {posts.map((post) => <CouponRow post={post} />)}
-      </div>
+      {posts.length > 0 ? (
+        <div class="post-list-rows">
+          {posts.map((post) => <CouponRow post={post} />)}
+        </div>
+      ) : (
+        <p class="empty-state">No tips published in this category yet.</p>
+      )}
     </section>
 
     {bottomSeo && (
@@ -237,6 +241,13 @@ const heading = category.name
 
   .post-list-rows {
     display: grid;
+  }
+
+  .empty-state {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
   }
 
   @media (max-width: 880px) {

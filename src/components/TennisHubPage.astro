@@ -24,8 +24,9 @@ type Props = {
 };
 
 const { category } = Astro.props;
+const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
-const posts = livePosts.length ? livePosts : placeholderTennisTips;
+const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderTennisTips;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";

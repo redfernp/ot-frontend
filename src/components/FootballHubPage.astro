@@ -26,8 +26,9 @@ type Props = {
 };
 
 const { category } = Astro.props;
+const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
-const posts = livePosts.length ? livePosts : placeholderRelatedTips;
+const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
@@ -35,10 +36,12 @@ const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallb
 
 const categoryName = category.name || "Football";
 
-// Dynamic: today's top international matches. Empty in dev without env; falls back to
-// authentic-looking placeholders so the design still demos.
+// Dynamic: today's top international matches.
+// Local placeholders are used only when WPGraphQL is not configured.
 const liveInternational = await getInternationalTips(6).catch(() => []);
-const internationalPosts = liveInternational.length ? liveInternational : placeholderInternationalTips;
+const internationalPosts = liveInternational.length || !hasWpGraphQL
+  ? (liveInternational.length ? liveInternational : placeholderInternationalTips)
+  : [];
 
 // Top inline league chips for the hero (popular subset, taken from real IA)
 const heroLeagueChips = footballPopularLeagues.slice(0, 8);

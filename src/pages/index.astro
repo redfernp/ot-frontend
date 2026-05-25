@@ -10,6 +10,7 @@ import {
 } from "@/lib/siteNav";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 
+const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const latestBySport = await Promise.all(
   homeLatestSections.map(async (section) => ({
     ...section,
@@ -17,15 +18,13 @@ const latestBySport = await Promise.all(
   })),
 );
 
-// Local-preview fallback: when WPGraphQL isn't configured, only the football section
-// gets the authentic-looking fixture set we already use across the site. Other sports
-// show the empty state since we don't have placeholder posts for them and faking it
-// across all sports would misrepresent what's actually published.
+// Local-preview fallback: when WPGraphQL is not configured, only the football section
+// gets the fixture set already used across the site. Other sports show the empty state.
 const sections = latestBySport.map((section) => ({
   ...section,
   posts: section.posts.length
     ? section.posts
-    : section.slug === "football" ? placeholderRelatedTips.slice(0, 4) : [],
+    : !hasWpGraphQL && section.slug === "football" ? placeholderRelatedTips.slice(0, 4) : [],
 }));
 ---
 

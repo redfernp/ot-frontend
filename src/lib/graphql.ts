@@ -3,6 +3,18 @@ type GraphQLResponse<T> = {
   errors?: Array<{ message: string }>;
 };
 
+type DateQueryParts = {
+  year: number;
+  month: number;
+  day: number;
+};
+
+type DateQuery = {
+  after: DateQueryParts;
+  before: DateQueryParts;
+  inclusive: boolean;
+};
+
 export type WpPost = {
   id: string;
   slug: string;
@@ -63,6 +75,27 @@ function wait(ms: number) {
 
 function formatError(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function todayDateQuery(timeZone = "Europe/London"): DateQuery {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "numeric",
+    timeZone,
+    year: "numeric",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const today = {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+  };
+
+  return {
+    after: today,
+    before: today,
+    inclusive: true,
+  };
 }
 
 export async function wpGraphQL<T>(
@@ -197,9 +230,6 @@ export async function getCategory(slug: string, postLimit = 30) {
   // name itself for textarea).
   const data = await wpGraphQL<{
     category?: WpCategory & {
-      posts?: {
-        nodes: WpPost[];
-      };
       categoryTopSeoText?: {
         categoryTopSeoTextEditor?: string;
       };
@@ -207,8 +237,11 @@ export async function getCategory(slug: string, postLimit = 30) {
         categoryBottomSeoText?: string;
       };
     };
+    posts?: {
+      nodes: WpPost[];
+    };
   }>(
-    `query CategoryBySlug($slug: ID!, $postLimit: Int!) {
+    `query CategoryBySlug($slug: ID!, $categoryName: String!, $postLimit: Int!) {
       category(id: $slug, idType: SLUG) {
         id
         slug
@@ -232,29 +265,34 @@ export async function getCategory(slug: string, postLimit = 30) {
         categoryBottomSeoText {
           categoryBottomSeoText
         }
-        posts(first: $postLimit, where: { orderby: { field: DATE, order: DESC } }) {
-          nodes {
-            id
-            slug
-            uri
-            title
-            excerpt
-            content
-            date
-          }
+      }
+      posts(first: $postLimit, where: { categoryName: $categoryName, orderby: { field: DATE, order: DESC } }) {
+        nodes {
+          id
+          slug
+          uri
+          title
+          excerpt
+          content
+          date
         }
       }
     }`,
-    { slug, postLimit },
+    { slug, categoryName: slug, postLimit },
   );
 
-  return data?.category ?? null;
+  if (!data?.category) {
+    return null;
+  }
+
+  return {
+    ...data.category,
+    posts: data.posts,
+  };
 }
 
 export async function getInternationalTips(limit = 6) {
-  // Pull latest international match tips. Probes the categories used on live Oddstips
-  // for international fixtures (international-match, europe-friendlies, world-cup, etc).
-  // First non-empty response wins; otherwise returns [].
+  const dateQuery = todayDateQuery();
   const candidateSlugs = [
     "international-match",
     "international",
@@ -263,7 +301,7 @@ export async function getInternationalTips(limit = 6) {
   ];
 
   for (const slug of candidateSlugs) {
-    const posts = await getCategoryPostTitles(slug, limit).catch(() => []);
+    const posts = await getCategoryPostTitles(slug, limit, dateQuery).catch(() => []);
 
     if (posts.length) {
       return posts;
@@ -273,33 +311,29 @@ export async function getInternationalTips(limit = 6) {
   return [];
 }
 
-export async function getCategoryPostTitles(slug: string, limit = 4) {
+export async function getCategoryPostTitles(slug: string, limit = 4, dateQuery?: DateQuery) {
   // Lightweight query: titles + URIs only. Used by homepage "Latest X Tips" sections
   // where the live site renders title-only cards.
   const data = await wpGraphQL<{
-    category?: {
-      posts?: {
-        nodes: WpPost[];
-      };
+    posts?: {
+      nodes: WpPost[];
     };
   }>(
-    `query CategoryPostTitles($slug: ID!, $limit: Int!) {
-      category(id: $slug, idType: SLUG) {
-        posts(first: $limit, where: { orderby: { field: DATE, order: DESC } }) {
-          nodes {
-            id
-            slug
-            uri
-            title
-            date
-          }
+    `query CategoryPostTitles($slug: String!, $limit: Int!, $dateQuery: DateQueryInput) {
+      posts(first: $limit, where: { categoryName: $slug, orderby: { field: DATE, order: DESC }, dateQuery: $dateQuery }) {
+        nodes {
+          id
+          slug
+          uri
+          title
+          date
         }
       }
     }`,
-    { slug, limit },
+    { slug, limit, dateQuery },
   );
 
-  return data?.category?.posts?.nodes ?? [];
+  return data?.posts?.nodes ?? [];
 }
 
 export async function getPost(slug: string) {
