@@ -7,7 +7,7 @@ type Props = {
 
 const {
   label = "Match date selector",
-  daysBefore = 2,
+  daysBefore = 28,
   daysAfter = 6,
 } = Astro.props;
 
@@ -199,6 +199,22 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       });
     }
 
+    function revealActiveDate() {
+      document.querySelectorAll("[data-date-rail]").forEach((rail) => {
+        const active = rail.querySelector("[data-date-link].active");
+
+        if (!active) {
+          return;
+        }
+
+        active.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      });
+    }
+
     function updateSections(activeDate) {
       document.querySelectorAll("[data-date-filter-section]").forEach((section) => {
         const rows = Array.from(section.querySelectorAll("[data-tip-date]"));
@@ -230,6 +246,7 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
     function applyDate(activeDate) {
       updateRails(activeDate);
       updateSections(activeDate);
+      window.requestAnimationFrame(revealActiveDate);
     }
 
     document.addEventListener("click", (event) => {
@@ -278,6 +295,8 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
     grid-auto-flow: column;
     grid-auto-columns: minmax(94px, 1fr);
     overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
   }
 
@@ -302,6 +321,7 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
     min-width: 94px;
     padding: 0.65rem 0.55rem 0.55rem;
     position: relative;
+    scroll-snap-align: center;
     text-decoration: none;
     text-transform: uppercase;
   }
