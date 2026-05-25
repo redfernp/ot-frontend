@@ -42,6 +42,7 @@ export type SeoFields = {
 };
 
 const endpoint = import.meta.env.WPGRAPHQL_ENDPOINT;
+const retryDelaysMs = [1000, 2000, 4000];
 
 function authHeader(): Record<string, string> {
   const user = import.meta.env.WP_BASIC_AUTH_USER;
@@ -56,6 +57,14 @@ function authHeader(): Record<string, string> {
   };
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function formatError(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export async function wpGraphQL<T>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -64,26 +73,61 @@ export async function wpGraphQL<T>(
     return null;
   }
 
-  const response = await fetch(endpoint, {
+  const request = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...authHeader(),
     },
     body: JSON.stringify({ query, variables }),
-  });
+  };
 
-  if (!response.ok) {
-    throw new Error(`WPGraphQL request failed: ${response.status} ${response.statusText}`);
+  for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+    let response: Response;
+
+    try {
+      response = await fetch(endpoint, request);
+    } catch (error) {
+      if (attempt < retryDelaysMs.length) {
+        await wait(retryDelaysMs[attempt]);
+        continue;
+      }
+
+      throw new Error(`WPGraphQL request failed after ${attempt + 1} attempts: ${formatError(error)}`);
+    }
+
+    if (!response.ok) {
+      const message = `WPGraphQL request failed: ${response.status} ${response.statusText}`;
+
+      if (response.status >= 500 && attempt < retryDelaysMs.length) {
+        await wait(retryDelaysMs[attempt]);
+        continue;
+      }
+
+      throw new Error(message);
+    }
+
+    let payload: GraphQLResponse<T>;
+
+    try {
+      payload = (await response.json()) as GraphQLResponse<T>;
+    } catch (error) {
+      if (attempt < retryDelaysMs.length) {
+        await wait(retryDelaysMs[attempt]);
+        continue;
+      }
+
+      throw new Error(`WPGraphQL response was not valid JSON after ${attempt + 1} attempts: ${formatError(error)}`);
+    }
+
+    if (payload.errors?.length) {
+      throw new Error(payload.errors.map((error) => error.message).join("; "));
+    }
+
+    return payload.data ?? null;
   }
 
-  const payload = (await response.json()) as GraphQLResponse<T>;
-
-  if (payload.errors?.length) {
-    throw new Error(payload.errors.map((error) => error.message).join("; "));
-  }
-
-  return payload.data ?? null;
+  return null;
 }
 
 export async function getLatestPosts(limit = 8) {
