@@ -15,6 +15,11 @@ type DateQuery = {
   inclusive: boolean;
 };
 
+type WpGraphQLOptions = {
+  retryDelaysMs?: number[];
+  timeoutMs?: number;
+};
+
 export type WpPost = {
   id: string;
   slug: string;
@@ -54,7 +59,7 @@ export type SeoFields = {
 };
 
 const endpoint = import.meta.env.WPGRAPHQL_ENDPOINT;
-const retryDelaysMs = [1000, 2000, 4000];
+const defaultRetryDelaysMs = [1000, 2000, 4000];
 
 function authHeader(): Record<string, string> {
   const user = import.meta.env.WP_BASIC_AUTH_USER;
@@ -101,10 +106,13 @@ function todayDateQuery(timeZone = "Europe/London"): DateQuery {
 export async function wpGraphQL<T>(
   query: string,
   variables: Record<string, unknown> = {},
+  options: WpGraphQLOptions = {},
 ): Promise<T | null> {
   if (!endpoint) {
     return null;
   }
+
+  const retryDelaysMs = options.retryDelaysMs ?? defaultRetryDelaysMs;
 
   const request = {
     method: "POST",
@@ -117,9 +125,14 @@ export async function wpGraphQL<T>(
 
   for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
     let response: Response;
+    const controller = options.timeoutMs ? new AbortController() : undefined;
+    const timeout = controller ? setTimeout(() => controller.abort(), options.timeoutMs) : undefined;
 
     try {
-      response = await fetch(endpoint, request);
+      response = await fetch(endpoint, {
+        ...request,
+        signal: controller?.signal,
+      });
     } catch (error) {
       if (attempt < retryDelaysMs.length) {
         await wait(retryDelaysMs[attempt]);
@@ -127,6 +140,10 @@ export async function wpGraphQL<T>(
       }
 
       throw new Error(`WPGraphQL request failed after ${attempt + 1} attempts: ${formatError(error)}`);
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
     }
 
     if (!response.ok) {

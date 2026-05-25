@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import CouponRow from "@/components/CouponRow.astro";
-import { getCategory, type WpPost } from "@/lib/graphql";
+import { wpGraphQL, type WpPost } from "@/lib/graphql";
 import { homeSports } from "@/lib/siteNav";
 import { cleanOdds, extractTime, findFirstLink, splitTipBody, summarizeTip } from "@/lib/tips";
 
@@ -46,30 +46,71 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-const samples: SportSample[] = await Promise.all(
-  homeSports.map(async (sport) => {
-    const slug = sport.path.replace(/^\/+|\/+$/g, "");
+function graphQlAlias(slug: string, index: number) {
+  const alias = slug.replace(/[^A-Za-z0-9_]/g, "_").replace(/^[^A-Za-z_]/, "sport_");
 
-    try {
-      const category = await getCategory(slug, 1);
+  return alias || `sport_${index}`;
+}
 
-      return {
-        label: sport.label,
-        path: sport.path,
-        slug,
-        categoryName: category?.name,
-        post: category?.posts?.nodes?.[0],
-      };
-    } catch (error) {
-      return {
-        label: sport.label,
-        path: sport.path,
-        slug,
-        error: errorMessage(error),
-      };
+const sportRequests = homeSports.map((sport, index) => {
+  const slug = sport.path.replace(/^\/+|\/+$/g, "");
+  const alias = graphQlAlias(slug, index);
+
+  return {
+    ...sport,
+    alias,
+    postsKey: `${alias}Posts`,
+    slug,
+    variable: `${alias}CategoryName`,
+  };
+});
+
+const variableDefs = sportRequests.map((sport) => `$${sport.variable}: String!`).join(", ");
+const sportFields = sportRequests
+  .map(
+    (sport) => `
+      ${sport.postsKey}: posts(first: 1, where: { categoryName: $${sport.variable}, orderby: { field: DATE, order: DESC } }) {
+        nodes {
+          ...SportTipPost
+        }
+      }
+    `,
+  )
+  .join("\n");
+const sportVariables = Object.fromEntries(sportRequests.map((sport) => [sport.variable, sport.slug]));
+
+let sampleData: Record<string, { nodes: WpPost[] } | undefined> | null = null;
+let sampleError: string | undefined;
+
+try {
+  sampleData = await wpGraphQL<Record<string, { nodes: WpPost[] }>>(
+    `query SportTipSamples(${variableDefs}) {
+      ${sportFields}
     }
-  }),
-);
+
+    fragment SportTipPost on Post {
+      id
+      slug
+      uri
+      title
+      excerpt
+      content
+      date
+    }`,
+    sportVariables,
+    { retryDelaysMs: [], timeoutMs: 18000 },
+  );
+} catch (error) {
+  sampleError = errorMessage(error);
+}
+
+const samples: SportSample[] = sportRequests.map((sport) => ({
+  label: sport.label,
+  path: sport.path,
+  slug: sport.slug,
+  post: sampleData?.[sport.postsKey]?.nodes?.[0],
+  error: sampleError,
+}));
 
 const panels = samples.map((sample) => {
   const summary = sample.post ? summarizeTip(sample.post) : null;
