@@ -1,9 +1,11 @@
 ---
 import CouponRow from "@/components/CouponRow.astro";
 import CategorySidebar from "@/components/CategorySidebar.astro";
+import DateRail from "@/components/DateRail.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderTennisTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
+import { extractEventDate } from "@/lib/tips";
 
 // Simple sport hub mirrors the football hub layout without country or league blocks.
 // SEO text comes from ACF Pro category_top_seo_text + category_bottom_seo_text.
@@ -26,6 +28,10 @@ const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
 const fallbackPosts = category.slug === "tennis" ? placeholderTennisTips : [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : fallbackPosts;
+const datedPosts = posts.map((post) => ({
+  post,
+  tipDate: extractEventDate(post),
+}));
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
@@ -58,19 +64,24 @@ const sportLabel = categoryName.toLowerCase();
 
 <div class="hub-layout">
   <main class="hub-main">
-    <section class="post-list tennis-list" aria-labelledby="latest-tennis-heading">
+    <DateRail />
+
+    <section class="post-list tennis-list" aria-labelledby="latest-tennis-heading" data-date-filter-section>
       <header class="post-list-head">
         <p class="eyebrow on-orange">{categoryName} tips</p>
-        <h2 id="latest-tennis-heading">Today's {categoryName} Predictions</h2>
-        <p class="post-list-meta">{posts.length} {posts.length === 1 ? "match" : "matches"}</p>
+        <h2 id="latest-tennis-heading">{categoryName} Predictions</h2>
+        <p class="post-list-meta">
+          <span data-date-count data-singular="match" data-plural="matches">
+            {posts.length} {posts.length === 1 ? "match" : "matches"}
+          </span>
+        </p>
       </header>
       {posts.length > 0 ? (
-        <div class="post-list-rows">
-          {posts.map((post) => <CouponRow post={post} />)}
+        <div class="post-list-rows" data-date-filter-list>
+          {datedPosts.map(({ post, tipDate }) => <CouponRow post={post} tipDate={tipDate} />)}
         </div>
-      ) : (
-        <p class="empty-state">No {sportLabel} tips published today. Check back later.</p>
-      )}
+      ) : null}
+      <p class="empty-state" data-date-empty hidden={posts.length > 0}>No {sportLabel} tips found for this date. Try another date.</p>
     </section>
 
     {bottomSeo && (

@@ -148,6 +148,105 @@ export function intensityOf(value: string | undefined): SignalIntensity {
   return "neutral";
 }
 
+function isoDate(year: number, month: number, day: number) {
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return [
+    String(year).padStart(4, "0"),
+    String(month).padStart(2, "0"),
+    String(day).padStart(2, "0"),
+  ].join("-");
+}
+
+function monthNumber(value: string) {
+  const months: Record<string, number> = {
+    jan: 1,
+    january: 1,
+    feb: 2,
+    february: 2,
+    mar: 3,
+    march: 3,
+    apr: 4,
+    april: 4,
+    may: 5,
+    jun: 6,
+    june: 6,
+    jul: 7,
+    july: 7,
+    aug: 8,
+    august: 8,
+    sep: 9,
+    sept: 9,
+    september: 9,
+    oct: 10,
+    october: 10,
+    nov: 11,
+    november: 11,
+    dec: 12,
+    december: 12,
+  };
+
+  return months[value.toLowerCase()];
+}
+
+function dateFromText(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const text = decodeHtml(value.replace(/<[^>]+>/g, " "));
+  const dashed = text.match(/\b(\d{1,2})-(\d{1,2})-(\d{4})\b/);
+
+  if (dashed) {
+    return isoDate(Number(dashed[3]), Number(dashed[2]), Number(dashed[1]));
+  }
+
+  const iso = text.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+
+  if (iso) {
+    return isoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  }
+
+  const slashed = text.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+
+  if (slashed) {
+    return isoDate(Number(slashed[3]), Number(slashed[2]), Number(slashed[1]));
+  }
+
+  const named = text.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})\b/);
+
+  if (named) {
+    const month = monthNumber(named[2]);
+
+    if (month) {
+      return isoDate(Number(named[3]), month, Number(named[1]));
+    }
+  }
+
+  return null;
+}
+
+export function extractEventDate(post: WpPost): string | null {
+  const titleDate = dateFromText(post.title);
+
+  if (titleDate) {
+    return titleDate;
+  }
+
+  const lines = htmlToLines(post.content || post.excerpt || "");
+  const kickoff = fieldAfter(lines, /^Start Time$/i);
+
+  return dateFromText(kickoff) || dateFromText(lines.join(" "));
+}
+
 // Extract HH:MM from any free-form kickoff string. WP "Start Time" is often a long
 // phrase like "15:00 (UK time), Sun, 24th May 2026."; this just pulls the time.
 export function extractTime(value: string | undefined): string | null {

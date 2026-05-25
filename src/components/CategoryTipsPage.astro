@@ -1,9 +1,11 @@
 ---
 import CouponRow from "@/components/CouponRow.astro";
 import CategorySidebar from "@/components/CategorySidebar.astro";
+import DateRail from "@/components/DateRail.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
+import { extractEventDate } from "@/lib/tips";
 
 type CategoryWithPosts = WpCategory & {
   posts?: {
@@ -26,6 +28,10 @@ const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
 // Local-preview fallback when WPGraphQL is not configured.
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
+const datedPosts = posts.map((post) => ({
+  post,
+  tipDate: extractEventDate(post),
+}));
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
@@ -76,19 +82,24 @@ const heading = category.name
 
 <div class="cat-layout">
   <main class="cat-main">
-    <section class="post-list" aria-labelledby="latest-heading">
+    <DateRail />
+
+    <section class="post-list" aria-labelledby="latest-heading" data-date-filter-section>
       <header class="post-list-head">
         <p class="eyebrow">Latest predictions</p>
         <h2 id="latest-heading">{category.name || "Latest"} tips</h2>
-        <p class="post-list-meta">{posts.length} {posts.length === 1 ? "tip" : "tips"}</p>
+        <p class="post-list-meta">
+          <span data-date-count data-singular="tip" data-plural="tips">
+            {posts.length} {posts.length === 1 ? "tip" : "tips"}
+          </span>
+        </p>
       </header>
       {posts.length > 0 ? (
-        <div class="post-list-rows">
-          {posts.map((post) => <CouponRow post={post} />)}
+        <div class="post-list-rows" data-date-filter-list>
+          {datedPosts.map(({ post, tipDate }) => <CouponRow post={post} tipDate={tipDate} />)}
         </div>
-      ) : (
-        <p class="empty-state">No tips published in this category yet.</p>
-      )}
+      ) : null}
+      <p class="empty-state" data-date-empty hidden={posts.length > 0}>No tips found for this date. Try another date.</p>
     </section>
 
     {bottomSeo && (

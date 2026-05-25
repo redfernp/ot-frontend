@@ -4,9 +4,10 @@ import { cleanOdds, extractTime, findFirstLink, summarizeTip } from "@/lib/tips"
 
 type Props = {
   post: WpPost;
+  tipDate?: string | null;
 };
 
-const { post } = Astro.props;
+const { post, tipDate } = Astro.props;
 const href = post.uri || `/${post.slug}/`;
 const summary = summarizeTip(post);
 const bet365Url = findFirstLink(post.content, /bet365/i);
@@ -39,7 +40,7 @@ const odds = cleanOdds(summary.odds);
 const fixture = summary.fixture || post.title || "Football tip";
 ---
 
-<article class="coupon-row">
+<article class="coupon-row" data-tip-date={tipDate || undefined}>
   <a class="row-link" href={href}>
     {kickoffLabel ? (
       <span class="kickoff">{kickoffLabel}</span>
@@ -61,7 +62,7 @@ const fixture = summary.fixture || post.title || "Football tip";
 
     <span class="odds">
       <span class="odds-label">Bet365</span>
-      <span class:list={["odds-value", { "is-empty": !odds }]}>{odds || "—"}</span>
+      <span class:list={["odds-value", { "is-empty": !odds }]}>{odds || "-"}</span>
     </span>
 
     <span class="row-arrow" aria-hidden="true">&rarr;</span>

@@ -3,9 +3,10 @@ import type { WpPost } from "@/lib/graphql";
 
 type Props = {
   post: WpPost;
+  tipDate?: string | null;
 };
 
-const { post } = Astro.props;
+const { post, tipDate } = Astro.props;
 const href = post.uri || `/${post.slug}/`;
 
 function formatDate(dateIso?: string) {
@@ -25,7 +26,7 @@ function formatDate(dateIso?: string) {
 const dateLabel = formatDate(post.date);
 ---
 
-<a class="post-list-item" href={href}>
+<a class="post-list-item" href={href} data-tip-date={tipDate || undefined}>
   {dateLabel && <span class="date" aria-hidden="true">{dateLabel}</span>}
   <span class="title" set:html={post.title || "Football tip"} />
   <span class="arrow" aria-hidden="true">&rarr;</span>
