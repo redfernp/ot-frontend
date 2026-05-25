@@ -3,14 +3,12 @@ type Props = {
   label?: string;
   daysBefore?: number;
   daysAfter?: number;
-  paramName?: string;
 };
 
 const {
   label = "Match date selector",
   daysBefore = 2,
   daysAfter = 6,
-  paramName = "date",
 } = Astro.props;
 
 function londonTodayIso() {
@@ -82,13 +80,12 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
   data-date-rail
   data-days-before={daysBefore}
   data-days-after={daysAfter}
-  data-param-name={paramName}
 >
   <div class="date-list">
     {items.map((item) => (
-      <a
+      <button
+        type="button"
         class:list={["date-item", { active: item.offset === 0 }]}
-        href={`?${paramName}=${item.isoDate}`}
         data-date-link
         data-date-offset={item.offset}
         data-date={item.isoDate}
@@ -96,7 +93,7 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       >
         <strong>{item.label}</strong>
         <span>{item.caption}</span>
-      </a>
+      </button>
     ))}
   </div>
 </nav>
@@ -160,15 +157,15 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       }).format(new Date(`${isoDate}T00:00:00Z`));
     }
 
-    function paramName() {
-      return document.querySelector("[data-date-rail]")?.dataset.paramName || "date";
-    }
-
-    function selectedDate() {
+    function cleanDateQuery() {
       const url = new URL(window.location.href);
-      const value = url.searchParams.get(paramName());
 
-      return value && isoPattern.test(value) ? value : londonTodayIso();
+      if (!url.searchParams.has("date")) {
+        return;
+      }
+
+      url.searchParams.delete("date");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
     }
 
     function updateRails(activeDate) {
@@ -178,11 +175,8 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
         rail.querySelectorAll("[data-date-link]").forEach((link) => {
           const offset = Number(link.dataset.dateOffset || 0);
           const isoDate = addDays(today, offset);
-          const url = new URL(window.location.href);
 
-          url.searchParams.set(rail.dataset.paramName || "date", isoDate);
           link.dataset.date = isoDate;
-          link.href = `${url.pathname}${url.search}${url.hash}`;
           link.classList.toggle("active", isoDate === activeDate);
 
           if (isoDate === activeDate) {
@@ -253,22 +247,17 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
         return;
       }
 
-      const url = new URL(window.location.href);
-      url.searchParams.set(paramName(), nextDate);
-      window.history.pushState({}, "", url);
       applyDate(nextDate);
-    });
-
-    window.addEventListener("popstate", () => {
-      applyDate(selectedDate());
     });
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
-        applyDate(selectedDate());
+        cleanDateQuery();
+        applyDate(londonTodayIso());
       }, { once: true });
     } else {
-      applyDate(selectedDate());
+      cleanDateQuery();
+      applyDate(londonTodayIso());
     }
   })();
 </script>
@@ -298,10 +287,15 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
   .date-item {
     align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.18);
     color: #c8d7f3;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
+    font: inherit;
     gap: 0.2rem;
     justify-content: center;
     min-height: 68px;
