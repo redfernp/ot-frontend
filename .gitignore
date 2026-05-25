@@ -6,3 +6,6 @@ dist/
 .env.production
 .env.staging
 .DS_Store
+
+# Per-machine preview/launch config; not shared across the team
+.claude/

@@ -1,9 +1,34 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import CategoryTipsPage from "@/components/CategoryTipsPage.astro";
+import FootballHubPage from "@/components/FootballHubPage.astro";
+import TennisHubPage from "@/components/TennisHubPage.astro";
 import TipPostPage from "@/components/TipPostPage.astro";
 import { getCategories, getCategory, getLatestPosts, getPost } from "@/lib/graphql";
 import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
+import { placeholderRelatedTips, placeholderTennisTips } from "@/lib/relatedTips";
+
+// Per-route dev-preview fallback so routes render with a sensible category name and
+// the multi-fixture placeholder set when WPGraphQL isn't configured. Replaced by real
+// WP data the moment env vars land.
+const categoryFallbacks: Record<string, { name: string; uri: string; slug: string; posts?: typeof placeholderRelatedTips }> = {
+  football: {
+    name: "Football",
+    uri: "/football/",
+    slug: "football",
+  },
+  "england-premier-league": {
+    name: "England Premier League",
+    uri: "/football/united-kingdom/england-premier-league/",
+    slug: "england-premier-league",
+  },
+  tennis: {
+    name: "Tennis",
+    uri: "/tennis/",
+    slug: "tennis",
+    posts: placeholderTennisTips,
+  },
+};
 
 export async function getStaticPaths() {
   const priorityCategoryRoutes = [
@@ -14,6 +39,10 @@ export async function getStaticPaths() {
     {
       path: "football/united-kingdom/england-premier-league",
       categorySlug: "england-premier-league",
+    },
+    {
+      path: "tennis",
+      categorySlug: "tennis",
     },
   ];
   const priorityPostRoutes = [
@@ -66,11 +95,28 @@ type Props = {
 };
 
 const { categorySlug, postSlug, routeType } = Astro.props;
+
+function buildCategoryFallback(slug: string) {
+  const known = categoryFallbacks[slug];
+
+  if (known) {
+    return {
+      id: `fallback-${slug}`,
+      slug: known.slug,
+      uri: known.uri,
+      name: known.name,
+      posts: { nodes: known.posts ?? placeholderRelatedTips },
+    };
+  }
+
+  return {
+    ...placeholderCategory,
+    posts: { nodes: [placeholderPost] },
+  };
+}
+
 const category = routeType === "category"
-  ? (await getCategory(categorySlug || "")) || {
-      ...placeholderCategory,
-      posts: { nodes: [placeholderPost] },
-    }
+  ? (await getCategory(categorySlug || "")) || buildCategoryFallback(categorySlug || "")
   : null;
 const post = routeType === "post"
   ? (await getPost(postSlug || "")) || {
@@ -85,5 +131,13 @@ const post = routeType === "post"
   description={post?.excerpt || category?.description || "Oddstips staging page proof of concept."}
   seo={post?.seo || category?.seo}
 >
-  {post ? <TipPostPage post={post} /> : category && <CategoryTipsPage category={category} />}
+  {post ? (
+    <TipPostPage post={post} />
+  ) : category && categorySlug === "football" ? (
+    <FootballHubPage category={category} />
+  ) : category && categorySlug === "tennis" ? (
+    <TennisHubPage category={category} />
+  ) : (
+    category && <CategoryTipsPage category={category} />
+  )}
 </BaseLayout>

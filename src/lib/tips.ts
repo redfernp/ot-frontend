@@ -33,7 +33,11 @@ function decodeHtml(value: string) {
     .replace(/&rsquo;/gi, "'")
     .replace(/&lsquo;/gi, "'")
     .replace(/&ndash;/gi, "-")
-    .replace(/&mdash;/gi, "-");
+    .replace(/&mdash;/gi, "-")
+    .replace(/&pound;/gi, "£")
+    .replace(/&#163;/g, "£")
+    .replace(/&euro;/gi, "€")
+    .replace(/&#8364;/g, "€");
 }
 
 function escapeRegExp(value: string) {
@@ -104,6 +108,98 @@ export function findFirstLink(html: string | undefined, matcher: RegExp) {
   }
 
   return undefined;
+}
+
+export function splitTipBody(html = "") {
+  const cleaned = cleanTipContentHtml(html);
+  const headingMatch = cleaned.match(/<h[2-6][^>]*>\s*Related Reading\s*<\/h[2-6]>/i);
+
+  if (!headingMatch || headingMatch.index === undefined) {
+    return { lede: cleaned, relatedReading: "" };
+  }
+
+  return {
+    lede: cleaned.slice(0, headingMatch.index).trim(),
+    relatedReading: cleaned.slice(headingMatch.index + headingMatch[0].length).trim(),
+  };
+}
+
+export type SignalIntensity = "high" | "med" | "low" | "neutral";
+
+export function intensityOf(value: string | undefined): SignalIntensity {
+  if (!value) {
+    return "neutral";
+  }
+
+  const v = value.toLowerCase().trim();
+
+  if (/^(very high|high|likely|late|frantic)$/.test(v)) {
+    return "high";
+  }
+
+  if (/^(medium|med|possible|moderate|open|mid)$/.test(v)) {
+    return "med";
+  }
+
+  if (/^(very low|low|unlikely|early|tactical|slow|none)$/.test(v)) {
+    return "low";
+  }
+
+  return "neutral";
+}
+
+// Extract HH:MM from any free-form kickoff string. WP "Start Time" is often a long
+// phrase like "15:00 (UK time), Sun, 24th May 2026."; this just pulls the time.
+export function extractTime(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const match = value.match(/\b(\d{1,2}):(\d{2})\b/);
+
+  if (!match) {
+    return null;
+  }
+
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+// Filter out 0 / 0.0 / 0.00 / "-" / empty as missing odds. WP sometimes returns these
+// for unpriced matches and we don't want to render them as if they were real prices.
+export function cleanOdds(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed || trimmed === "-" || /^0(\.0+)?$/.test(trimmed)) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+export function parseReturns(returnsText: string | undefined) {
+  if (!returnsText) {
+    return null;
+  }
+
+  const stakeMatch = returnsText.match(/(?:£|£|GBP\s*)?(\d+(?:\.\d+)?)\s*(?:bet|stake)?/i);
+  const returnMatch = returnsText.match(/returns?\s+(?:a\s+total\s+of\s+)?(?:£|£)?(\d+(?:\.\d+)?)/i);
+
+  const stake = stakeMatch ? Number(stakeMatch[1]) : null;
+  const total = returnMatch ? Number(returnMatch[1]) : null;
+
+  if (!stake || !total) {
+    return null;
+  }
+
+  return {
+    stake,
+    total,
+    profit: Math.round((total - stake) * 100) / 100,
+  };
 }
 
 export function cleanTipContentHtml(html = "") {

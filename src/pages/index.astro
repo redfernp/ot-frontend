@@ -1,84 +1,358 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import PostCard from "@/components/PostCard.astro";
-import { getCategories, getLatestPosts } from "@/lib/graphql";
+import PostListItem from "@/components/PostListItem.astro";
+import { getCategoryPostTitles } from "@/lib/graphql";
+import {
+  homeLatestSections,
+  homeLeagues,
+  homeRegions,
+  homeSports,
+} from "@/lib/siteNav";
+import { placeholderRelatedTips } from "@/lib/relatedTips";
 
-const [posts, categories] = await Promise.all([
-  getLatestPosts(8),
-  getCategories(8),
-]);
+const latestBySport = await Promise.all(
+  homeLatestSections.map(async (section) => ({
+    ...section,
+    posts: await getCategoryPostTitles(section.slug, 4).catch(() => []),
+  })),
+);
+
+// Local-preview fallback: when WPGraphQL isn't configured, only the football section
+// gets the authentic-looking fixture set we already use across the site. Other sports
+// show the empty state since we don't have placeholder posts for them and faking it
+// across all sports would misrepresent what's actually published.
+const sections = latestBySport.map((section) => ({
+  ...section,
+  posts: section.posts.length
+    ? section.posts
+    : section.slug === "football" ? placeholderRelatedTips.slice(0, 4) : [],
+}));
 ---
 
 <BaseLayout
-  title="Oddstips Staging Frontend"
-  description="Astro and WPGraphQL staging frontend proof of concept for Oddstips."
+  title="Oddstips - Daily Free Betting Tips For All Your Favourite Sports"
+  description="Free 1x2 football betting tips, predictions and bookmaker odds from the Oddstips team. Coverage across football, tennis, cricket, snooker, darts and basketball."
 >
-  <section class="panel hero">
-    <p class="eyebrow">Astro + WPGraphQL proof of concept</p>
-    <h1>Oddstips staging frontend</h1>
-    <p>
-      This shell proves Cloudflare Pages deployment and WordPress GraphQL connectivity before the redesign work starts.
+  <section class="home-hero" aria-labelledby="hero-heading">
+    <h1 id="hero-heading">Daily Free Betting Tips For All Your Favourite Sports</h1>
+    <p class="hero-lede">
+      Browse today's free predictions across every major sport. Pick a league or sport below and jump straight to the latest tips.
     </p>
+    <form class="hero-search" role="search" action="/" method="get">
+      <label class="sr-only" for="home-search">Search Oddstips</label>
+      <input
+        id="home-search"
+        type="search"
+        name="s"
+        placeholder="Search latest free tips, leagues or fixtures"
+        autocomplete="off"
+      />
+      <button type="submit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <span>Search</span>
+      </button>
+    </form>
+    <p class="hero-be">18+ &middot; Please gamble responsibly &middot; BeGambleAware.org</p>
   </section>
 
-  <section>
-    <h2>Latest Tips</h2>
-    {posts.length ? (
-      <div class="grid">
-        {posts.map((post) => <PostCard post={post} />)}
-      </div>
-    ) : (
-      <div class="panel">
-        <p>No WPGraphQL data yet. Add `WPGRAPHQL_ENDPOINT` in Cloudflare Pages to populate this section.</p>
-      </div>
-    )}
+  <section class="section sports-band" aria-labelledby="sports-heading">
+    <header class="section-head">
+      <p class="eyebrow">Browse by sport</p>
+      <h2 id="sports-heading">Most Popular Sports Tips</h2>
+    </header>
+    <div class="sport-tiles">
+      {homeSports.map((sport) => (
+        <a class="sport-tile" href={sport.path}>
+          <span class="sport-label">{sport.label}</span>
+          <span class="sport-arrow" aria-hidden="true">&rarr;</span>
+        </a>
+      ))}
+    </div>
   </section>
 
-  <section>
-    <h2>Categories</h2>
-    {categories.length ? (
-      <div class="category-list">
-        {categories.map((category) => (
-          <a href={`/category/${category.slug}/`}>{category.name || category.slug}</a>
-        ))}
-      </div>
-    ) : (
-      <div class="panel">
-        <p>Category data will appear here once staging WordPress GraphQL is connected.</p>
-      </div>
-    )}
+  <section class="section leagues-band" aria-labelledby="leagues-heading">
+    <header class="section-head">
+      <p class="eyebrow">Most popular football</p>
+      <h2 id="leagues-heading">Most Popular Football League Betting Tips</h2>
+    </header>
+    <div class="league-tiles">
+      {homeLeagues.map((league) => (
+        <a class="league-tile" href={league.path}>{league.label}</a>
+      ))}
+    </div>
+  </section>
+
+  {sections.map((section) => (
+    <section class="section latest-section" aria-labelledby={`latest-${section.slug}`}>
+      <header class="section-head latest-head">
+        <h2 id={`latest-${section.slug}`}>{section.label}</h2>
+        <a class="see-all" href={section.allHref}>View all &rarr;</a>
+      </header>
+      {section.posts.length > 0 ? (
+        <div class="latest-list">
+          {section.posts.map((post) => <PostListItem post={post} />)}
+        </div>
+      ) : (
+        <p class="latest-empty">No tips published yet. Check back soon.</p>
+      )}
+      <a class="latest-cta" href={section.allHref}>
+        Click Here To See All Our {section.label.replace(/^Latest\s/, "").replace(/\sBetting Tips$/, "")} Betting Tips &rarr;
+      </a>
+    </section>
+  ))}
+
+  <section class="section regions-section" aria-labelledby="regions-heading">
+    <header class="section-head">
+      <p class="eyebrow">Country &amp; region coverage</p>
+      <h2 id="regions-heading">Top 27 Football Betting Regions &amp; Leagues</h2>
+    </header>
+    <div class="regions-grid">
+      {homeRegions.map((region) => (
+        <a class="region-card" href={region.path}>
+          <strong>{region.label}</strong>
+          <span>{region.blurb}</span>
+        </a>
+      ))}
+    </div>
   </section>
 </BaseLayout>
 
 <style>
-  .hero {
-    margin-bottom: 2rem;
+  .sr-only {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
   }
 
-  .eyebrow {
-    color: #2563eb;
-    font-size: 0.875rem;
-    font-weight: 800;
-    margin: 0 0 0.5rem;
+  .section { margin-top: 2.5rem; }
+  .section-head { margin-bottom: 1rem; }
+  .section-head h2 {
+    color: var(--ot-text);
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    margin: 0;
+  }
+  .section-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0 0 0.25rem;
     text-transform: uppercase;
   }
 
-  section + section {
-    margin-top: 2rem;
+  /* HERO */
+  .home-hero {
+    background: linear-gradient(135deg, var(--ot-brand-blue) 0%, var(--ot-brand-blue-dark) 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    padding: 2.5rem 2rem 2.25rem;
+    position: relative;
+    text-align: center;
   }
-
-  .category-list {
+  .home-hero h1 {
+    color: #fff;
+    font-size: clamp(1.85rem, 4vw, 2.6rem);
+    line-height: 1.15;
+    margin: 0 auto 0.85rem;
+    max-width: 22ch;
+  }
+  .hero-lede {
+    color: #d5e7f7;
+    font-size: 1rem;
+    margin: 0 auto 1.5rem;
+    max-width: 48ch;
+  }
+  .hero-search {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    margin: 0 auto 1rem;
+    max-width: 520px;
+    overflow: hidden;
+  }
+  .hero-search input {
+    background: #fff;
+    border: 0;
+    border-radius: 999px 0 0 999px;
+    color: var(--ot-text);
+    flex: 1;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.85rem 1.1rem;
+  }
+  .hero-search input:focus { outline: 0; }
+  .hero-search button {
+    align-items: center;
+    background: var(--ot-brand-orange);
+    border: 0;
+    border-radius: 0 999px 999px 0;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 900;
+    gap: 0.4rem;
+    padding: 0 1.4rem;
+    transition: background 120ms ease;
+  }
+  .hero-search button:hover { background: #d95800; }
+  .hero-be {
+    color: #c8d8ec;
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    margin: 0;
   }
 
-  .category-list a {
-    background: #fff;
-    border: 1px solid #d7dde6;
-    border-radius: 999px;
-    color: #172033;
-    padding: 0.5rem 0.85rem;
+  /* SPORTS TILES */
+  .sport-tiles {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .sport-tile {
+    align-items: center;
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-bottom: 3px solid var(--ot-brand-blue);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    color: var(--ot-brand-blue-dark);
+    display: flex;
+    font-weight: 900;
+    justify-content: space-between;
+    padding: 1rem 1.1rem;
+    text-decoration: none;
+    transition: border-bottom-color 140ms ease, transform 140ms ease;
+  }
+  .sport-tile:hover {
+    border-bottom-color: var(--ot-brand-orange);
+    transform: translateY(-2px);
+  }
+  .sport-arrow { color: var(--ot-brand-orange); }
+  @media (max-width: 880px) { .sport-tiles { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 480px) { .sport-tiles { grid-template-columns: repeat(2, 1fr); } }
+
+  /* LEAGUE TILES */
+  .league-tiles {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .league-tile {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-left: 3px solid var(--ot-brand-blue-soft);
+    border-radius: var(--ot-radius-sm);
+    color: var(--ot-brand-blue);
+    font-size: 0.92rem;
+    font-weight: 700;
+    padding: 0.7rem 0.95rem;
+    text-decoration: none;
+    transition: border-left-color 120ms ease, background 120ms ease;
+  }
+  .league-tile:hover {
+    background: #f3f8fd;
+    border-left-color: var(--ot-brand-orange);
+    color: var(--ot-brand-blue-dark);
+  }
+  @media (max-width: 880px) { .league-tiles { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .league-tiles { grid-template-columns: 1fr; } }
+
+  /* LATEST SECTIONS */
+  .latest-section {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .latest-head {
+    align-items: end;
+    background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin: 0;
+    padding: 1.1rem 1.25rem;
+  }
+  .latest-head h2 {
+    color: var(--ot-text);
+    font-size: 1.15rem;
+    margin: 0;
+  }
+  .latest-head .see-all {
+    color: var(--ot-brand-orange);
+    font-size: 0.85rem;
+    font-weight: 800;
     text-decoration: none;
   }
+  .latest-head .see-all:hover { text-decoration: underline; }
+
+  .latest-list { display: grid; }
+  .latest-empty {
+    color: var(--ot-muted);
+    font-size: 0.92rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .latest-cta {
+    background: var(--ot-surface-2);
+    border-top: 1px solid var(--ot-border);
+    color: var(--ot-brand-blue);
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 800;
+    padding: 0.95rem 1.25rem;
+    text-align: center;
+    text-decoration: none;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .latest-cta:hover {
+    background: var(--ot-brand-blue);
+    color: #fff;
+  }
+
+  /* REGIONS GRID */
+  .regions-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .region-card {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-top: 3px solid var(--ot-brand-blue);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    color: var(--ot-text);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem 1.1rem;
+    text-decoration: none;
+    transition: border-top-color 140ms ease, transform 140ms ease;
+  }
+  .region-card:hover {
+    border-top-color: var(--ot-brand-orange);
+    transform: translateY(-2px);
+  }
+  .region-card strong {
+    color: var(--ot-brand-blue-dark);
+    font-size: 0.98rem;
+  }
+  .region-card span {
+    color: var(--ot-text-2);
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  @media (max-width: 880px) { .regions-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .regions-grid { grid-template-columns: 1fr; } }
 </style>

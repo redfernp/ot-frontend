@@ -144,15 +144,27 @@ export async function getCategories(limit = 25) {
   return data?.categories.nodes ?? [];
 }
 
-export async function getCategory(slug: string) {
+export async function getCategory(slug: string, postLimit = 30) {
+  // ACF Pro fields on the Category taxonomy (added by Paul):
+  //   category_top_seo_text     (WYSIWYG)   -> rendered under H1 on the category page
+  //   category_bottom_seo_text  (textarea)  -> rendered under the tips list
+  // WPGraphQL for ACF exposes each ACF field as its own object type, with the actual
+  // value living on a per-field-type inner property (Editor for wp_editor, the field
+  // name itself for textarea).
   const data = await wpGraphQL<{
     category?: WpCategory & {
       posts?: {
         nodes: WpPost[];
       };
+      categoryTopSeoText?: {
+        categoryTopSeoTextEditor?: string;
+      };
+      categoryBottomSeoText?: {
+        categoryBottomSeoText?: string;
+      };
     };
   }>(
-    `query CategoryBySlug($slug: ID!) {
+    `query CategoryBySlug($slug: ID!, $postLimit: Int!) {
       category(id: $slug, idType: SLUG) {
         id
         slug
@@ -170,7 +182,13 @@ export async function getCategory(slug: string) {
             url
           }
         }
-        posts(first: 12, where: { orderby: { field: DATE, order: DESC } }) {
+        categoryTopSeoText {
+          categoryTopSeoTextEditor
+        }
+        categoryBottomSeoText {
+          categoryBottomSeoText
+        }
+        posts(first: $postLimit, where: { orderby: { field: DATE, order: DESC } }) {
           nodes {
             id
             slug
@@ -183,10 +201,61 @@ export async function getCategory(slug: string) {
         }
       }
     }`,
-    { slug },
+    { slug, postLimit },
   );
 
   return data?.category ?? null;
+}
+
+export async function getInternationalTips(limit = 6) {
+  // Pull latest international match tips. Probes the categories used on live Oddstips
+  // for international fixtures (international-match, europe-friendlies, world-cup, etc).
+  // First non-empty response wins; otherwise returns [].
+  const candidateSlugs = [
+    "international-match",
+    "international",
+    "europe-friendlies",
+    "world-cup",
+  ];
+
+  for (const slug of candidateSlugs) {
+    const posts = await getCategoryPostTitles(slug, limit).catch(() => []);
+
+    if (posts.length) {
+      return posts;
+    }
+  }
+
+  return [];
+}
+
+export async function getCategoryPostTitles(slug: string, limit = 4) {
+  // Lightweight query: titles + URIs only. Used by homepage "Latest X Tips" sections
+  // where the live site renders title-only cards.
+  const data = await wpGraphQL<{
+    category?: {
+      posts?: {
+        nodes: WpPost[];
+      };
+    };
+  }>(
+    `query CategoryPostTitles($slug: ID!, $limit: Int!) {
+      category(id: $slug, idType: SLUG) {
+        posts(first: $limit, where: { orderby: { field: DATE, order: DESC } }) {
+          nodes {
+            id
+            slug
+            uri
+            title
+            date
+          }
+        }
+      }
+    }`,
+    { slug, limit },
+  );
+
+  return data?.category?.posts?.nodes ?? [];
 }
 
 export async function getPost(slug: string) {

@@ -1,0 +1,242 @@
+---
+import type { WpPost } from "@/lib/graphql";
+import { cleanOdds, extractTime, findFirstLink, summarizeTip } from "@/lib/tips";
+
+type Props = {
+  post: WpPost;
+};
+
+const { post } = Astro.props;
+const href = post.uri || `/${post.slug}/`;
+const summary = summarizeTip(post);
+const bet365Url = findFirstLink(post.content, /bet365/i);
+
+function formatKickoff(dateIso?: string) {
+  if (!dateIso) {
+    return null;
+  }
+
+  const d = new Date(dateIso);
+
+  if (Number.isNaN(d.getTime())) {
+    return null;
+  }
+
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+// Pull just HH:MM for the small pill. summary.kickoff from WP is usually a long
+// phrase ("15:00 (UK time), Sun, 24th May 2026"), so we mine the time out of it
+// and fall back to post.date if nothing usable was found.
+const kickoffLabel =
+  extractTime(summary.kickoff) ||
+  formatKickoff(post.date) ||
+  null;
+
+const pickLabel = summary.tip;
+const pickKey = summary.couponPick; // "H" | "D" | "A" | null
+const odds = cleanOdds(summary.odds);
+const fixture = summary.fixture || post.title || "Football tip";
+---
+
+<article class="coupon-row">
+  <a class="row-link" href={href}>
+    {kickoffLabel ? (
+      <span class="kickoff">{kickoffLabel}</span>
+    ) : (
+      <span class="kickoff is-tbc">TBC</span>
+    )}
+    <span class="fixture">
+      <strong>{fixture}</strong>
+    </span>
+
+    {pickLabel ? (
+      <span class="pick">
+        <span class="pick-label">Tipster pick</span>
+        <span class:list={["pick-value", { "is-draw": pickKey === "D" }]}>{pickLabel}</span>
+      </span>
+    ) : (
+      <span class="pick is-empty"><span class="pick-label">Tipster pick</span><span class="pick-value">View tip</span></span>
+    )}
+
+    <span class="odds">
+      <span class="odds-label">Bet365</span>
+      <span class:list={["odds-value", { "is-empty": !odds }]}>{odds || "—"}</span>
+    </span>
+
+    <span class="row-arrow" aria-hidden="true">&rarr;</span>
+  </a>
+
+  {bet365Url && odds && (
+    <a class="quick-bet" href={bet365Url} rel="nofollow" aria-label={`Back ${pickLabel || "this tip"} on Bet365`}>
+      <span>Bet</span>
+    </a>
+  )}
+</article>
+
+<style>
+  .coupon-row {
+    background: var(--ot-surface);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    transition: background 100ms ease;
+  }
+  .coupon-row:last-child { border-bottom: 0; }
+  .coupon-row:hover { background: #f3f8fd; }
+
+  .row-link {
+    align-items: center;
+    color: var(--ot-text);
+    display: grid;
+    flex: 1;
+    gap: 0.5rem 1rem;
+    grid-template-columns: 64px minmax(0, 1fr) minmax(120px, 0.6fr) minmax(78px, auto) auto;
+    min-width: 0;
+    padding: 0.8rem 1rem;
+    text-decoration: none;
+  }
+
+  .kickoff {
+    align-items: center;
+    background: var(--ot-brand-blue);
+    border-radius: 6px;
+    color: #fff;
+    display: inline-flex;
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 900;
+    height: 32px;
+    justify-content: center;
+    letter-spacing: 0.04em;
+    min-width: 56px;
+    padding: 0 0.4rem;
+    white-space: nowrap;
+  }
+  .kickoff.is-tbc {
+    background: var(--ot-brand-blue-muted);
+    font-size: 0.7rem;
+  }
+
+  .fixture {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .fixture strong {
+    color: var(--ot-brand-blue);
+    font-size: 0.93rem;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .coupon-row:hover .fixture strong { color: var(--ot-brand-blue-dark); text-decoration: underline; text-decoration-color: var(--ot-brand-blue-soft); }
+  .fixture small {
+    color: var(--ot-muted);
+    font-size: 0.78rem;
+  }
+
+  .pick {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    line-height: 1.2;
+    min-width: 0;
+  }
+  .pick-label {
+    color: var(--ot-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .pick-value {
+    color: var(--ot-text);
+    font-size: 0.92rem;
+    font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pick-value.is-draw { color: var(--ot-muted); }
+  .pick.is-empty .pick-value { color: var(--ot-brand-blue); }
+
+  .odds {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    line-height: 1.2;
+    text-align: right;
+  }
+  .odds-label {
+    color: var(--ot-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .odds-value {
+    background: var(--ot-brand-orange);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 900;
+    padding: 0.18rem 0.65rem;
+  }
+  .odds-value.is-empty {
+    background: transparent;
+    border: 1px dashed var(--ot-brand-blue-soft);
+    color: var(--ot-muted);
+    font-weight: 800;
+    padding: 0.15rem 0.55rem;
+  }
+
+  .row-arrow {
+    color: var(--ot-brand-blue-muted);
+    font-size: 1rem;
+    font-weight: 900;
+    opacity: 0;
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+  .coupon-row:hover .row-arrow { opacity: 1; transform: translateX(3px); color: var(--ot-brand-orange); }
+
+  .quick-bet {
+    align-items: center;
+    background: var(--ot-brand-orange);
+    border-left: 1px solid var(--ot-border);
+    color: #fff;
+    display: flex;
+    font-size: 0.78rem;
+    font-weight: 900;
+    justify-content: center;
+    letter-spacing: 0.06em;
+    min-width: 52px;
+    text-decoration: none;
+    transition: background 120ms ease;
+  }
+  .quick-bet:hover { background: #d95800; }
+
+  @media (max-width: 720px) {
+    .row-link {
+      grid-template-columns: 56px minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+    }
+    .kickoff { grid-row: 1 / span 2; }
+    .fixture { grid-column: 2 / -1; grid-row: 1; }
+    .fixture strong { white-space: normal; }
+    .pick { grid-column: 2; grid-row: 2; }
+    .odds { grid-column: 3; grid-row: 2; align-items: flex-start; text-align: left; }
+    .row-arrow { display: none; }
+    /* Drop the sidecar Bet button on small screens. Users tap the row to view the tip
+       and place the bet from the full preview where there is room for a proper CTA. */
+    .quick-bet { display: none; }
+  }
+
+  @media (max-width: 440px) {
+    .pick-label, .odds-label { display: none; }
+    .pick-value, .odds-value { font-size: 0.88rem; }
+  }
+</style>

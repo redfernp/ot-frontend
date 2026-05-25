@@ -1,0 +1,159 @@
+---
+import { footballInternational, footballPopularLeagues } from "@/lib/siteNav";
+
+type Props = {
+  showPopularLeagues?: boolean;
+  showInternational?: boolean;
+  currentPath?: string;
+};
+
+const { showPopularLeagues = true, showInternational = true, currentPath } = Astro.props;
+---
+
+<aside class="cat-sidebar" aria-label="League navigation">
+  <form class="sidebar-search" role="search" action="/" method="get">
+    <label class="sr-only" for="cat-search">Search latest free tips</label>
+    <input
+      id="cat-search"
+      type="search"
+      name="s"
+      placeholder="Search latest free tips"
+      autocomplete="off"
+    />
+    <button type="submit" aria-label="Search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+    </button>
+  </form>
+
+  {showPopularLeagues && (
+    <div class="sidebar-block">
+      <p class="sidebar-eyebrow">Popular Leagues</p>
+      <ul>
+        {footballPopularLeagues.map((link) => (
+          <li>
+            <a href={link.path} class:list={{ "is-current": currentPath === link.path }}>
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {showInternational && (
+    <div class="sidebar-block">
+      <p class="sidebar-eyebrow">International Games</p>
+      <ul>
+        {footballInternational.map((link) => (
+          <li>
+            <a href={link.path} class:list={{ "is-current": currentPath === link.path }}>
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  <p class="sidebar-be">18+ &middot; Please gamble responsibly. BeGambleAware.org</p>
+</aside>
+
+<style>
+  .cat-sidebar {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .sr-only {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
+  .sidebar-search {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    display: flex;
+    overflow: hidden;
+  }
+  .sidebar-search input {
+    background: transparent;
+    border: 0;
+    color: var(--ot-text);
+    flex: 1;
+    font: inherit;
+    font-size: 0.92rem;
+    padding: 0.75rem 0.9rem;
+  }
+  .sidebar-search input:focus { outline: 2px solid var(--ot-brand-blue-soft); outline-offset: -2px; }
+  .sidebar-search button {
+    background: var(--ot-brand-blue);
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    padding: 0 0.95rem;
+    transition: background 120ms ease;
+  }
+  .sidebar-search button:hover { background: var(--ot-brand-blue-dark); }
+
+  .sidebar-block {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .sidebar-eyebrow {
+    background: var(--ot-brand-blue);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    padding: 0.7rem 1rem;
+    text-transform: uppercase;
+  }
+  .sidebar-block ul {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+  }
+  .sidebar-block li + li {
+    border-top: 1px solid var(--ot-border);
+  }
+  .sidebar-block a {
+    color: var(--ot-brand-blue);
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.65rem 1rem;
+    text-decoration: none;
+    transition: background 100ms ease, color 100ms ease;
+  }
+  .sidebar-block a:hover {
+    background: #f3f8fd;
+    color: var(--ot-brand-blue-dark);
+  }
+  .sidebar-block a.is-current {
+    background: #fff6ee;
+    border-left: 3px solid var(--ot-brand-orange);
+    color: var(--ot-brand-orange);
+    padding-left: calc(1rem - 3px);
+  }
+
+  .sidebar-be {
+    color: var(--ot-muted);
+    font-size: 0.74rem;
+    margin: 0.25rem 0 0;
+    text-align: center;
+  }
+</style>

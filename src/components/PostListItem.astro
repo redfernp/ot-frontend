@@ -1,0 +1,94 @@
+---
+import type { WpPost } from "@/lib/graphql";
+
+type Props = {
+  post: WpPost;
+};
+
+const { post } = Astro.props;
+const href = post.uri || `/${post.slug}/`;
+
+function formatDate(dateIso?: string) {
+  if (!dateIso) {
+    return null;
+  }
+
+  const d = new Date(dateIso);
+
+  if (Number.isNaN(d.getTime())) {
+    return null;
+  }
+
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+const dateLabel = formatDate(post.date);
+---
+
+<a class="post-list-item" href={href}>
+  {dateLabel && <span class="date" aria-hidden="true">{dateLabel}</span>}
+  <span class="title" set:html={post.title || "Football tip"} />
+  <span class="arrow" aria-hidden="true">&rarr;</span>
+</a>
+
+<style>
+  .post-list-item {
+    align-items: center;
+    background: var(--ot-surface);
+    border-bottom: 1px solid var(--ot-border);
+    color: var(--ot-text);
+    display: grid;
+    gap: 0.65rem 0.85rem;
+    grid-template-columns: auto 1fr auto;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    transition: background 100ms ease, color 100ms ease;
+  }
+  .post-list-item:last-child { border-bottom: 0; }
+  .post-list-item:hover {
+    background: #f3f8fd;
+    color: var(--ot-brand-blue-dark);
+  }
+  .date {
+    background: var(--ot-brand-blue);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .title {
+    color: var(--ot-brand-blue);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .post-list-item:hover .title {
+    color: var(--ot-brand-blue-dark);
+    text-decoration: underline;
+    text-decoration-color: var(--ot-brand-blue-soft);
+  }
+  .arrow {
+    color: var(--ot-brand-orange);
+    font-size: 0.95rem;
+    font-weight: 900;
+    opacity: 0;
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+  .post-list-item:hover .arrow {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 560px) {
+    .post-list-item {
+      grid-template-columns: auto 1fr;
+      padding: 0.85rem 0.85rem;
+    }
+    .arrow { display: none; }
+  }
+</style>

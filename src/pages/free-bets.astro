@@ -3,50 +3,503 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getPage } from "@/lib/graphql";
 
 const page = await getPage("free-bets");
+
+const lastUpdated = new Date().toLocaleDateString("en-GB", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
+const offers = [
+  {
+    slug: "bet365",
+    brand: "Bet365",
+    headline: "Bet 10, Get 30 in Free Bets",
+    rating: 4.8,
+    badge: "Editor's Choice",
+    color: "#027a3e",
+    wagering: "1x",
+    min: "10",
+    expiry: "30 days",
+    code: "OTBONUS",
+    cta: "Claim 30 free bet",
+    pros: ["Best 1x2 odds on Premier League", "Cash out on 5,000+ markets", "Live streaming included"],
+    terms: "New customers only. Min deposit 10. Free bets paid as bet credits. T&Cs apply. 18+. BeGambleAware.org.",
+  },
+  {
+    slug: "william-hill",
+    brand: "William Hill",
+    headline: "Bet 10, Get 40 in Free Bets",
+    rating: 4.6,
+    badge: "Biggest Bonus",
+    color: "#0b3d91",
+    wagering: "1x",
+    min: "10",
+    expiry: "30 days",
+    code: "WHFB40",
+    cta: "Claim 40 free bet",
+    pros: ["Best boosted odds offers", "Deep football market depth", "Acca insurance"],
+    terms: "New customers only. Min deposit 10. T&Cs apply. 18+. BeGambleAware.org.",
+  },
+  {
+    slug: "paddy-power",
+    brand: "Paddy Power",
+    headline: "Bet 10, Get 40 + 100 Free Spins",
+    rating: 4.5,
+    badge: "Best All-Round",
+    color: "#0a8a3b",
+    wagering: "1x",
+    min: "10",
+    expiry: "7 days",
+    code: "YSKAS",
+    cta: "Claim 40 + spins",
+    pros: ["Money-back specials", "Paddy's Rewards Club", "Excellent in-play UI"],
+    terms: "New customers only. Min deposit 10. T&Cs apply. 18+. BeGambleAware.org.",
+  },
+  {
+    slug: "betfair",
+    brand: "Betfair",
+    headline: "20 in Free Exchange Bets",
+    rating: 4.4,
+    badge: "Best Exchange",
+    color: "#fdb40c",
+    wagering: "None",
+    min: "10",
+    expiry: "30 days",
+    code: "ZSKAS",
+    cta: "Claim 20 free bet",
+    pros: ["Best exchange liquidity", "Trade pre-match and in-play", "Lay betting available"],
+    terms: "New customers only. Min deposit 10. T&Cs apply. 18+. BeGambleAware.org.",
+  },
+];
+
+const howWeRate = [
+  { title: "Offer value", text: "What you actually get back after wagering. We weight stake-not-returned offers below cash-back." },
+  { title: "Markets and odds", text: "We compare price quality across the EPL, Champions League and weekend coupons." },
+  { title: "Wagering terms", text: "Lower turnover requirements and shorter expiries score higher." },
+  { title: "Payments and support", text: "Withdrawal speeds, deposit methods and live chat responsiveness." },
+];
+
+const faqs = [
+  {
+    q: "What is a free bet?",
+    a: "A free bet is a stake-not-returned token that lets you place a bet without risking your own money. If it wins, you keep the winnings (not the stake).",
+  },
+  {
+    q: "How do I claim a free bet?",
+    a: "Register with the bookmaker, deposit the minimum qualifying amount, place a qualifying bet, and the free bet is credited automatically once the qualifying bet settles.",
+  },
+  {
+    q: "Are free bets really free?",
+    a: "Yes, but they come with wagering and time-based terms. We list the key terms next to every offer so you can compare like-for-like.",
+  },
+  {
+    q: "Can I claim more than one free bet?",
+    a: "Yes. Each offer is one-per-customer per brand, but you can claim a free bet from every brand on this page, as long as you are a new customer at each.",
+  },
+];
 ---
 
 <BaseLayout
-  title={page?.title || "Free Bets"}
-  description="Free bets evergreen page proof of concept."
+  title="Best Free Bets and Sign-Up Offers (May 2026) - Oddstips"
+  description="Compare the best UK free bet offers from Bet365, William Hill, Paddy Power and more. Wagering terms, ratings and exclusive Oddstips codes."
   seo={page?.seo}
 >
-  <section class="panel">
-    <p class="eyebrow">Evergreen template</p>
-    <h1>{page?.title || "Free Bets"}</h1>
-    {page?.content ? (
-      <div class="content" set:html={page.content} />
-    ) : (
-      <p>
-        This placeholder will become the structured ACF-powered free bets page, with bookmaker comparison data,
-        eligibility notes, offer terms, and FAQs.
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span class="sep">/</span> <span aria-current="page">Free Bets</span>
+  </nav>
+
+  <section class="hero" aria-labelledby="hero-heading">
+    <div>
+      <p class="eyebrow">Updated {lastUpdated}</p>
+      <h1 id="hero-heading">Best free bets and sign-up offers</h1>
+      <p class="lede">
+        We've claimed every free bet on this page. These are the four offers worth your time right now, ranked by real
+        value after wagering, market quality and withdrawal speed.
       </p>
-    )}
+      <ul class="hero-points">
+        <li><span class="check">v</span> Exclusive Oddstips codes</li>
+        <li><span class="check">v</span> Wagering and expiry shown up-front</li>
+        <li><span class="check">v</span> Independent, no paid placements</li>
+      </ul>
+    </div>
+    <aside class="hero-side" aria-label="Quick stats">
+      <div><strong>4</strong><span>Top offers</span></div>
+      <div><strong>140</strong><span>Total free bet value</span></div>
+      <div><strong>1x</strong><span>Avg wagering</span></div>
+    </aside>
   </section>
 
-  <section class="panel offer-module">
-    <h2>Future ACF Offer Module</h2>
-    <p>
-      Build this from structured fields rather than Beaver Builder markup: bookmaker, bonus, wagering requirements,
-      expiry, rating, pros, cons, and CTA URL.
-    </p>
+  <section class="comparison" aria-labelledby="compare-heading">
+    <div class="section-head">
+      <h2 id="compare-heading">Comparison table</h2>
+      <p>All offers ranked by overall score.</p>
+    </div>
+    <div class="comparison-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Bookmaker</th>
+            <th>Offer</th>
+            <th>Wagering</th>
+            <th>Min deposit</th>
+            <th>Expiry</th>
+            <th>Rating</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {offers.map((offer) => (
+            <tr>
+              <td>
+                <a class="brand-link" href={`/reviews/${offer.slug}/`}>
+                  <span class="brand-logo" style={`background:${offer.color}`}>{offer.brand.slice(0, 2)}</span>
+                  <strong>{offer.brand}</strong>
+                </a>
+              </td>
+              <td>{offer.headline}</td>
+              <td>{offer.wagering}</td>
+              <td>{offer.min}</td>
+              <td>{offer.expiry}</td>
+              <td>
+                <div class="stars" aria-label={`${offer.rating} out of 5`}>
+                  <span class="stars-fill" style={`--w:${(offer.rating / 5) * 100}%`}></span>
+                </div>
+                <small>{offer.rating}/5</small>
+              </td>
+              <td>
+                <a class="row-cta" href={`/reviews/${offer.slug}/`} rel="nofollow">Claim</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="offer-stack" aria-labelledby="stack-heading">
+    <h2 id="stack-heading">In-depth offer reviews</h2>
+    {offers.map((offer, i) => (
+      <article class="offer-detail" id={offer.slug}>
+        <div class="offer-rank">#{i + 1}</div>
+        <header class="offer-head">
+          <span class="logo" style={`background:${offer.color}`}>{offer.brand.slice(0, 2)}</span>
+          <div>
+            <span class="badge">{offer.badge}</span>
+            <h3>{offer.brand}</h3>
+            <p>{offer.headline}</p>
+          </div>
+          <div class="rating-block">
+            <div class="stars stars-lg" aria-label={`${offer.rating} out of 5`}>
+              <span class="stars-fill" style={`--w:${(offer.rating / 5) * 100}%`}></span>
+            </div>
+            <strong>{offer.rating}/5</strong>
+          </div>
+        </header>
+
+        <div class="offer-body">
+          <div class="key-facts">
+            <div><span class="label">Wagering</span><strong>{offer.wagering}</strong></div>
+            <div><span class="label">Min deposit</span><strong>{offer.min}</strong></div>
+            <div><span class="label">Expiry</span><strong>{offer.expiry}</strong></div>
+            <div><span class="label">Code</span><strong>{offer.code}</strong></div>
+          </div>
+
+          <ul class="pros">
+            {offer.pros.map((pro) => (
+              <li><span class="check">v</span> {pro}</li>
+            ))}
+          </ul>
+
+          <a class="cta" href={`/reviews/${offer.slug}/`} rel="nofollow">{offer.cta}</a>
+          <p class="terms">{offer.terms}</p>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <section class="how-we-rate" aria-labelledby="how-heading">
+    <h2 id="how-heading">How we rate free bet offers</h2>
+    <div class="rate-grid">
+      {howWeRate.map((item) => (
+        <div class="rate-card">
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {page?.content && (
+    <section class="panel cms-content">
+      <h2>{page?.title || "Editorial"}</h2>
+      <div class="content" set:html={page.content} />
+    </section>
+  )}
+
+  <section class="faqs" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Free bet FAQs</h2>
+    <div class="faq-list">
+      {faqs.map((faq) => (
+        <details>
+          <summary>{faq.q}</summary>
+          <p>{faq.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="responsible-band">
+    <strong>18+ only. Please gamble responsibly.</strong>
+    <p>BeGambleAware.org. GamCare.org.uk. Self-exclusion via GamStop.co.uk.</p>
   </section>
 </BaseLayout>
 
 <style>
-  .eyebrow {
-    color: #2563eb;
-    font-size: 0.875rem;
+  .breadcrumbs { color: var(--ot-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .breadcrumbs a { color: var(--ot-ink-2); text-decoration: none; }
+  .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
+
+  .hero {
+    background: linear-gradient(135deg, #052e1c 0%, #0d4a30 60%, #167447 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1.4fr 1fr;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .hero > div { padding: 2.25rem; }
+  .hero h1 { color: #fff; max-width: 22ch; }
+  .hero .eyebrow { color: var(--ot-gold); }
+  .lede { color: #c9efd9; font-size: 1.05rem; margin: 0 0 1.25rem; max-width: 56ch; }
+  .hero-points { color: #d8f0e1; display: grid; gap: 0.4rem; font-weight: 700; list-style: none; margin: 0; padding: 0; }
+  .check {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    color: var(--ot-ink);
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    height: 18px;
+    line-height: 18px;
+    margin-right: 0.4rem;
+    text-align: center;
+    width: 18px;
+  }
+  .hero-side {
+    background: rgba(255,255,255,0.06);
+    border-left: 1px solid rgba(255,255,255,0.14);
+    display: grid;
+    gap: 0;
+    grid-template-rows: repeat(3, 1fr);
+  }
+  .hero-side div { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1.25rem; }
+  .hero-side div:last-child { border-bottom: 0; }
+  .hero-side strong { color: #fff; display: block; font-size: 1.7rem; }
+  .hero-side span { color: #c9efd9; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  @media (max-width: 880px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-side { border-left: 0; border-top: 1px solid rgba(255,255,255,0.14); }
+  }
+
+  .section-head {
+    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .section-head h2, .section-head p { margin: 0; }
+  .section-head p { color: var(--ot-muted); }
+
+  /* COMPARISON */
+  .comparison { margin-top: 2rem; }
+  .comparison-scroll {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    overflow-x: auto;
+  }
+  .comparison table { border-collapse: collapse; min-width: 760px; width: 100%; }
+  .comparison th {
+    background: #f6f8fc;
+    color: var(--ot-muted);
+    font-size: 0.72rem;
     font-weight: 800;
-    margin: 0 0 0.5rem;
+    letter-spacing: 0.08em;
+    padding: 0.85rem 1rem;
+    text-align: left;
     text-transform: uppercase;
   }
+  .comparison td { border-top: 1px solid var(--ot-border); padding: 0.85rem 1rem; vertical-align: middle; }
+  .brand-link { align-items: center; color: var(--ot-text); display: flex; gap: 0.6rem; text-decoration: none; }
+  .brand-logo {
+    align-items: center;
+    border-radius: 6px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 900;
+    height: 28px;
+    justify-content: center;
+    width: 44px;
+  }
+  .stars { background: #ebeef4; border-radius: 999px; height: 6px; overflow: hidden; width: 100px; }
+  .stars-lg { height: 9px; width: 140px; }
+  .stars-fill { background: var(--ot-gold); display: block; height: 100%; width: var(--w, 0%); }
+  .row-cta {
+    background: var(--ot-green);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 900;
+    padding: 0.5rem 0.9rem;
+    text-decoration: none;
+  }
+  .row-cta:hover { background: var(--ot-green-2); }
 
-  .offer-module {
-    margin-top: 2rem;
+  /* OFFER STACK */
+  .offer-stack { display: grid; gap: 1rem; margin-top: 2.5rem; }
+  .offer-detail {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    padding: 1.5rem;
+    position: relative;
+  }
+  .offer-rank {
+    background: var(--ot-ink);
+    border-radius: 8px;
+    color: var(--ot-gold);
+    font-size: 0.85rem;
+    font-weight: 900;
+    left: -10px;
+    padding: 0.25rem 0.55rem;
+    position: absolute;
+    top: -10px;
+  }
+  .offer-head {
+    align-items: center;
+    border-bottom: 1px solid var(--ot-border);
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: auto 1fr auto;
+    padding-bottom: 1.25rem;
+  }
+  .logo {
+    align-items: center;
+    border-radius: 12px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 1.1rem;
+    font-weight: 900;
+    height: 64px;
+    justify-content: center;
+    width: 88px;
+  }
+  .badge {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    color: var(--ot-ink);
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.6rem;
+    text-transform: uppercase;
+  }
+  .offer-head h3 { font-size: 1.4rem; margin: 0.4rem 0 0.2rem; }
+  .offer-head p { color: var(--ot-text-2); font-weight: 800; margin: 0; }
+  .rating-block { text-align: right; }
+  .rating-block strong { color: var(--ot-ink); display: block; font-size: 1rem; margin-top: 0.35rem; }
+
+  .offer-body { padding-top: 1.25rem; }
+  .key-facts {
+    background: var(--ot-surface-2);
+    border-radius: var(--ot-radius-sm);
+    display: grid;
+    gap: 0;
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .key-facts > div { border-right: 1px solid var(--ot-border); padding: 0.8rem 1rem; }
+  .key-facts > div:last-child { border-right: 0; }
+  .label {
+    color: var(--ot-muted);
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+  }
+  .key-facts strong { color: var(--ot-text); }
+
+  .pros { color: var(--ot-text-2); display: grid; gap: 0.45rem; list-style: none; margin: 0 0 1.25rem; padding: 0; }
+  .pros .check { background: var(--ot-green); color: #fff; }
+
+  .cta {
+    background: var(--ot-green);
+    border-radius: 999px;
+    color: #fff;
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: 900;
+    padding: 0.85rem 1.5rem;
+    text-decoration: none;
+  }
+  .cta:hover { background: var(--ot-green-2); }
+  .terms { color: var(--ot-muted); font-size: 0.78rem; margin: 0.85rem 0 0; }
+
+  @media (max-width: 720px) {
+    .offer-head { grid-template-columns: auto 1fr; }
+    .rating-block { grid-column: 1 / -1; text-align: left; }
+    .key-facts { grid-template-columns: 1fr 1fr; }
+    .key-facts > div:nth-child(2n) { border-right: 0; }
   }
 
-  .content :global(img) {
-    height: auto;
-    max-width: 100%;
+  /* HOW WE RATE */
+  .how-we-rate { margin-top: 2.5rem; }
+  .rate-grid { display: grid; gap: 1rem; grid-template-columns: repeat(4, 1fr); }
+  .rate-card {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    padding: 1.25rem;
   }
+  .rate-card h3 { font-size: 1rem; margin: 0 0 0.5rem; }
+  .rate-card p { color: var(--ot-text-2); margin: 0; }
+  @media (max-width: 880px) { .rate-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 540px) { .rate-grid { grid-template-columns: 1fr; } }
+
+  .cms-content { margin-top: 2.5rem; }
+  .cms-content .content :global(p) { color: var(--ot-text-2); }
+
+  .faqs { margin-top: 2.5rem; }
+  .faq-list { display: grid; gap: 0.5rem; }
+  details {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius-sm);
+    padding: 1rem 1.1rem;
+  }
+  summary { color: var(--ot-text); cursor: pointer; font-weight: 800; list-style: none; }
+  summary::after { color: var(--ot-muted); content: "+"; float: right; font-weight: 900; }
+  details[open] summary::after { content: "-"; }
+  details p { color: var(--ot-text-2); margin: 0.6rem 0 0; }
+
+  .responsible-band {
+    background: #fff7ed;
+    border: 1px solid #fbd9a8;
+    border-radius: var(--ot-radius);
+    color: #7a4a0c;
+    margin-top: 2.5rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .responsible-band strong { display: block; font-size: 1.05rem; margin-bottom: 0.35rem; }
+  .responsible-band p { margin: 0; }
 </style>

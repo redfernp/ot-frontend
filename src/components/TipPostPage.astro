@@ -2,7 +2,7 @@
 import type { WpPost } from "@/lib/graphql";
 import RelatedTips from "@/components/RelatedTips.astro";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
-import { findFirstLink, summarizeTip } from "@/lib/tips";
+import { findFirstLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
 
 type Props = {
   post: WpPost;
@@ -15,446 +15,829 @@ const published = post.date
   ? new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })
   : null;
 const bet365Url = findFirstLink(post.content, /bet365/i);
+const { lede, relatedReading } = splitTipBody(post.content || "");
+const returns = parseReturns(summary.returns);
+
+const signals = [
+  { label: "Game flow", value: summary.gameFlow },
+  { label: "First goal", value: summary.firstGoal },
+  { label: "Source of first goal", value: summary.sourceOfFirstGoal },
+  { label: "Risk of injuries", value: summary.riskOfInjuries },
+  { label: "Corner count", value: summary.cornerCount },
+  { label: "Bookings", value: summary.bookings },
+  { label: "Penalties awarded", value: summary.penaltiesAwarded },
+  { label: "Key area", value: summary.keyArea },
+].filter((signal): signal is { label: string; value: string } => Boolean(signal.value));
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Football", href: "/football/" },
+  { label: "Premier League", href: "/football/united-kingdom/england-premier-league/" },
+  { label: summary.fixture || post.title || "Tip" },
+];
+
+const faqs = [
+  summary.tip && summary.odds && {
+    q: `What's the best tip for ${summary.fixture || "this match"}?`,
+    a: `Our tipster recommends ${summary.tip} at odds of ${summary.odds} with Bet365.`,
+  },
+  summary.kickoff && {
+    q: "What time does the match kick off?",
+    a: `Kickoff is ${summary.kickoff}. Check our coupon page on the day for any last-minute schedule changes.`,
+  },
+  {
+    q: "Where can I bet on this match?",
+    a: "We recommend Bet365 for the best odds and 1x2 markets. New customers can claim a free bet using the link in the tip card above.",
+  },
+].filter((faq): faq is { q: string; a: string } => Boolean(faq));
 ---
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  {breadcrumb.map((crumb, i) => (
+    <>
+      {crumb.href ? <a href={crumb.href}>{crumb.label}</a> : <span aria-current="page">{crumb.label}</span>}
+      {i < breadcrumb.length - 1 && <span class="sep">/</span>}
+    </>
+  ))}
+</nav>
 
 <article class="tip-page">
   <section class="tip-hero">
-    <div class="match-copy">
-      <p class="eyebrow">Fixed odds tip</p>
-      <h1>{summary.fixture || post.title || "Betting Tip"}</h1>
-      {(summary.homeTeam || summary.awayTeam) && (
-        <p class="teams">
-          {summary.homeTeam || "Home"} <span>v</span> {summary.awayTeam || "Away"}
-        </p>
-      )}
-      {summary.event && <p class="event">{summary.event}</p>}
+    <div class="hero-top">
+      <span class="comp-pill">Premier League</span>
+      {published && <span class="published">Published {published}</span>}
     </div>
 
-    <aside class="pick-panel" aria-label="1x2 tip summary">
-      <span class="label">OddsTips pick</span>
-      <strong>{summary.tip || "View tip details"}</strong>
+    <div class="match-row">
+      <div class="team team-home">
+        <span class="crest" aria-hidden="true">{(summary.homeTeam || "H").slice(0, 1)}</span>
+        <strong>{summary.homeTeam || "Home"}</strong>
+      </div>
+      <div class="versus">
+        <span class="vs">VS</span>
+      </div>
+      <div class="team team-away">
+        <span class="crest" aria-hidden="true">{(summary.awayTeam || "A").slice(0, 1)}</span>
+        <strong>{summary.awayTeam || "Away"}</strong>
+      </div>
+    </div>
+
+    {summary.kickoff && (
+      <div class="kickoff-bar">
+        <svg class="kickoff-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        <span>{summary.kickoff}</span>
+      </div>
+    )}
+
+    <h1>{summary.fixture || post.title || "Betting Tip"}</h1>
+    {summary.event && <p class="event">{summary.event}</p>}
+
+    <div class="pick-row">
       <div class="market" aria-label="1x2 market">
         <span class:list={["market-cell", { active: activePick === "H" }]}>
-          <b>1</b>
+          <span class="cell-key">1</span>
           <small>{summary.homeTeam || "Home"}</small>
         </span>
         <span class:list={["market-cell", { active: activePick === "D" }]}>
-          <b>X</b>
+          <span class="cell-key">X</span>
           <small>Draw</small>
         </span>
         <span class:list={["market-cell", { active: activePick === "A" }]}>
-          <b>2</b>
+          <span class="cell-key">2</span>
           <small>{summary.awayTeam || "Away"}</small>
         </span>
       </div>
-    </aside>
+      <div class="pick-summary">
+        <span class="label">OddsTips pick</span>
+        <strong>{summary.tip || "View tip details"}</strong>
+        <span class="odds-pill">{summary.odds || "-"}</span>
+      </div>
+    </div>
   </section>
 
-  <section class="summary-strip" aria-label="Tip details">
-    <div>
-      <span class="label">Kickoff</span>
-      <strong>{summary.kickoff || "TBC"}</strong>
-    </div>
-    <div>
-      <span class="label">Bet365 odds</span>
-      {bet365Url ? <a class="odds-link" href={bet365Url} rel="nofollow">{summary.odds || "-"}</a> : <strong>{summary.odds || "-"}</strong>}
-    </div>
-    <div>
-      <span class="label">Game flow</span>
-      <strong>{summary.gameFlow || "TBC"}</strong>
-    </div>
-    <div>
-      <span class="label">Published</span>
-      <strong>{published || "TBC"}</strong>
-    </div>
-  </section>
+  {(summary.kickoff || summary.odds || returns) && (
+    <section class="summary-strip" aria-label="Tip details">
+      {summary.kickoff && (
+        <div>
+          <span class="label">Kickoff</span>
+          <strong>{summary.kickoff}</strong>
+        </div>
+      )}
+      {summary.odds && (
+        <div>
+          <span class="label">Bet365 odds</span>
+          {bet365Url
+            ? <a class="odds-link" href={bet365Url} rel="nofollow">{summary.odds}</a>
+            : <strong>{summary.odds}</strong>}
+        </div>
+      )}
+      {returns && (
+        <div>
+          <span class="label">£100 returns</span>
+          <strong>&pound;{returns.total.toFixed(2)}</strong>
+        </div>
+      )}
+    </section>
+  )}
 
   <div class="tip-layout">
     <section class="analysis">
-      <h2>Match Tip</h2>
-      {post.content ? <div class="content" set:html={post.content} /> : <p set:html={post.excerpt || ""} />}
+      {lede && (
+        <section class="tipster-read" aria-labelledby="tipster-read-heading">
+          <p class="eyebrow">Tipster's read</p>
+          <h2 id="tipster-read-heading">Why we like this bet</h2>
+          <div class="lede" set:html={lede} />
+        </section>
+      )}
+
+      {signals.length > 0 && (
+        <section class="signals" aria-labelledby="signals-heading">
+          <p class="eyebrow">Match signals</p>
+          <h2 id="signals-heading">How we expect the game to flow</h2>
+          <ul class="signal-grid">
+            {signals.map((signal) => {
+              const intensity = intensityOf(signal.value);
+              return (
+                <li class:list={["signal-chip", `is-${intensity}`]}>
+                  <span class="signal-label">{signal.label}</span>
+                  <span class="signal-value">{signal.value}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {(summary.tip || returns || summary.value) && (
+        <section class="bet-panel" aria-labelledby="bet-panel-heading">
+          <p class="eyebrow on-blue">OddsTips top value bet</p>
+          <h2 id="bet-panel-heading">
+            {summary.tip || "View the recommended bet"}
+            {summary.odds && (
+              bet365Url
+                ? <a class="bet-odds" href={bet365Url} rel="nofollow">{summary.odds} <small>Bet365</small></a>
+                : <span class="bet-odds is-static">{summary.odds} <small>Bet365</small></span>
+            )}
+          </h2>
+
+          {returns && (
+            <dl class="returns">
+              <div>
+                <dt>Stake</dt>
+                <dd>&pound;{returns.stake.toFixed(0)}</dd>
+              </div>
+              <div class="returns-arrow" aria-hidden="true">&rarr;</div>
+              <div>
+                <dt>Returns</dt>
+                <dd>&pound;{returns.total.toFixed(2)}</dd>
+              </div>
+              <div class="returns-profit">
+                <dt>Profit</dt>
+                <dd>+&pound;{returns.profit.toFixed(2)}</dd>
+              </div>
+            </dl>
+          )}
+
+          {summary.value && (
+            <p class="bet-value">{summary.value}</p>
+          )}
+
+          {bet365Url && (
+            <a class="bet-cta" href={bet365Url} rel="nofollow">
+              Back this tip on Bet365
+              <span aria-hidden="true">&rarr;</span>
+            </a>
+          )}
+        </section>
+      )}
+
+      {relatedReading && (
+        <section class="related-reading" aria-labelledby="related-reading-heading">
+          <p class="eyebrow">Related reading</p>
+          <h2 id="related-reading-heading">More from the tipster</h2>
+          <div class="related-content" set:html={relatedReading} />
+        </section>
+      )}
+
+      <section class="faqs" aria-labelledby="faqs-heading">
+        <h2 id="faqs-heading">FAQs</h2>
+        <div class="faq-list">
+          {faqs.map((faq) => (
+            <details>
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <p class="responsible">
+        18+ only. Gamble responsibly. BeGambleAware.org and GamCare.org.uk offer free, confidential support.
+      </p>
     </section>
 
-    <aside class="coupon-note" aria-label="Coupon summary">
-      <h2>Coupon View</h2>
-      <dl>
-        <div>
-          <dt>Selection</dt>
-          <dd>{summary.tip || "TBC"}</dd>
-        </div>
-        <div>
-          <dt>Market</dt>
-          <dd>1x2</dd>
-        </div>
-        <div>
-          <dt>Odds</dt>
-          <dd>{summary.odds || "-"}</dd>
-        </div>
-      </dl>
-      {bet365Url && <a class="coupon-cta" href={bet365Url} rel="nofollow">Back this tip with Bet365</a>}
+    <aside class="tip-sidebar" aria-label="Tip sidebar">
+      <div class="bet365-card">
+        <span class="card-tag">#Ad &middot; New customers</span>
+        <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
+        {bet365Url && <a class="card-cta" href={bet365Url} rel="nofollow">Claim with Bet365</a>}
+        <p class="card-terms">
+          #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
+        </p>
+        <p class="card-be">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
+      </div>
+
+      <div class="quick-links">
+        <h3>League hub</h3>
+        <a href="/football/united-kingdom/england-premier-league/">Premier League tips</a>
+        <a href="/football/">All football tips</a>
+        <a href="/free-bets/">Free bet offers</a>
+      </div>
     </aside>
   </div>
 
-  <RelatedTips heading="More England Premier League tips this weekend" posts={placeholderRelatedTips} />
+  <RelatedTips heading="All England Premier League Predictions" posts={placeholderRelatedTips} />
 </article>
 
+<div class="sticky-cta" aria-hidden="true">
+  <div>
+    <span class="label">Pick</span>
+    <strong>{summary.tip || "Home win"}</strong>
+  </div>
+  <span class="sticky-odds">{summary.odds || "2.10"}</span>
+  {bet365Url ? (
+    <a href={bet365Url} rel="nofollow">Bet on Bet365</a>
+  ) : (
+    <a href="/free-bets/">View offers</a>
+  )}
+</div>
+
 <style>
-  .tip-page {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .eyebrow {
-    color: #2563eb;
-    font-size: 0.875rem;
-    font-weight: 800;
-    margin: 0 0 0.5rem;
-    text-transform: uppercase;
-  }
-
-  .tip-hero {
-    align-items: stretch;
-    background: #fff;
-    border: 1px solid #d7dde6;
-    border-radius: 8px;
-    display: grid;
-    gap: 0;
-    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
-    overflow: hidden;
-  }
-
-  .match-copy,
-  .pick-panel {
-    padding: 1.25rem;
-  }
-
-  .match-copy h1 {
-    font-size: clamp(2rem, 4.5vw, 3.2rem);
-    line-height: 1.05;
-    margin: 0;
-  }
-
-  .teams {
-    color: #172033;
-    font-size: 1.1rem;
-    font-weight: 800;
-    margin: 1rem 0 0;
-  }
-
-  .teams span {
-    color: #778397;
-    font-size: 0.86rem;
-    padding: 0 0.4rem;
-    text-transform: uppercase;
-  }
-
-  .event {
-    color: #667085;
-    font-size: 1rem;
-    margin: 0.75rem 0 0;
-    max-width: 64ch;
-  }
-
-  .pick-panel {
-    background: #f1f8f6;
-    border-left: 1px solid #b9ddd5;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .label {
-    color: #5d697a;
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0;
-    margin-bottom: 0.35rem;
-    text-transform: uppercase;
-  }
-
-  .pick-panel > strong {
-    color: #0f766e;
-    font-size: 1.35rem;
-    line-height: 1.2;
+  .breadcrumbs {
+    color: var(--ot-muted);
+    font-size: 0.85rem;
     margin-bottom: 1rem;
   }
+  .breadcrumbs a { color: var(--ot-ink-2); text-decoration: none; }
+  .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
 
-  .market {
-    display: grid;
-    gap: 0.45rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .tip-page { display: grid; gap: 1.25rem; padding-bottom: 4rem; }
+
+  /* HERO */
+  .tip-hero {
+    background:
+      radial-gradient(800px 200px at 80% -20%, rgba(216,173,85,0.18), transparent 60%),
+      linear-gradient(135deg, #2c0d4d 0%, #3c1376 60%, #5b2dca 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    overflow: hidden;
+    padding: 1.5rem;
+    position: relative;
   }
+  .hero-top {
+    align-items: center;
+    color: #d5e0f4;
+    display: flex;
+    font-size: 0.8rem;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .comp-pill {
+    background: rgba(255,255,255,0.14);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.7rem;
+    text-transform: uppercase;
+  }
+  .published { color: #c5d2ea; }
 
-  .market-cell {
+  .match-row {
+    align-items: center;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 1fr auto 1fr;
+    margin: 1rem 0;
+  }
+  .team { align-items: center; display: flex; gap: 0.85rem; }
+  .team-away { flex-direction: row-reverse; text-align: right; }
+  .crest {
     align-items: center;
     background: #fff;
-    border: 1px solid #cfd8e6;
-    border-radius: 6px;
-    color: #3f4d5f;
+    border-radius: 12px;
+    color: var(--ot-ink);
     display: flex;
-    flex-direction: column;
-    gap: 0.18rem;
+    font-size: 1.5rem;
+    font-weight: 900;
+    height: 56px;
     justify-content: center;
-    min-height: 4.25rem;
-    min-width: 0;
-    padding: 0.55rem 0.35rem;
-    text-align: center;
+    width: 56px;
   }
-
-  .market-cell.active {
-    background: #12233d;
-    border-color: #12233d;
+  .team strong { color: #fff; font-size: 1.1rem; }
+  .versus { display: flex; flex-direction: column; gap: 0.25rem; text-align: center; }
+  .vs { color: var(--ot-gold); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.15em; }
+  .kickoff-bar {
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
     color: #fff;
-  }
-
-  .market-cell b {
-    font-size: 1.25rem;
-    line-height: 1;
-  }
-
-  .market-cell small {
-    font-size: 0.75rem;
+    display: inline-flex;
+    font-size: 0.85rem;
     font-weight: 800;
-    line-height: 1.1;
-    max-width: 100%;
-    overflow-wrap: anywhere;
+    gap: 0.45rem;
+    margin: 1rem 0 1.25rem;
+    padding: 0.4rem 0.85rem;
+    width: fit-content;
   }
+  .kickoff-icon { color: var(--ot-gold); }
 
-  .summary-strip {
-    background: #fff;
-    border: 1px solid #d7dde6;
-    border-radius: 8px;
+  .tip-hero h1 {
+    color: #fff;
+    font-size: clamp(1.65rem, 3.5vw, 2.4rem);
+    margin: 0 0 0.4rem;
+  }
+  .event { color: #d5e0f4; margin: 0; max-width: 60ch; }
+
+  .pick-row {
+    align-items: stretch;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    grid-template-columns: 1.4fr 1fr;
+    margin-top: 1.25rem;
+  }
+  .market {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: var(--ot-radius-sm);
+    display: grid;
+    gap: 0;
+    grid-template-columns: repeat(3, 1fr);
     overflow: hidden;
   }
-
-  .summary-strip div {
-    border-right: 1px solid #e4e9f1;
-    min-width: 0;
-    padding: 1rem;
+  .market-cell {
+    align-items: center;
+    color: #d5e0f4;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    justify-content: center;
+    padding: 0.9rem 0.5rem;
+    text-align: center;
   }
+  .market-cell + .market-cell { border-left: 1px solid rgba(255,255,255,0.14); }
+  .market-cell.active { background: var(--ot-gold); color: var(--ot-ink); }
+  .cell-key { font-size: 1.2rem; font-weight: 900; }
+  .market-cell small { font-size: 0.72rem; font-weight: 800; line-height: 1.1; }
 
-  .summary-strip div:last-child {
-    border-right: 0;
+  .pick-summary {
+    background: rgba(255,255,255,0.08);
+    border-radius: var(--ot-radius-sm);
+    padding: 0.85rem 1rem;
   }
-
-  .summary-strip strong {
-    color: #101828;
-    display: block;
-    font-size: 0.98rem;
-    line-height: 1.3;
-  }
-
-  .odds-link {
-    color: #0f766e;
-    display: block;
-    font-size: 0.98rem;
+  .pick-summary .label { color: #aab8d3; }
+  .pick-summary strong { color: #fff; display: block; font-size: 1.1rem; line-height: 1.25; margin: 0.2rem 0 0.5rem; }
+  .odds-pill {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    color: var(--ot-ink);
+    display: inline-block;
+    font-size: 0.9rem;
     font-weight: 900;
-    line-height: 1.3;
+    padding: 0.25rem 0.65rem;
   }
 
+  /* SUMMARY STRIP */
+  .summary-strip {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    overflow: hidden;
+  }
+  .summary-strip > div {
+    border-right: 1px solid var(--ot-border);
+    padding: 0.9rem 1rem;
+  }
+  .summary-strip > div:last-child { border-right: 0; }
+  .label {
+    color: var(--ot-muted);
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+  }
+  .summary-strip strong { color: var(--ot-text); font-size: 0.98rem; }
+  .odds-link { color: var(--ot-green); font-size: 1rem; font-weight: 900; text-decoration: none; }
+
+  /* LAYOUT */
   .tip-layout {
     align-items: start;
     display: grid;
-    gap: 1rem;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.34fr);
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr) 320px;
   }
-
-  .analysis,
-  .coupon-note {
-    background: #fff;
-    border: 1px solid #d7dde6;
-    border-radius: 8px;
-    padding: 1.25rem;
-  }
-
-  .analysis h2,
-  .coupon-note h2 {
-    margin-top: 0;
-  }
-
-  .coupon-note {
-    position: sticky;
-    top: 1rem;
-  }
-
-  .coupon-note dl {
+  .analysis {
     display: grid;
-    gap: 0.9rem;
-    margin: 0;
+    gap: 1.25rem;
   }
-
-  .coupon-note div {
-    border-bottom: 1px solid #e4e9f1;
-    padding-bottom: 0.9rem;
+  .analysis > section {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    padding: 1.5rem;
   }
-
-  .coupon-note div:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .coupon-note dt {
-    color: #667085;
-    font-size: 0.8rem;
-    font-weight: 800;
-    margin-bottom: 0.25rem;
+  .analysis h2 { margin: 0 0 1rem; }
+  .analysis .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0 0 0.4rem;
     text-transform: uppercase;
   }
 
-  .coupon-note dd {
-    color: #101828;
+  /* TIPSTER'S READ */
+  .tipster-read .lede :global(p) {
+    color: var(--ot-text);
+    font-size: 1.02rem;
+    line-height: 1.65;
+    margin: 0 0 0.85rem;
+  }
+  .tipster-read .lede :global(p:first-child) {
+    font-size: 1.12rem;
+    font-weight: 500;
+  }
+  .tipster-read .lede :global(p:last-child) { margin-bottom: 0; }
+  .tipster-read .lede :global(a) {
+    color: var(--ot-brand-blue);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--ot-brand-blue-soft);
+    text-underline-offset: 3px;
+  }
+  .tipster-read .lede :global(a:hover) {
+    color: var(--ot-brand-blue-dark);
+    text-decoration-color: var(--ot-brand-blue);
+  }
+
+  /* MATCH SIGNALS */
+  .signals h2 { color: var(--ot-text); font-size: 1.2rem; }
+  .signal-grid {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .signal-chip {
+    background: var(--ot-surface-2);
+    border: 1px solid var(--ot-border);
+    border-left: 4px solid var(--ot-brand-blue-soft);
+    border-radius: var(--ot-radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem 0.9rem;
+  }
+  .signal-label {
+    color: var(--ot-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .signal-value {
+    color: var(--ot-text);
     font-size: 1rem;
     font-weight: 800;
-    margin: 0;
+    line-height: 1.2;
   }
+  .signal-chip.is-high {
+    background: #fff6ee;
+    border-color: var(--ot-brand-orange-soft);
+    border-left-color: var(--ot-brand-orange);
+  }
+  .signal-chip.is-high .signal-value { color: var(--ot-brand-orange); }
+  .signal-chip.is-med {
+    background: #eef6fd;
+    border-color: var(--ot-brand-blue-soft);
+    border-left-color: var(--ot-brand-blue);
+  }
+  .signal-chip.is-med .signal-value { color: var(--ot-brand-blue-dark); }
+  .signal-chip.is-low { border-left-color: #c5cdd9; }
+  .signal-chip.is-neutral { border-left-color: var(--ot-brand-blue-soft); }
 
-  .coupon-cta {
+  /* BET PANEL - editorial Oddstips look (white card, brand-blue accents) */
+  .analysis > section.bet-panel {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-top: 4px solid var(--ot-brand-orange);
+    position: relative;
+  }
+  .bet-panel .eyebrow.on-blue {
+    color: var(--ot-brand-orange);
+    letter-spacing: 0.12em;
+  }
+  .bet-panel h2 {
     align-items: center;
-    background: #0f766e;
-    border-radius: 6px;
+    color: var(--ot-brand-blue-dark);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 1.55rem;
+    gap: 0.75rem;
+    line-height: 1.15;
+    margin: 0 0 1.1rem;
+  }
+  .bet-odds {
+    align-items: baseline;
+    background: var(--ot-brand-orange);
+    border-radius: 999px;
     color: #fff;
     display: inline-flex;
-    font-size: 0.92rem;
+    font-size: 1.05rem;
     font-weight: 900;
-    justify-content: center;
-    margin-top: 1rem;
-    min-height: 2.75rem;
-    padding: 0.7rem 0.9rem;
-    text-align: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.95rem;
     text-decoration: none;
-    width: 100%;
+    transition: background 120ms ease;
+  }
+  .bet-odds:hover { background: #d95800; }
+  .bet-odds small {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    opacity: 0.92;
+    text-transform: uppercase;
+  }
+  .bet-odds.is-static {
+    background: var(--ot-brand-blue-soft);
+    color: var(--ot-brand-blue-dark);
   }
 
-  .content :global(img) {
+  .returns {
+    align-items: center;
+    background: #f3f8fd;
+    border: 1px solid var(--ot-brand-blue-soft);
+    border-radius: var(--ot-radius-sm);
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 1fr auto 1fr auto;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1.1rem;
+  }
+  .returns div { display: flex; flex-direction: column; gap: 0.15rem; }
+  .returns dt {
+    color: var(--ot-brand-blue-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .returns dd {
+    color: var(--ot-brand-blue-dark);
+    font-size: 1.2rem;
+    font-weight: 900;
+    margin: 0;
+  }
+  .returns-arrow {
+    align-items: center;
+    color: var(--ot-brand-blue-soft);
+    display: flex !important;
+    font-size: 1.4rem;
+    font-weight: 900;
+    justify-content: center;
+  }
+  .returns-profit {
+    border-left: 1px solid var(--ot-brand-blue-soft);
+    padding-left: 1rem;
+  }
+  .returns-profit dd { color: var(--ot-brand-orange); }
+
+  .bet-value {
+    color: var(--ot-text-2);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0 0 1.1rem;
+  }
+  .bet-cta {
+    align-items: center;
+    background: var(--ot-brand-orange);
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(245, 99, 0, 0.25);
+    color: #fff;
+    display: inline-flex;
+    font-weight: 900;
+    gap: 0.45rem;
+    padding: 0.85rem 1.5rem;
+    text-decoration: none;
+    transition: background 120ms ease, transform 120ms ease;
+  }
+  .bet-cta:hover { background: #d95800; transform: translateY(-1px); }
+
+  /* RELATED READING */
+  .related-content :global(p) {
+    margin: 0 0 0.55rem;
+  }
+  .related-content :global(p:last-child) { margin-bottom: 0; }
+  .related-content :global(a) {
+    color: var(--ot-brand-blue);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--ot-brand-blue-soft);
+    text-underline-offset: 3px;
+  }
+  .related-content :global(a:hover) {
+    color: var(--ot-brand-blue-dark);
+    text-decoration-color: var(--ot-brand-blue);
+  }
+  .related-content :global(img) {
     border-radius: 8px;
     display: block;
     height: auto;
-    margin: 1rem 0;
+    margin: 0.75rem 0 0;
     max-width: 100%;
   }
 
-  .content :global(a) {
-    color: #0f766e;
+  .faqs h2 { font-size: 1.2rem; }
+  .faq-list { display: grid; gap: 0.5rem; }
+  details {
+    background: var(--ot-surface-2);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius-sm);
+    padding: 0.85rem 1rem;
+  }
+  summary {
+    color: var(--ot-text);
+    cursor: pointer;
     font-weight: 800;
+    list-style: none;
+  }
+  summary::after {
+    color: var(--ot-muted);
+    content: "+";
+    float: right;
+    font-weight: 900;
+  }
+  details[open] summary::after { content: "-"; }
+  details p { color: var(--ot-text-2); margin: 0.6rem 0 0; }
+
+  .responsible {
+    background: #fff7ed;
+    border: 1px solid #fbd9a8;
+    border-radius: var(--ot-radius-sm);
+    color: #7a4a0c;
+    font-size: 0.85rem;
+    margin: 0;
+    padding: 0.85rem 1rem;
   }
 
-  .content :global(h2),
-  .content :global(h3) {
-    border-top: 1px solid #e4e9f1;
-    font-size: 1.12rem;
-    margin: 1.35rem 0 0.5rem;
-    padding-top: 1.1rem;
+  /* SIDEBAR */
+  .tip-sidebar { display: grid; gap: 1rem; position: sticky; top: 5rem; }
+
+  .bet365-card {
+    background: linear-gradient(135deg, #027a3e 0%, #016a36 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    padding: 1.25rem;
+  }
+  .card-tag {
+    background: rgba(255,255,255,0.18);
+    border-radius: 999px;
+    color: #fff;
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.65rem;
+    padding: 0.2rem 0.6rem;
+    text-transform: uppercase;
+  }
+  .card-title { color: #fff; font-size: 1.1rem; font-weight: 900; margin: 0 0 0.4rem; }
+  .card-cta {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    color: var(--ot-ink);
+    display: block;
+    font-weight: 900;
+    padding: 0.7rem 1rem;
+    text-align: center;
+    text-decoration: none;
+  }
+  .card-cta:hover { background: #e7bc60; }
+  .card-terms {
+    color: #cfe1f4;
+    font-size: 0.7rem;
+    line-height: 1.45;
+    margin: 0.85rem 0 0;
+  }
+  .card-be {
+    color: #aac4e3;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    margin: 0.5rem 0 0;
   }
 
-  .content :global(h2:first-child),
-  .content :global(h3:first-child) {
-    border-top: 0;
-    margin-top: 0;
-    padding-top: 0;
+  .quick-links {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    padding: 1.25rem;
+  }
+  .quick-links h3 { font-size: 1rem; margin: 0 0 0.65rem; }
+  .quick-links a {
+    border-top: 1px solid var(--ot-border);
+    color: var(--ot-ink);
+    display: block;
+    font-weight: 800;
+    padding: 0.55rem 0;
+    text-decoration: none;
+  }
+  .quick-links a:first-of-type { border-top: 0; }
+  .quick-links a:hover { color: var(--ot-green); }
+
+  /* STICKY MOBILE CTA */
+  .sticky-cta {
+    align-items: center;
+    background: var(--ot-ink);
+    border-top: 3px solid var(--ot-gold);
+    bottom: 0;
+    color: #fff;
+    display: none;
+    gap: 0.75rem;
+    left: 0;
+    padding: 0.6rem 0.85rem;
+    position: fixed;
+    right: 0;
+    z-index: 40;
+  }
+  .sticky-cta .label { color: #aab8d3; font-size: 0.65rem; margin: 0; }
+  .sticky-cta strong { color: #fff; display: block; font-size: 0.95rem; }
+  .sticky-odds {
+    background: var(--ot-gold);
+    border-radius: 6px;
+    color: var(--ot-ink);
+    font-size: 0.9rem;
+    font-weight: 900;
+    padding: 0.45rem 0.7rem;
+  }
+  .sticky-cta a {
+    background: var(--ot-green);
+    border-radius: 999px;
+    color: #fff;
+    flex: 0 0 auto;
+    font-size: 0.85rem;
+    font-weight: 900;
+    margin-left: auto;
+    padding: 0.55rem 0.9rem;
+    text-decoration: none;
   }
 
-  .content :global(p) {
-    color: #344054;
-    margin: 0 0 0.85rem;
+  @media (max-width: 880px) {
+    .tip-layout { grid-template-columns: 1fr; }
+    .tip-sidebar { position: static; }
+    .summary-strip { grid-template-columns: 1fr 1fr; }
+    .summary-strip > div { border-bottom: 1px solid var(--ot-border); }
+    .summary-strip > div:nth-child(2n) { border-right: 0; }
+    .summary-strip > div:nth-last-child(-n+2) { border-bottom: 0; }
+    .pick-row { grid-template-columns: 1fr; }
+    .sticky-cta { display: flex; }
   }
 
-  @media (max-width: 860px) {
-    .tip-hero,
-    .tip-layout,
-    .summary-strip {
-      grid-template-columns: 1fr;
+  @media (max-width: 640px) {
+    .returns {
+      grid-template-columns: 1fr 1fr;
+      row-gap: 0.75rem;
     }
-
-    .pick-panel {
+    .returns-arrow { display: none !important; }
+    .returns-profit {
       border-left: 0;
-      border-top: 1px solid #b9ddd5;
+      border-top: 1px solid var(--ot-brand-blue-soft);
+      grid-column: 1 / -1;
+      padding-left: 0;
+      padding-top: 0.7rem;
     }
-
-    .summary-strip div {
-      border-bottom: 1px solid #e4e9f1;
-      border-right: 0;
-    }
-
-    .summary-strip div:last-child {
-      border-bottom: 0;
-    }
-
-    .coupon-note {
-      position: static;
-    }
-
+    .bet-panel h2 { font-size: 1.3rem; }
   }
 
-  @media (max-width: 620px) {
-    .match-copy,
-    .pick-panel,
-    .analysis,
-    .coupon-note {
-      padding: 1rem;
-    }
-
-    .match-copy h1 {
-      font-size: 2rem;
-      line-height: 1.08;
-    }
-
-    .teams {
-      font-size: 1rem;
-      margin-top: 0.75rem;
-    }
-
-    .event {
-      font-size: 0.94rem;
-      line-height: 1.45;
-    }
-
-    .pick-panel > strong {
-      font-size: 1.15rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .market {
-      gap: 0.35rem;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .market-cell {
-      min-height: 3.45rem;
-      padding: 0.45rem 0.25rem;
-    }
-
-    .market-cell b {
-      font-size: 1.05rem;
-    }
-
-    .market-cell small {
-      font-size: 0.66rem;
-      max-height: 1.55rem;
-      overflow: hidden;
-    }
-
-    .summary-strip div {
-      padding: 0.85rem 1rem;
-    }
-
-    .summary-strip strong {
-      font-size: 0.92rem;
-    }
-
-    .content :global(h2),
-    .content :global(h3) {
-      font-size: 1rem;
-      margin-top: 1rem;
-      padding-top: 0.85rem;
-    }
-
-    .content :global(p) {
-      font-size: 0.94rem;
-      line-height: 1.5;
-    }
+  @media (max-width: 560px) {
+    .match-row { gap: 0.5rem; }
+    .crest { height: 44px; width: 44px; font-size: 1.2rem; }
+    .team strong { font-size: 0.92rem; }
+    .tip-hero { padding: 1.25rem; }
+    .analysis > section { padding: 1.25rem; }
+    .signal-grid { grid-template-columns: 1fr 1fr; }
   }
-
 </style>

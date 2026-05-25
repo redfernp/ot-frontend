@@ -1,0 +1,269 @@
+---
+import CouponRow from "@/components/CouponRow.astro";
+import CategorySidebar from "@/components/CategorySidebar.astro";
+import type { WpCategory, WpPost } from "@/lib/graphql";
+import { placeholderTennisTips } from "@/lib/relatedTips";
+import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
+
+// Tennis hub mirrors the football hub layout but skips Top Divisions / Country Grid /
+// All Top Leagues because the live oddstips.co.uk tennis page does not surface any
+// tournament or country navigation. Only the hero copy + post list exist on live.
+// SEO text comes from ACF Pro category_top_seo_text + category_bottom_seo_text.
+type CategoryWithSeo = WpCategory & {
+  posts?: { nodes: WpPost[] };
+  categoryTopSeoText?: {
+    categoryTopSeoTextEditor?: string;
+  };
+  categoryBottomSeoText?: {
+    categoryBottomSeoText?: string;
+  };
+};
+
+type Props = {
+  category: CategoryWithSeo;
+};
+
+const { category } = Astro.props;
+const livePosts = category.posts?.nodes ?? [];
+const posts = livePosts.length ? livePosts : placeholderTennisTips;
+
+const fallbackSeo = getCategorySeoCopy(category.slug);
+const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
+const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
+
+const categoryName = category.name || "Tennis";
+---
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">/</span>
+  <span aria-current="page">{categoryName}</span>
+</nav>
+
+<header class="hub-hero">
+  <div class="hub-hero-inner">
+    <p class="hero-eyebrow">Tennis match betting</p>
+    <h1>{categoryName} Betting Tips</h1>
+    {topSeo ? (
+      <div class="hub-lede" set:html={topSeo} />
+    ) : (
+      <p class="hub-lede">
+        Today's best ATP, WTA and Challenger tennis predictions, scored through Oddstips' 38-section value algorithm. Scan the picks below or jump straight into a match.
+      </p>
+    )}
+  </div>
+  <div class="hub-hero-pattern" aria-hidden="true"></div>
+</header>
+
+<div class="hub-layout">
+  <main class="hub-main">
+    <section class="post-list tennis-list" aria-labelledby="latest-tennis-heading">
+      <header class="post-list-head">
+        <p class="eyebrow on-orange">Tennis tips</p>
+        <h2 id="latest-tennis-heading">Today's {categoryName} Predictions</h2>
+        <p class="post-list-meta">{posts.length} {posts.length === 1 ? "match" : "matches"}</p>
+      </header>
+      {posts.length > 0 ? (
+        <div class="post-list-rows">
+          {posts.map((post) => <CouponRow post={post} />)}
+        </div>
+      ) : (
+        <p class="empty-state">No tennis tips published today. Check back later.</p>
+      )}
+    </section>
+
+    {bottomSeo && (
+      <section class="seo-content" aria-label="Category guide">
+        <div class="seo-prose" set:html={bottomSeo} />
+      </section>
+    )}
+  </main>
+
+  <CategorySidebar currentPath={category.uri} />
+</div>
+
+<style>
+  .breadcrumbs {
+    color: var(--ot-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs a:hover { text-decoration: underline; }
+  .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
+
+  /* HERO (matches FootballHubPage hero pattern) */
+  .hub-hero {
+    background: linear-gradient(135deg, var(--ot-brand-blue) 0%, var(--ot-brand-blue-dark) 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    position: relative;
+  }
+  .hub-hero-pattern {
+    background:
+      radial-gradient(circle at 18px 18px, rgba(255, 255, 255, 0.07) 1.2px, transparent 1.6px) 0 0 / 28px 28px,
+      radial-gradient(900px 240px at 100% 0%, rgba(245, 99, 0, 0.35), transparent 60%);
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+  }
+  .hub-hero-inner {
+    padding: 2.25rem 2rem 1.75rem;
+    position: relative;
+    z-index: 1;
+  }
+  .hub-hero h1 {
+    color: #fff;
+    font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+    line-height: 1.12;
+    margin: 0 0 0.85rem;
+    max-width: 28ch;
+  }
+  .hero-eyebrow {
+    color: var(--ot-brand-orange);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    margin: 0 0 0.6rem;
+    text-transform: uppercase;
+  }
+  .hub-lede {
+    color: #d5e7f7;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 64ch;
+  }
+  .hub-lede :global(p) {
+    color: #d5e7f7;
+    margin: 0 0 0.65rem;
+  }
+  .hub-lede :global(p:last-child) { margin-bottom: 0; }
+  .hub-lede :global(a) {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.55);
+  }
+  .hub-lede :global(a:hover) {
+    color: var(--ot-brand-orange);
+    text-decoration-color: var(--ot-brand-orange);
+  }
+  .hub-lede :global(strong) { color: #fff; }
+
+  .hub-layout {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .hub-main {
+    display: grid;
+    gap: 1.75rem;
+    min-width: 0;
+  }
+
+  .block-eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0 0 0.3rem;
+    text-transform: uppercase;
+  }
+
+  /* POST LIST (matches football post-list pattern) */
+  .post-list {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .tennis-list { border-top: 4px solid var(--ot-brand-orange); }
+  .post-list-head {
+    align-items: end;
+    background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    justify-content: space-between;
+    padding: 1.1rem 1.25rem;
+  }
+  .post-list-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+    width: 100%;
+  }
+  .post-list-head .eyebrow.on-orange { color: var(--ot-brand-orange); }
+  .post-list-head h2 {
+    color: var(--ot-text);
+    font-size: 1.15rem;
+    margin: 0.2rem 0 0;
+  }
+  .post-list-meta {
+    color: var(--ot-muted);
+    font-size: 0.8rem;
+    margin: 0;
+  }
+  .empty-state {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
+  }
+
+  /* SEO CONTENT (matches football SEO content pattern) */
+  .seo-content {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    padding: 1.75rem 1.75rem 2rem;
+  }
+  .seo-prose {
+    color: var(--ot-text);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 70ch;
+  }
+  .seo-prose :global(h2) {
+    border-bottom: 2px solid var(--ot-brand-blue-soft);
+    color: var(--ot-brand-blue-dark);
+    font-size: 1.25rem;
+    margin: 2rem 0 0.85rem;
+    padding-bottom: 0.4rem;
+  }
+  .seo-prose :global(h2:first-child) { margin-top: 0; }
+  .seo-prose :global(p) {
+    color: var(--ot-text-2);
+    margin: 0 0 1rem;
+  }
+  .seo-prose :global(p:last-child) { margin-bottom: 0; }
+  .seo-prose :global(strong) { color: var(--ot-text); }
+  .seo-prose :global(a) {
+    color: var(--ot-brand-blue);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--ot-brand-blue-soft);
+    text-underline-offset: 3px;
+  }
+  .seo-prose :global(a:hover) {
+    color: var(--ot-brand-blue-dark);
+    text-decoration-color: var(--ot-brand-blue);
+  }
+
+  @media (max-width: 880px) {
+    .hub-layout { grid-template-columns: 1fr; }
+    .hub-hero-inner { padding: 1.75rem 1.5rem 1.5rem; }
+    .seo-content { padding: 1.5rem 1.4rem; }
+  }
+</style>
