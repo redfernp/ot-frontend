@@ -5,7 +5,6 @@ import DateRail from "@/components/DateRail.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
-import { extractEventDate } from "@/lib/tips";
 
 type CategoryWithPosts = WpCategory & {
   posts?: {
@@ -28,10 +27,6 @@ const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
 // Local-preview fallback when WPGraphQL is not configured.
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
-const datedPosts = posts.map((post) => ({
-  post,
-  tipDate: extractEventDate(post),
-}));
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
@@ -110,7 +105,7 @@ const heading = category.name
       </header>
       {posts.length > 0 ? (
         <div class="post-list-rows" data-date-filter-list>
-          {datedPosts.map(({ post, tipDate }) => <CouponRow post={post} tipDate={tipDate} />)}
+          {posts.map((post) => <CouponRow post={post} />)}
         </div>
       ) : null}
       <p class="empty-state" data-date-empty hidden={posts.length > 0}>No tips found for this date. Try another date.</p>

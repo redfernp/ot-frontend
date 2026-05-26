@@ -1,5 +1,5 @@
 ---
-import PostListItem from "@/components/PostListItem.astro";
+import CouponRow from "@/components/CouponRow.astro";
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import DateRail from "@/components/DateRail.astro";
 import { getInternationalTips, type WpCategory, type WpPost } from "@/lib/graphql";
@@ -7,7 +7,6 @@ import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/rela
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
 import { footballByRegion, footballPopularLeagues } from "@/lib/siteNav";
 import { topDivisions } from "@/lib/topDivisions";
-import { extractEventDate } from "@/lib/tips";
 
 const topLeaguesSorted = [...topDivisions].sort((a, b) => a.league.localeCompare(b.league));
 
@@ -31,10 +30,6 @@ const { category } = Astro.props;
 const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
-const datedPosts = posts.map((post) => ({
-  post,
-  tipDate: extractEventDate(post),
-}));
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
@@ -48,10 +43,6 @@ const liveInternational = await getInternationalTips(6).catch(() => []);
 const internationalPosts = liveInternational.length || !hasWpGraphQL
   ? (liveInternational.length ? liveInternational : placeholderInternationalTips)
   : [];
-const datedInternationalPosts = internationalPosts.map((post) => ({
-  post,
-  tipDate: extractEventDate(post),
-}));
 
 // Top inline league chips for the hero (popular subset, taken from real IA)
 const heroLeagueChips = footballPopularLeagues.slice(0, 8);
@@ -101,7 +92,7 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
       </header>
       {internationalPosts.length > 0 ? (
         <div class="post-list-rows" data-date-filter-list>
-          {datedInternationalPosts.map(({ post, tipDate }) => <PostListItem post={post} tipDate={tipDate} />)}
+          {internationalPosts.map((post) => <CouponRow post={post} />)}
         </div>
       ) : null}
       <p class="empty-state" data-date-empty hidden={internationalPosts.length > 0}>No international matches found for this date. Try another date.</p>
@@ -119,7 +110,7 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
       </header>
       {posts.length > 0 ? (
         <div class="post-list-rows" data-date-filter-list>
-          {datedPosts.map(({ post, tipDate }) => <PostListItem post={post} tipDate={tipDate} />)}
+          {posts.map((post) => <CouponRow post={post} />)}
         </div>
       ) : null}
       <p class="empty-state" data-date-empty hidden={posts.length > 0}>No football tips found for this date. Try another date.</p>

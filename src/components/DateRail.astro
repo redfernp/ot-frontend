@@ -261,7 +261,11 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       });
     }
 
-    function initialActiveDate(preferredDate) {
+    function initialActiveDate(preferredDate, forcePreferred = false) {
+      if (forcePreferred) {
+        return preferredDate;
+      }
+
       const rows = Array.from(document.querySelectorAll("[data-date-filter-section] [data-tip-date]"));
 
       if (!rows.length) {
@@ -309,12 +313,15 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       applyDate(nextDate, true);
     });
 
+    const explicitDate = queryDate();
+    const preferredDate = explicitDate || londonTodayIso();
+
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
-        applyDate(initialActiveDate(queryDate() || londonTodayIso()));
+        applyDate(initialActiveDate(preferredDate, Boolean(explicitDate)));
       }, { once: true });
     } else {
-      applyDate(initialActiveDate(queryDate() || londonTodayIso()));
+      applyDate(initialActiveDate(preferredDate, Boolean(explicitDate)));
     }
   })();
 </script>

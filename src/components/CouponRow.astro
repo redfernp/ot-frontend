@@ -1,6 +1,6 @@
 ---
 import type { WpPost } from "@/lib/graphql";
-import { cleanOdds, extractTime, findFirstLink, summarizeTip } from "@/lib/tips";
+import { cleanOdds, extractEventDate, extractTime, findFirstLink, summarizeTip } from "@/lib/tips";
 
 type Props = {
   post: WpPost;
@@ -11,6 +11,7 @@ const { post, tipDate } = Astro.props;
 const href = post.uri || `/${post.slug}/`;
 const summary = summarizeTip(post);
 const bet365Url = findFirstLink(post.content, /bet365/i);
+const eventDate = tipDate || extractEventDate(post);
 
 function formatKickoff(dateIso?: string) {
   if (!dateIso) {
@@ -26,6 +27,25 @@ function formatKickoff(dateIso?: string) {
   return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
+function formatEventDate(isoDate?: string | null) {
+  if (!isoDate) {
+    return null;
+  }
+
+  const d = new Date(`${isoDate}T00:00:00Z`);
+
+  if (Number.isNaN(d.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC",
+    weekday: "short",
+  }).format(d);
+}
+
 // Pull just HH:MM for the small pill. summary.kickoff from WP is usually a long
 // phrase ("15:00 (UK time), Sun, 24th May 2026"), so we mine the time out of it
 // and fall back to post.date if nothing usable was found.
@@ -38,15 +58,15 @@ const pickLabel = summary.tip;
 const pickKey = summary.couponPick; // "H" | "D" | "A" | null
 const odds = cleanOdds(summary.odds);
 const fixture = summary.fixture || post.title || "Football tip";
+const eventDateLabel = formatEventDate(eventDate);
 ---
 
-<article class="coupon-row" data-tip-date={tipDate || undefined}>
+<article class="coupon-row" data-tip-date={eventDate || undefined}>
   <a class="row-link" href={href}>
-    {kickoffLabel ? (
-      <span class="kickoff">{kickoffLabel}</span>
-    ) : (
-      <span class="kickoff is-tbc">TBC</span>
-    )}
+    <span class:list={["event-time", { "is-tbc": !kickoffLabel }]}>
+      {eventDateLabel && <span class="event-date">{eventDateLabel}</span>}
+      <span class="kickoff">{kickoffLabel || "TBC"}</span>
+    </span>
     <span class="fixture">
       <strong>{fixture}</strong>
     </span>
@@ -91,30 +111,46 @@ const fixture = summary.fixture || post.title || "Football tip";
     display: grid;
     flex: 1;
     gap: 0.5rem 1rem;
-    grid-template-columns: 64px minmax(0, 1fr) minmax(120px, 0.6fr) minmax(78px, auto) auto;
+    grid-template-columns: 94px minmax(0, 1fr) minmax(120px, 0.6fr) minmax(78px, auto) auto;
     min-width: 0;
     padding: 0.8rem 1rem;
     text-decoration: none;
   }
 
-  .kickoff {
+  .event-time {
     align-items: center;
     background: var(--ot-brand-blue);
     border-radius: 6px;
     color: #fff;
-    display: inline-flex;
+    display: grid;
     flex-shrink: 0;
-    font-size: 0.78rem;
-    font-weight: 900;
-    height: 32px;
+    gap: 0.12rem;
+    min-height: 42px;
     justify-content: center;
-    letter-spacing: 0.04em;
-    min-width: 56px;
-    padding: 0 0.4rem;
+    min-width: 86px;
+    padding: 0.38rem 0.45rem;
+    text-align: center;
     white-space: nowrap;
   }
-  .kickoff.is-tbc {
+  .event-time.is-tbc {
     background: var(--ot-brand-blue-muted);
+  }
+  .event-date {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .kickoff {
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+  }
+  .event-time.is-tbc .kickoff {
     font-size: 0.7rem;
   }
 
@@ -222,10 +258,10 @@ const fixture = summary.fixture || post.title || "Football tip";
 
   @media (max-width: 720px) {
     .row-link {
-      grid-template-columns: 56px minmax(0, 1fr) auto;
+      grid-template-columns: 74px minmax(0, 1fr) auto;
       grid-template-rows: auto auto;
     }
-    .kickoff { grid-row: 1 / span 2; }
+    .event-time { grid-row: 1 / span 2; min-width: 70px; }
     .fixture { grid-column: 2 / -1; grid-row: 1; }
     .fixture strong { white-space: normal; }
     .pick { grid-column: 2; grid-row: 2; }
