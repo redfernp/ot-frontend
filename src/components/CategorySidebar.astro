@@ -11,6 +11,18 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
 ---
 
 <aside class="cat-sidebar" aria-label="League navigation">
+  <section class="sidebar-offer" aria-label="Bet365 free bet offer">
+    <p class="offer-kicker">#Ad &middot; New customers</p>
+    <h2>Bet &pound;10 &amp; Get &pound;30 in Free Bets</h2>
+    <a class="offer-cta" href="https://www.everytip.co.uk/go/bet365" rel="nofollow sponsored noopener" target="_blank">
+      Claim with Bet365
+    </a>
+    <p class="offer-terms">
+      #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
+    </p>
+    <p class="offer-safe">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
+  </section>
+
   <form class="sidebar-search" role="search" action="/" method="get">
     <label class="sr-only" for="cat-search">Search latest free tips</label>
     <input
@@ -63,6 +75,8 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
 
 <style>
   .cat-sidebar {
+    align-content: start;
+    align-self: start;
     display: grid;
     gap: 1rem;
   }
@@ -77,12 +91,72 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
     width: 1px;
   }
 
+  .sidebar-offer {
+    background: #047a35;
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    color: #fff;
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.25rem;
+  }
+  .offer-kicker {
+    align-self: start;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: 900;
+    justify-self: start;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    margin: 0;
+    padding: 0.45rem 0.7rem;
+    text-transform: uppercase;
+  }
+  .sidebar-offer h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    line-height: 1.15;
+    margin: 0;
+  }
+  .offer-cta {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    color: var(--ot-ink);
+    display: block;
+    font-size: 0.98rem;
+    font-weight: 900;
+    padding: 0.85rem 1rem;
+    text-align: center;
+    text-decoration: none;
+  }
+  .offer-cta:hover {
+    background: #e7bc60;
+    color: var(--ot-ink);
+  }
+  .offer-terms {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.45;
+    margin: 0;
+  }
+  .offer-safe {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.74rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
   .sidebar-search {
     background: var(--ot-surface);
     border: 1px solid var(--ot-border);
     border-radius: var(--ot-radius);
     box-shadow: var(--ot-shadow-sm);
     display: flex;
+    min-height: 44px;
     overflow: hidden;
   }
   .sidebar-search input {
@@ -91,8 +165,9 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
     color: var(--ot-text);
     flex: 1;
     font: inherit;
-    font-size: 0.92rem;
-    padding: 0.75rem 0.9rem;
+    font-size: 0.84rem;
+    min-width: 0;
+    padding: 0.55rem 0.75rem;
   }
   .sidebar-search input:focus { outline: 2px solid var(--ot-brand-blue-soft); outline-offset: -2px; }
   .sidebar-search button {
@@ -100,7 +175,8 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
     border: 0;
     color: #fff;
     cursor: pointer;
-    padding: 0 0.95rem;
+    flex: 0 0 46px;
+    padding: 0;
     transition: background 120ms ease;
   }
   .sidebar-search button:hover { background: var(--ot-brand-blue-dark); }
