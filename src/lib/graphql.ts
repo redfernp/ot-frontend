@@ -20,6 +20,17 @@ type WpGraphQLOptions = {
   timeoutMs?: number;
 };
 
+type ChildCategoryConnection = {
+  pageInfo?: {
+    hasNextPage?: boolean;
+    endCursor?: string | null;
+  };
+  nodes: Array<{
+    databaseId?: number;
+    count?: number | null;
+  }>;
+};
+
 export type WpPost = {
   id: string;
   slug: string;
@@ -30,10 +41,14 @@ export type WpPost = {
   date?: string;
   modified?: string;
   seo?: SeoFields;
+  categories?: {
+    nodes: WpCategory[];
+  };
 };
 
 export type WpCategory = {
   id: string;
+  databaseId?: number;
   slug: string;
   uri?: string;
   name?: string;
@@ -60,6 +75,7 @@ export type SeoFields = {
 
 const endpoint = import.meta.env.WPGRAPHQL_ENDPOINT;
 const defaultRetryDelaysMs = [1000, 2000, 4000];
+const parentSportCategorySlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
 function authHeader(): Record<string, string> {
   const user = import.meta.env.WP_BASIC_AUTH_USER;
@@ -261,6 +277,7 @@ export async function getCategory(slug: string, postLimit = 30) {
     `query CategoryBySlug($slug: ID!, $categoryName: String!, $postLimit: Int!) {
       category(id: $slug, idType: SLUG) {
         id
+        databaseId
         slug
         uri
         name
@@ -302,10 +319,93 @@ export async function getCategory(slug: string, postLimit = 30) {
     return null;
   }
 
+  if (parentSportCategorySlugs.has(slug) && !data.posts?.nodes?.length) {
+    const childPosts = await getChildCategoryPosts(slug, postLimit);
+
+    if (childPosts.length) {
+      return {
+        ...data.category,
+        posts: { nodes: childPosts },
+      };
+    }
+  }
+
   return {
     ...data.category,
     posts: data.posts,
   };
+}
+
+async function getChildCategoryDatabaseIds(slug: string) {
+  const ids: string[] = [];
+  let after: string | null = null;
+
+  do {
+    const data: {
+      category?: {
+        children?: ChildCategoryConnection;
+      };
+    } | null = await wpGraphQL(
+      `query ChildCategoryIds($slug: ID!, $after: String) {
+        category(id: $slug, idType: SLUG) {
+          children(first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              databaseId
+              count
+            }
+          }
+        }
+      }`,
+      { slug, after },
+    );
+
+    const connection: ChildCategoryConnection | undefined = data?.category?.children;
+
+    connection?.nodes.forEach((node) => {
+      if (typeof node.databaseId === "number" && node.count !== null && node.count !== 0) {
+        ids.push(String(node.databaseId));
+      }
+    });
+
+    after = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor || null : null;
+  } while (after);
+
+  return ids;
+}
+
+async function getChildCategoryPosts(slug: string, postLimit: number) {
+  const categoryIds = await getChildCategoryDatabaseIds(slug);
+
+  if (!categoryIds.length) {
+    return [];
+  }
+
+  const data = await wpGraphQL<{
+    posts?: {
+      nodes: WpPost[];
+    };
+  }>(
+    `query ChildCategoryPosts($categoryIds: [ID], $postLimit: Int!) {
+      posts(first: $postLimit, where: { categoryIn: $categoryIds, orderby: { field: DATE, order: DESC } }) {
+        nodes {
+          id
+          slug
+          uri
+          title
+          excerpt
+          content
+          date
+        }
+      }
+    }`,
+    { categoryIds, postLimit },
+  );
+
+  return data?.posts?.nodes ?? [];
 }
 
 export async function getInternationalTips(limit = 6) {
@@ -391,6 +491,7 @@ export async function getPost(slug: string) {
         categories {
           nodes {
             id
+            databaseId
             slug
             uri
             name
@@ -402,6 +503,40 @@ export async function getPost(slug: string) {
   );
 
   return data?.post ?? null;
+}
+
+export async function getRelatedPosts(post: WpPost, limit = 6) {
+  const categoryIds = (post.categories?.nodes ?? [])
+    .map((category) => category.databaseId)
+    .filter((id): id is number => typeof id === "number")
+    .map(String);
+
+  if (!categoryIds.length) {
+    return [];
+  }
+
+  const data = await wpGraphQL<{
+    posts?: {
+      nodes: WpPost[];
+    };
+  }>(
+    `query RelatedPosts($categoryIds: [ID], $limit: Int!) {
+      posts(first: $limit, where: { categoryIn: $categoryIds, orderby: { field: DATE, order: DESC } }) {
+        nodes {
+          id
+          slug
+          uri
+          title
+          excerpt
+          content
+          date
+        }
+      }
+    }`,
+    { categoryIds, limit: limit + 1 },
+  );
+
+  return (data?.posts?.nodes ?? []).filter((related) => related.slug !== post.slug).slice(0, limit);
 }
 
 export async function getPage(slug: string) {
@@ -435,4 +570,58 @@ export async function getPage(slug: string) {
   );
 
   return data?.page ?? null;
+}
+
+export async function getPages(limit = 100) {
+  type PagesResponse = {
+    pages?: {
+      pageInfo?: {
+        hasNextPage?: boolean;
+        endCursor?: string | null;
+      };
+      nodes: WpPost[];
+    };
+  };
+
+  const pages: WpPost[] = [];
+  let after: string | null = null;
+
+  do {
+    const data: PagesResponse | null = await wpGraphQL<PagesResponse>(
+      `query Pages($limit: Int!, $after: String) {
+        pages(first: $limit, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            slug
+            uri
+            title
+            content
+            modified
+            seo {
+              title
+              metaDesc
+              canonical
+              opengraphTitle
+              opengraphDescription
+              breadcrumbs {
+                text
+                url
+              }
+            }
+          }
+        }
+      }`,
+      { limit, after },
+    );
+
+    const connection: PagesResponse["pages"] = data?.pages;
+    pages.push(...(connection?.nodes ?? []));
+    after = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor || null : null;
+  } while (after);
+
+  return pages;
 }

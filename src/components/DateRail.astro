@@ -243,6 +243,24 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       });
     }
 
+    function initialActiveDate(preferredDate) {
+      const rows = Array.from(document.querySelectorAll("[data-date-filter-section] [data-tip-date]"));
+
+      if (!rows.length) {
+        return preferredDate;
+      }
+
+      const dates = rows
+        .map((row) => row.dataset.tipDate)
+        .filter((date) => date && isoPattern.test(date));
+
+      if (dates.includes(preferredDate)) {
+        return preferredDate;
+      }
+
+      return dates[0] || preferredDate;
+    }
+
     function applyDate(activeDate) {
       updateRails(activeDate);
       updateSections(activeDate);
@@ -270,11 +288,11 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
         cleanDateQuery();
-        applyDate(londonTodayIso());
+        applyDate(initialActiveDate(londonTodayIso()));
       }, { once: true });
     } else {
       cleanDateQuery();
-      applyDate(londonTodayIso());
+      applyDate(initialActiveDate(londonTodayIso()));
     }
   })();
 </script>

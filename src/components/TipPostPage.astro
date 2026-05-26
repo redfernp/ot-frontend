@@ -1,14 +1,14 @@
 ---
 import type { WpPost } from "@/lib/graphql";
 import RelatedTips from "@/components/RelatedTips.astro";
-import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { findFirstLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
 
 type Props = {
   post: WpPost;
+  relatedPosts?: WpPost[];
 };
 
-const { post } = Astro.props;
+const { post, relatedPosts = [] } = Astro.props;
 const summary = summarizeTip(post);
 const activePick = summary.couponPick;
 const published = post.date
@@ -17,6 +17,20 @@ const published = post.date
 const bet365Url = findFirstLink(post.content, /bet365/i);
 const { lede, relatedReading } = splitTipBody(post.content || "");
 const returns = parseReturns(summary.returns);
+const primaryCategory = post.categories?.nodes?.find((category) => category.uri) || post.categories?.nodes?.[0];
+
+function titleCaseSegment(segment: string) {
+  return segment
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+const primaryCategoryPath = primaryCategory?.uri || "";
+const sportSlug = primaryCategoryPath.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean)[0];
+const sportName = sportSlug ? titleCaseSegment(sportSlug) : "Sports";
+const sportHref = sportSlug ? `/${sportSlug}/` : undefined;
+const categoryName = primaryCategory?.name || `${sportName} tips`;
+const categoryHref = primaryCategory?.uri || sportHref;
 
 const signals = [
   { label: "Game flow", value: summary.gameFlow },
@@ -31,10 +45,10 @@ const signals = [
 
 const breadcrumb = [
   { label: "Home", href: "/" },
-  { label: "Football", href: "/football/" },
-  { label: "Premier League", href: "/football/united-kingdom/england-premier-league/" },
+  sportHref && { label: sportName, href: sportHref },
+  categoryHref && categoryHref !== sportHref && { label: categoryName, href: categoryHref },
   { label: summary.fixture || post.title || "Tip" },
-];
+].filter((crumb): crumb is { label: string; href?: string } => Boolean(crumb));
 
 const faqs = [
   summary.tip && summary.odds && {
@@ -46,8 +60,8 @@ const faqs = [
     a: `Kickoff is ${summary.kickoff}. Check our coupon page on the day for any last-minute schedule changes.`,
   },
   {
-    q: "Where can I bet on this match?",
-    a: "We recommend Bet365 for the best odds and 1x2 markets. New customers can claim a free bet using the link in the tip card above.",
+    q: "Where can I bet on this tip?",
+    a: "We recommend Bet365 for competitive pre-match odds. New customers can claim a free bet using the link in the tip card above.",
   },
 ].filter((faq): faq is { q: string; a: string } => Boolean(faq));
 ---
@@ -64,7 +78,7 @@ const faqs = [
 <article class="tip-page">
   <section class="tip-hero">
     <div class="hero-top">
-      <span class="comp-pill">Premier League</span>
+      <span class="comp-pill">{categoryName}</span>
       {published && <span class="published">Published {published}</span>}
     </div>
 
@@ -251,15 +265,21 @@ const faqs = [
       </div>
 
       <div class="quick-links">
-        <h3>League hub</h3>
-        <a href="/football/united-kingdom/england-premier-league/">Premier League tips</a>
-        <a href="/football/">All football tips</a>
+        <h3>{sportName} hubs</h3>
+        {categoryHref && <a href={categoryHref}>{categoryName} tips</a>}
+        {sportHref && <a href={sportHref}>All {sportName} tips</a>}
         <a href="/free-bets/">Free bet offers</a>
       </div>
     </aside>
   </div>
 
-  <RelatedTips heading="All England Premier League Predictions" posts={placeholderRelatedTips} />
+  <RelatedTips
+    heading={`More ${categoryName} Predictions`}
+    hubHref={categoryHref}
+    hubLabel={`${categoryName} hub`}
+    posts={relatedPosts}
+    sportLabel={sportName.toLowerCase()}
+  />
 </article>
 
 <div class="sticky-cta" aria-hidden="true">

@@ -159,8 +159,9 @@ const primaryNav: NavItem[] = [
       </div>
 
       <div class="footer-band">
-        <p>18+ only. Please gamble responsibly. BeGambleAware.org. GamCare.org.uk.</p>
-        <p>(c) Oddstips. Operated independently of any bookmaker.</p>
+        <p>Here at oddstips.co.uk, we understand that gambling can become an addiction that can cause great harm if not controlled. We respectfully remind you that you should only ever bet with an amount of money that you can afford to lose. The information provided on site at oddstips.co.uk, is for information and entertainment purposes only, and Oddstips will not be held liable for any inaccuracy, or for any loss which may be incurred. For help regarding a gambling addiction, or more information on the subject, please visit: <a href="https://www.gambleaware.org/" rel="nofollow noopener" target="_blank">www.gambleaware.org</a>. 18+ only. You can also read our <a href="/safer-gambling/">safer gambling guide</a> for more information.</p>
+        <p>Advertising disclosure: Every online gambler deserves a trusted, and fair place to play. At oddstips.co.uk, we offer free, impartial and independent reviews of the UK's best online betting operators so that you can play with confidence and security. All ratings and reviews are made independently of the operator by our team of gaming experts with years of gaming experience. We only review companies that are fully UK licensed. meaning have passed the most stringent of player safety tests as laid out by the UK Gambling Commission, therefore can be trusted to offer fair play, and have independent betting adjudication services to also assist player complaints when customers and operators fail to meet satisfactory conclusion to a players complaint. We accept compensation from the companies advertised on this website via their affiliate program and this may affect the brand positioning.</p>
+        <p>Copyright 2024 - OddsTips.co.uk | <a href="/terms-of-service/">Terms Of Service</a> | <a href="/privacy/">Privacy</a> | <a href="/contact/">Contact Us</a> | <a href="https://www.gambleaware.org/" rel="nofollow noopener" target="_blank">GambleAware</a> | <a href="/safer-gambling/">Safer Gambling</a> | 18+</p>
       </div>
     </footer>
   </body>
@@ -593,15 +594,22 @@ const primaryNav: NavItem[] = [
   .footer-band {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     color: #8aa0c8;
-    display: flex;
-    flex-wrap: wrap;
-    font-size: 0.78rem;
-    gap: 0.5rem 2rem;
-    justify-content: space-between;
+    display: grid;
+    font-size: 0.76rem;
+    gap: 0.85rem;
+    line-height: 1.6;
     margin: 2rem auto 0;
     max-width: 1200px;
     padding-top: 1.5rem;
   }
+  .footer-band p { margin: 0; }
+  .footer-band a {
+    color: #d5e0f4;
+    font-size: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .footer-band a:hover { color: var(--ot-gold); }
 
   @media (max-width: 720px) {
     .footer-grid { grid-template-columns: 1fr 1fr; }

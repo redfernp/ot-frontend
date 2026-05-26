@@ -2,9 +2,10 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import CategoryTipsPage from "@/components/CategoryTipsPage.astro";
 import FootballHubPage from "@/components/FootballHubPage.astro";
+import GenericPage from "@/components/GenericPage.astro";
 import TennisHubPage from "@/components/TennisHubPage.astro";
 import TipPostPage from "@/components/TipPostPage.astro";
-import { getCategory, getPost } from "@/lib/graphql";
+import { getCategory, getPage, getPages, getPost, getRelatedPosts, type WpPost } from "@/lib/graphql";
 import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
 import { placeholderRelatedTips, placeholderTennisTips } from "@/lib/relatedTips";
 
@@ -33,6 +34,11 @@ const categoryFallbacks: Record<string, { name: string; uri: string; slug: strin
     uri: "/cricket/",
     slug: "cricket",
   },
+  snooker: {
+    name: "Snooker",
+    uri: "/snooker/",
+    slug: "snooker",
+  },
   darts: {
     name: "Darts",
     uri: "/darts/",
@@ -45,9 +51,47 @@ const categoryFallbacks: Record<string, { name: string; uri: string; slug: strin
   },
 };
 
-const simpleSportHubSlugs = new Set(["tennis", "cricket", "darts", "basketball"]);
+const simpleSportHubSlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
 export async function getStaticPaths() {
+  const normalizeRoutePath = (uri?: string) => (uri || "")
+    .replace(/^https?:\/\/[^/]+/i, "")
+    .replace(/^\/+|\/+$/g, "");
+
+  const liveSportCategoryRoutes = [
+    { path: "tennis", categorySlug: "tennis" },
+    { path: "tennis/wta-strasbourg", categorySlug: "wta-strasbourg" },
+    { path: "cricket", categorySlug: "cricket" },
+    { path: "cricket/indian-premier-league", categorySlug: "indian-premier-league" },
+    { path: "snooker", categorySlug: "snooker" },
+    { path: "snooker/snooker-900-2026", categorySlug: "snooker-900-2026" },
+    { path: "basketball", categorySlug: "basketball" },
+    { path: "basketball/argentina-liga-nacional", categorySlug: "argentina-liga-nacional" },
+    { path: "darts", categorySlug: "darts" },
+    { path: "darts/premier-league-darts-2026", categorySlug: "premier-league-darts-2026" },
+  ].map((route) => ({ ...route, requireLiveData: true }));
+  const liveSportPostRoutes = [
+    {
+      path: "emma-navarro-vs-iva-jovic-19-05-2026-free-fixed-odds-tip-tennis-betting-prediction",
+      postSlug: "emma-navarro-vs-iva-jovic-19-05-2026-free-fixed-odds-tip-tennis-betting-prediction",
+    },
+    {
+      path: "chennai-super-kings-vs-sunrisers-hyderabad-t20-18-05-2026-free-fixed-odds-tip-cricket-betting-prediction",
+      postSlug: "chennai-super-kings-vs-sunrisers-hyderabad-t20-18-05-2026-free-fixed-odds-tip-cricket-betting-prediction",
+    },
+    {
+      path: "luca-brecel-vs-ronnie-osullivan-17-05-2026-free-fixed-odds-tip-snooker-betting-prediction",
+      postSlug: "luca-brecel-vs-ronnie-osullivan-17-05-2026-free-fixed-odds-tip-snooker-betting-prediction",
+    },
+    {
+      path: "gimnasia-comodoro-vs-independiente-de-oliva-19-05-2026-free-fixed-odds-tip-basketball-betting-prediction",
+      postSlug: "gimnasia-comodoro-vs-independiente-de-oliva-19-05-2026-free-fixed-odds-tip-basketball-betting-prediction",
+    },
+    {
+      path: "luke-humphries-vs-michael-van-gerwen-21-05-2026-free-fixed-odds-tip-darts-betting-prediction",
+      postSlug: "luke-humphries-vs-michael-van-gerwen-21-05-2026-free-fixed-odds-tip-darts-betting-prediction",
+    },
+  ].map((route) => ({ ...route, requireLiveData: true }));
   const priorityCategoryRoutes = [
     {
       path: "football",
@@ -57,49 +101,67 @@ export async function getStaticPaths() {
       path: "football/united-kingdom/england-premier-league",
       categorySlug: "england-premier-league",
     },
-    {
-      path: "tennis",
-      categorySlug: "tennis",
-    },
-    {
-      path: "cricket",
-      categorySlug: "cricket",
-    },
-    {
-      path: "darts",
-      categorySlug: "darts",
-    },
-    {
-      path: "basketball",
-      categorySlug: "basketball",
-    },
+    ...liveSportCategoryRoutes,
   ];
   const priorityPostRoutes = [
     {
       path: "sunderland-v-chelsea-24-05-2026-free-fixed-odds-tip-football-betting-prediction",
       postSlug: "sunderland-v-chelsea-24-05-2026-free-fixed-odds-tip-football-betting-prediction",
     },
+    ...liveSportPostRoutes,
   ];
   const routes = [
     ...priorityCategoryRoutes.map((route) => ({ ...route, routeType: "category" as const })),
     ...priorityPostRoutes.map((route) => ({ ...route, routeType: "post" as const })),
   ];
+  const reservedPaths = new Set([
+    "",
+    "free-bets",
+    "reviews/bet365",
+    "reviews/william-hill",
+    ...routes.map((route) => route.path),
+  ]);
+  const wordpressPages = await getPages();
+  const pageRoutes = new Map<string, WpPost>();
 
-  return routes.map((route) => ({
-    params: { path: route.path },
-    props: route.routeType === "post"
-      ? { routeType: route.routeType, postSlug: route.postSlug }
-      : { routeType: route.routeType, categorySlug: route.categorySlug },
-  }));
+  wordpressPages.forEach((page) => {
+    const path = normalizeRoutePath(page.uri);
+
+    if (!path || reservedPaths.has(path)) {
+      return;
+    }
+
+    pageRoutes.set(path, page);
+  });
+
+  return [
+    ...routes.map((route) => {
+      const requireLiveData = "requireLiveData" in route ? route.requireLiveData : false;
+
+      return {
+        params: { path: route.path },
+        props: route.routeType === "post"
+          ? { routeType: route.routeType, postSlug: route.postSlug, requireLiveData }
+          : { routeType: route.routeType, categorySlug: route.categorySlug, requireLiveData },
+      };
+    }),
+    ...Array.from(pageRoutes, ([path, page]) => ({
+      params: { path },
+      props: { routeType: "page" as const, pageUri: page.uri, page },
+    })),
+  ];
 }
 
 type Props = {
-  routeType: "category" | "post";
+  routeType: "category" | "post" | "page";
   categorySlug?: string;
+  page?: WpPost;
+  pageUri?: string;
   postSlug?: string;
+  requireLiveData?: boolean;
 };
 
-const { categorySlug, postSlug, routeType } = Astro.props;
+const { categorySlug, page: pageProp, pageUri, postSlug, requireLiveData = false, routeType } = Astro.props;
 
 function buildCategoryFallback(slug: string) {
   const known = categoryFallbacks[slug];
@@ -120,24 +182,53 @@ function buildCategoryFallback(slug: string) {
   };
 }
 
-const category = routeType === "category"
-  ? (await getCategory(categorySlug || "")) || buildCategoryFallback(categorySlug || "")
-  : null;
-const post = routeType === "post"
-  ? (await getPost(postSlug || "")) || {
-      ...placeholderPost,
-      content: placeholderPost.content || "<p>This placeholder will be replaced by real Paul365 post content.</p>",
-    }
-  : null;
+let category = null;
+let page = pageProp || null;
+let post = null;
+let relatedPosts: WpPost[] = [];
+
+if (routeType === "page") {
+  page = page || await getPage(pageUri || "");
+
+  if (!page) {
+    throw new Error(`Live WordPress page not found for ${pageUri}`);
+  }
+}
+
+if (routeType === "category") {
+  category = await getCategory(categorySlug || "");
+
+  if (!category && requireLiveData) {
+    throw new Error(`Live WordPress category not found for ${categorySlug}`);
+  }
+
+  category = category || buildCategoryFallback(categorySlug || "");
+}
+
+if (routeType === "post") {
+  post = await getPost(postSlug || "");
+
+  if (!post && requireLiveData) {
+    throw new Error(`Live WordPress post not found for ${postSlug}`);
+  }
+
+  post = post || {
+    ...placeholderPost,
+    content: placeholderPost.content || "<p>This placeholder will be replaced by real Paul365 post content.</p>",
+  };
+  relatedPosts = post.slug === placeholderPost.slug ? [] : await getRelatedPosts(post);
+}
 ---
 
 <BaseLayout
-  title={post?.title || `${category?.name || "Category"} Betting Tips`}
-  description={post?.excerpt || category?.description || "Oddstips staging page proof of concept."}
-  seo={post?.seo || category?.seo}
+  title={page?.title || post?.title || `${category?.name || "Category"} Betting Tips`}
+  description={page?.seo?.metaDesc || post?.excerpt || category?.description || "Oddstips staging page proof of concept."}
+  seo={page?.seo || post?.seo || category?.seo}
 >
-  {post ? (
-    <TipPostPage post={post} />
+  {page ? (
+    <GenericPage page={page} />
+  ) : post ? (
+    <TipPostPage post={post} relatedPosts={relatedPosts} />
   ) : category && categorySlug === "football" ? (
     <FootballHubPage category={category} />
   ) : category && simpleSportHubSlugs.has(categorySlug || "") ? (

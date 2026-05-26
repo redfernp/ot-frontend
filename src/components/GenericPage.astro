@@ -1,0 +1,162 @@
+---
+import type { WpPost } from "@/lib/graphql";
+
+type Props = {
+  page: WpPost;
+};
+
+const { page } = Astro.props;
+const segments = (page.uri || "")
+  .replace(/^\/+|\/+$/g, "")
+  .split("/")
+  .filter(Boolean);
+
+let path = "";
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  ...segments.map((segment, index) => {
+    path += `/${segment}`;
+    const label = segment
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+    return {
+      label,
+      href: index === segments.length - 1 ? undefined : `${path}/`,
+    };
+  }),
+];
+
+const modified = page.modified
+  ? new Date(page.modified).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+  : null;
+---
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  {breadcrumbs.map((crumb, i) => (
+    <>
+      {crumb.href ? <a href={crumb.href}>{crumb.label}</a> : <span aria-current="page">{crumb.label}</span>}
+      {i < breadcrumbs.length - 1 && <span class="sep">/</span>}
+    </>
+  ))}
+</nav>
+
+<article class="generic-page">
+  <header class="page-header">
+    <h1>{page.title || "Oddstips"}</h1>
+    {modified && <p>Last updated {modified}</p>}
+  </header>
+
+  <section class="page-content" set:html={page.content || "<p>This page is being updated.</p>"} />
+</article>
+
+<style>
+  .breadcrumbs {
+    color: var(--ot-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs a:hover { text-decoration: underline; }
+  .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
+
+  .generic-page {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0 auto;
+    max-width: 900px;
+  }
+
+  .page-header {
+    border-bottom: 1px solid var(--ot-border);
+    padding-bottom: 1rem;
+  }
+  .page-header h1 {
+    color: var(--ot-text);
+    font-size: clamp(1.85rem, 4vw, 2.55rem);
+    margin: 0;
+  }
+  .page-header p {
+    color: var(--ot-muted);
+    font-size: 0.92rem;
+    margin: 0.55rem 0 0;
+  }
+
+  .page-content {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    color: var(--ot-text-2);
+    font-size: 1rem;
+    line-height: 1.75;
+    overflow: hidden;
+    padding: clamp(1.25rem, 4vw, 2rem);
+  }
+
+  .page-content :global(*) { max-width: 100%; }
+  .page-content :global(h1),
+  .page-content :global(h2),
+  .page-content :global(h3),
+  .page-content :global(h4) {
+    color: var(--ot-text);
+    line-height: 1.25;
+    margin: 1.65rem 0 0.75rem;
+  }
+  .page-content :global(h1:first-child),
+  .page-content :global(h2:first-child),
+  .page-content :global(h3:first-child) {
+    margin-top: 0;
+  }
+  .page-content :global(h2) {
+    border-bottom: 2px solid var(--ot-brand-blue-soft);
+    color: var(--ot-brand-blue-dark);
+    font-size: 1.35rem;
+    padding-bottom: 0.35rem;
+  }
+  .page-content :global(h3) { font-size: 1.15rem; }
+  .page-content :global(p) { margin: 0 0 1rem; }
+  .page-content :global(a) {
+    color: var(--ot-brand-blue);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--ot-brand-blue-soft);
+    text-underline-offset: 3px;
+  }
+  .page-content :global(a:hover) {
+    color: var(--ot-brand-blue-dark);
+    text-decoration-color: var(--ot-brand-blue);
+  }
+  .page-content :global(ul),
+  .page-content :global(ol) {
+    margin: 0 0 1.1rem;
+    padding-left: 1.25rem;
+  }
+  .page-content :global(li) { margin-bottom: 0.35rem; }
+  .page-content :global(strong) { color: var(--ot-text); }
+  .page-content :global(img) {
+    border-radius: var(--ot-radius-sm);
+    display: block;
+    height: auto;
+    max-width: 100%;
+  }
+  .page-content :global(table) {
+    border-collapse: collapse;
+    display: block;
+    margin: 1.25rem 0;
+    overflow-x: auto;
+    width: 100%;
+  }
+  .page-content :global(th),
+  .page-content :global(td) {
+    border: 1px solid var(--ot-border);
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .page-content :global(th) {
+    background: var(--ot-surface-2);
+    color: var(--ot-text);
+    font-weight: 800;
+  }
+</style>

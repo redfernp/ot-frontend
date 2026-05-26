@@ -2,13 +2,13 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import CouponRow from "@/components/CouponRow.astro";
 import { wpGraphQL, type WpPost } from "@/lib/graphql";
-import { homeSports } from "@/lib/siteNav";
 import { cleanOdds, extractTime, findFirstLink, splitTipBody, summarizeTip } from "@/lib/tips";
 
 type SportSample = {
   label: string;
   path: string;
   slug: string;
+  categoryPath: string;
   categoryName?: string;
   post?: WpPost;
   error?: string;
@@ -52,38 +52,74 @@ function graphQlAlias(slug: string, index: number) {
   return alias || `sport_${index}`;
 }
 
-const sportRequests = homeSports.map((sport, index) => {
+const liveSportSamples = [
+  {
+    label: "Tennis",
+    path: "/tennis/",
+    categoryPath: "/tennis/wta-strasbourg/",
+    categoryName: "WTA Strasbourg",
+    postSlug: "emma-navarro-vs-iva-jovic-19-05-2026-free-fixed-odds-tip-tennis-betting-prediction",
+  },
+  {
+    label: "Cricket",
+    path: "/cricket/",
+    categoryPath: "/cricket/indian-premier-league/",
+    categoryName: "Indian Premier League",
+    postSlug: "chennai-super-kings-vs-sunrisers-hyderabad-t20-18-05-2026-free-fixed-odds-tip-cricket-betting-prediction",
+  },
+  {
+    label: "Snooker",
+    path: "/snooker/",
+    categoryPath: "/snooker/snooker-900-2026/",
+    categoryName: "Snooker 900 2026",
+    postSlug: "luca-brecel-vs-ronnie-osullivan-17-05-2026-free-fixed-odds-tip-snooker-betting-prediction",
+  },
+  {
+    label: "Basketball",
+    path: "/basketball/",
+    categoryPath: "/basketball/argentina-liga-nacional/",
+    categoryName: "Argentina Liga Nacional",
+    postSlug: "gimnasia-comodoro-vs-independiente-de-oliva-19-05-2026-free-fixed-odds-tip-basketball-betting-prediction",
+  },
+  {
+    label: "Darts",
+    path: "/darts/",
+    categoryPath: "/darts/premier-league-darts-2026/",
+    categoryName: "Premier League Darts 2026",
+    postSlug: "luke-humphries-vs-michael-van-gerwen-21-05-2026-free-fixed-odds-tip-darts-betting-prediction",
+  },
+];
+
+const sportRequests = liveSportSamples.map((sport, index) => {
   const slug = sport.path.replace(/^\/+|\/+$/g, "");
   const alias = graphQlAlias(slug, index);
 
   return {
     ...sport,
     alias,
-    postsKey: `${alias}Posts`,
+    postKey: `${alias}Post`,
     slug,
-    variable: `${alias}CategoryName`,
+    variable: `${alias}PostSlug`,
   };
 });
 
-const variableDefs = sportRequests.map((sport) => `$${sport.variable}: String!`).join(", ");
+const variableDefs = sportRequests.map((sport) => `$${sport.variable}: ID!`).join(", ");
 const sportFields = sportRequests
   .map(
     (sport) => `
-      ${sport.postsKey}: posts(first: 1, where: { categoryName: $${sport.variable}, orderby: { field: DATE, order: DESC } }) {
-        nodes {
-          ...SportTipPost
-        }
+      ${sport.postKey}: post(id: $${sport.variable}, idType: SLUG) {
+        ...SportTipPost
       }
     `,
   )
   .join("\n");
-const sportVariables = Object.fromEntries(sportRequests.map((sport) => [sport.variable, sport.slug]));
+const sportVariables = Object.fromEntries(sportRequests.map((sport) => [sport.variable, sport.postSlug]));
 
-let sampleData: Record<string, { nodes: WpPost[] } | undefined> | null = null;
+let sampleData: Record<string, WpPost | undefined> | null = null;
 let sampleError: string | undefined;
 
 try {
-  sampleData = await wpGraphQL<Record<string, { nodes: WpPost[] }>>(
+  sampleData = await wpGraphQL<Record<string, WpPost | undefined>>(
     `query SportTipSamples(${variableDefs}) {
       ${sportFields}
     }
@@ -108,7 +144,9 @@ const samples: SportSample[] = sportRequests.map((sport) => ({
   label: sport.label,
   path: sport.path,
   slug: sport.slug,
-  post: sampleData?.[sport.postsKey]?.nodes?.[0],
+  categoryName: sport.categoryName,
+  categoryPath: sport.categoryPath,
+  post: sampleData?.[sport.postKey],
   error: sampleError,
 }));
 
@@ -169,8 +207,8 @@ const panels = samples.map((sample) => {
     <p class="eyebrow">Internal diagnostic</p>
     <h1>One Live Tip Per Sport</h1>
     <p>
-      This page pulls the latest live WP tip for each sport category and shows the parsed values used by the frontend.
-      Empty states mean WP did not return a real post for that sport.
+      This page pulls the supplied live WP sample tip for each sport and shows the parsed values used by the frontend.
+      Empty states mean WP did not return the selected staging post.
     </p>
   </header>
 
@@ -191,7 +229,10 @@ const panels = samples.map((sample) => {
             <p class="eyebrow">{panel.categoryName || panel.label}</p>
             <h2 id={`${panel.slug}-heading`}>{panel.label}</h2>
           </div>
-          <a class="sport-link" href={panel.path}>Sport hub</a>
+          <div class="panel-links">
+            <a class="sport-link" href={panel.path}>Sport hub</a>
+            <a class="sport-link" href={panel.categoryPath}>Category hub</a>
+          </div>
         </header>
 
         {panel.flags.length > 0 && (
@@ -366,6 +407,13 @@ const panels = samples.map((sample) => {
   .sport-link:hover,
   .source-row a:hover {
     text-decoration: underline;
+  }
+
+  .panel-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
   }
 
   .flag-list {

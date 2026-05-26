@@ -1,8 +1,5 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { getPage } from "@/lib/graphql";
-
-const page = await getPage("free-bets");
 
 const lastUpdated = new Date().toLocaleDateString("en-GB", {
   day: "2-digit",
@@ -14,96 +11,205 @@ const offers = [
   {
     slug: "bet365",
     brand: "Bet365",
-    headline: "Bet 10, Get 30 in Free Bets",
-    rating: 4.8,
-    badge: "Editor's Choice",
+    headline: "Bet £10 & Get £30 in Free Bets",
+    badge: "Best Odds Bookie",
     color: "#027a3e",
-    wagering: "1x",
-    min: "10",
-    expiry: "30 days",
-    code: "OTBONUS",
-    cta: "Claim 30 free bet",
-    pros: ["Best 1x2 odds on Premier League", "Cash out on 5,000+ markets", "Live streaming included"],
-    terms: "New customers only. Min deposit 10. Free bets paid as bet credits. T&Cs apply. 18+. BeGambleAware.org.",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2017/02/Bet365-150x40.png",
+    reviewHref: "https://www.everytip.co.uk/bet365-review",
+    offerHref: "https://www.everytip.co.uk/go/bet365",
+    cta: "Get Bet Credits",
+    description: "A strong all-round welcome offer for bettors who want familiar markets, broad sport coverage and Bet Credits after the qualifying bet settles.",
+    customer: "New customers",
+    qualifying: "Minimum deposit requirement and qualifying bet",
+    reward: "£30 in Bet Credits",
+    expiry: "Time limits apply",
+    terms: "#Ad - Bet £10 & Get £30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&Cs apply. Registration required.",
   },
   {
-    slug: "william-hill",
-    brand: "William Hill",
-    headline: "Bet 10, Get 40 in Free Bets",
-    rating: 4.6,
-    badge: "Biggest Bonus",
-    color: "#0b3d91",
-    wagering: "1x",
-    min: "10",
-    expiry: "30 days",
-    code: "WHFB40",
-    cta: "Claim 40 free bet",
-    pros: ["Best boosted odds offers", "Deep football market depth", "Acca insurance"],
-    terms: "New customers only. Min deposit 10. T&Cs apply. 18+. BeGambleAware.org.",
+    slug: "betfred",
+    brand: "Betfred",
+    headline: "Bet £10 Get £50 in Free Bets",
+    badge: "Lucky 15 Friendly",
+    color: "#092c74",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2018/06/betfred-154x40.png",
+    reviewHref: "https://www.everytip.co.uk/betfred-review",
+    offerHref: "https://www.everytip.co.uk/go/betfred",
+    cta: "Get Free Bets",
+    description: "A larger headline free-bet package for sports bettors who can place the qualifying £10 bet within the first 7 days.",
+    customer: "New customers",
+    qualifying: "Register, deposit with Debit Card, and place first bet £10+ at Evens (2.0)+ on Sports within 7 days",
+    reward: "3 x £10 Sports Free Bets and 2 x £10 Acca Free Bets",
+    expiry: "Credited within 10 hours of settlement, 7-day expiry",
+    terms: "#Ad - New customers only. Register, deposit with Debit Card, and place first bet £10+ at Evens (2.0)+ on Sports within 7 days to get 3 x £10 in Sports Free Bets & 2 x £10 in Acca Free Bets within 10 hours of settlement. 7-day expiry. Eligibility & payment exclusions apply. Full T&Cs apply.",
   },
   {
-    slug: "paddy-power",
-    brand: "Paddy Power",
-    headline: "Bet 10, Get 40 + 100 Free Spins",
-    rating: 4.5,
-    badge: "Best All-Round",
-    color: "#0a8a3b",
-    wagering: "1x",
-    min: "10",
-    expiry: "7 days",
-    code: "YSKAS",
-    cta: "Claim 40 + spins",
-    pros: ["Money-back specials", "Paddy's Rewards Club", "Excellent in-play UI"],
-    terms: "New customers only. Min deposit 10. T&Cs apply. 18+. BeGambleAware.org.",
+    slug: "betway",
+    brand: "Betway",
+    headline: "Bet £10, Get £40 in Free Bets",
+    badge: "Mobile Betting",
+    color: "#111111",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2018/03/Betway-sport-bets-review.jpg",
+    reviewHref: "https://www.everytip.co.uk/betway-sportsbook-review.html",
+    offerHref: "https://www.everytip.co.uk/go/betway",
+    cta: "Get Free Bets",
+    description: "A straightforward £10 qualifying bet route with four £10 tokens, useful if you prefer spreading free bets across multiple selections.",
+    customer: "New customers",
+    qualifying: "Place a min £10 bet at min odds of 2.0",
+    reward: "£40 worth of Free Bet Tokens",
+    expiry: "7 day expiry",
+    terms: "#Ad - New customers only. Place a min £10 bet at min odds of 2.0. £40 worth of Free Bet Tokens awarded on bet settlement. 4 x £10 each with betting restrictions. 7 day expiry. Debit Card deposits only (exclusions apply). 18+ GambleAware.org. Bet The Responsible Way. Full Terms apply",
   },
   {
-    slug: "betfair",
-    brand: "Betfair",
-    headline: "20 in Free Exchange Bets",
-    rating: 4.4,
-    badge: "Best Exchange",
-    color: "#fdb40c",
-    wagering: "None",
-    min: "10",
-    expiry: "30 days",
-    code: "ZSKAS",
-    cta: "Claim 20 free bet",
-    pros: ["Best exchange liquidity", "Trade pre-match and in-play", "Lay betting available"],
-    terms: "New customers only. Min deposit 10. T&Cs apply. 18+. BeGambleAware.org.",
+    slug: "quinnbet",
+    brand: "QuinnBet",
+    headline: "Get 50% Back In Free Bets Up To £25",
+    badge: "Loss Back Offer",
+    color: "#103b7a",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2024/09/quinnbet-logo-328.png",
+    reviewHref: "https://www.everytip.co.uk/quinnbet-review",
+    offerHref: "https://www.everytip.co.uk/go/quinnbet",
+    cta: "Get Free Bets",
+    description: "A loss-back style welcome offer for bettors who want some free-bet value returned if their first day does not go to plan.",
+    customer: "18+ New UK customers",
+    qualifying: "Bet £10+ on sportsbook markets at odds of evens (2.00) or greater",
+    reward: "50% back of first day's losses as a Free Bet up to £25",
+    expiry: "Free Bet valid for 7 days",
+    terms: "#Ad - 18+ New UK Customers Only. Bet £10+ on any sportsbook markets at odds of evens (2.00) or greater. No cash out. Get 50% back of your first day’s losses (from first bet settlement until 23:59) as a Free Bet up to £25, valid for 7 days. Min. 3 bets on different events required, with 2 bets being at least 50% of your largest stake. Place at least 1 bet of £10+ at odds 2.00+ to receive a £5 Free Bet even if your account is up or losses are under £5. T&Cs Apply. GambleAware.org",
+  },
+  {
+    slug: "spreadex",
+    brand: "Spreadex",
+    headline: "Bet £10, Get £60 in Free Bets",
+    badge: "Spread Betting",
+    color: "#003f2e",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2024/03/SPX_1_Sports-Primarylogo-WO-11.png",
+    reviewHref: "https://www.everytip.co.uk/go/spreadex",
+    offerHref: "https://www.everytip.co.uk/go/spreadex",
+    cta: "Get Free Bets",
+    description: "A higher-value package that combines fixed-odds free bets with spread-bet credits for users comfortable with spread betting risk.",
+    customer: "18+",
+    qualifying: "Place a qualifying £10 fixed odds bet at odds of 1/2 or greater",
+    reward: "3 x £10 free fixed odds bets and 6 x £5 free spread bets",
+    expiry: "Free bets expire in 28 days if unused",
+    terms: "#Ad - Bet £10 Get £60 in Free Bets. 18+ gambleaware.org. Spread betting losses can exceed deposit. Place a qualifying £10 fixed odds bet at odds of 1/2 or greater and get 3x £10 free fixed odds bets in consecutive days and 6x £5 free spread bets across consecutive days. Qualifying bet cannot be placed in-play or cashed out early. Free bets expire in 28 days if unused.",
+  },
+  {
+    slug: "betwright",
+    brand: "BetWright",
+    headline: "Bangers N' Cash Rewards",
+    badge: "Rewards",
+    color: "#18224a",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2025/04/betwright-logo-light-400px.png",
+    reviewHref: "https://www.everytip.co.uk/go/betwright",
+    offerHref: "https://www.everytip.co.uk/go/betwright",
+    cta: "Sign Up",
+    description: "A rewards-led offer built around opting in, tracking progress and claiming rewards when the promotion period completes.",
+    customer: "18+ only",
+    qualifying: "Opt into a banger rewards program and track your progress over time",
+    reward: "Rewards with no wagering requirements",
+    expiry: "Claim when time is up",
+    terms: "#Ad - Opt into a \"banger\" rewards program and track your progress over time. When times up, claim your rewards with no wagering requirements! 18+ Only. GambleAware.org",
+  },
+  {
+    slug: "fafabet",
+    brand: "Fafabet",
+    headline: "£50 Free Bet + £20 Casino Bonus",
+    badge: "Sports Plus Casino",
+    color: "#7a0026",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2024/05/fafabet-logo.png",
+    reviewHref: "https://www.everytip.co.uk/go/fafabet",
+    offerHref: "https://www.everytip.co.uk/go/fafabet",
+    cta: "Get Free Bets",
+    description: "A combined sports and casino welcome package for users who want both a sportsbook free bet and a casino bonus.",
+    customer: "New 18+ customers",
+    qualifying: "Deposit and bet on any sports with min odds of 2.0",
+    reward: "50% Back of your first days' losses as a Free bet up to £50 + £20 Casino Bonus",
+    expiry: "T&Cs apply",
+    terms: "New 18+ New Customers only. Deposit and bet on any sports with min odds of 2.0. Get 50% Back of your first days' losses as a Free bet up to £50+£20 Casino Bonus. T&Cs apply",
+  },
+  {
+    slug: "netbet",
+    brand: "NetBet",
+    headline: "Up to £30 in Sports & Casino Bonuses",
+    badge: "Sports And Casino",
+    color: "#004b9b",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2018/04/NetBet_Logo-2CRev-48px.png",
+    reviewHref: "https://www.everytip.co.uk/go/netbet-50",
+    offerHref: "https://www.everytip.co.uk/go/netbet-50",
+    cta: "Get Free Bets",
+    description: "A split sports-and-casino bonus with free bets and free spins after the qualifying activity is complete.",
+    customer: "New customers",
+    qualifying: "£30 single or combo to qualify",
+    reward: "£15 in free bets and £15 in free spins",
+    expiry: "Free bets valid for 3 days, free spins valid for 30 days",
+    terms: "£30 single or combo to qualify. £15 in free bets and £15 in free spins. for casino and vegas once the first bet is settled. new customers only / freebets valid for 3 days /. free spins valid for 30 days / x40 pt for free spins /. t&cs apply",
+  },
+  {
+    slug: "10bet",
+    brand: "10Bet",
+    headline: "Up to £50 Welcome Bonus",
+    badge: "Welcome Bonus",
+    color: "#101820",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2019/07/new-10bet-150x40-logo.jpg",
+    reviewHref: "https://www.everytip.co.uk/go/10bet",
+    offerHref: "https://www.everytip.co.uk/go/10bet",
+    cta: "Get Bonus",
+    description: "A deposit-match style welcome bonus for users happy to meet wagering requirements before bonus winnings become withdrawable.",
+    customer: "New customers",
+    qualifying: "Min deposit €15, no Skrill/Neteller, use bonus code PLAY10",
+    reward: "100% of deposit up to €50",
+    expiry: "Wager within 30 days",
+    terms: "New customers only; Min. deposit €15 (no Skrill/Neteller); Use bonus code PLAY10; Bonus amount is 100% of deposit up to €50; Offer can be claimed once per household; Wager the qualifying deposit and bonus amount 5x within 30 days to convert bonus winnings into real money; Wagers must be on min. odds of 1.80 on singles or combo bets with min odds. of 1.40 per selection to qualify; Max. stake contribution to wagering requirement is the value of your bonus; Terms apply; 18+",
+  },
+  {
+    slug: "mrplaysport",
+    brand: "mr.playSPORT",
+    headline: "Bet £/€10 Get £/€15",
+    badge: "Competitions",
+    color: "#ff6a00",
+    logoSrc: "https://www.everytip.co.uk/wp-content/uploads/2021/09/mrplay-sport-logo-blue-150x40-1.png",
+    reviewHref: "https://www.everytip.co.uk/go/mrplay",
+    offerHref: "https://www.everytip.co.uk/go/mrplay",
+    cta: "Get Free Bets",
+    description: "A compact welcome bonus for users who want a lower headline reward and a short 14-day qualifying window.",
+    customer: "18+ new players",
+    qualifying: "1st deposit, min deposit £10",
+    reward: "Max £15 bonus",
+    expiry: "Valid for 14 days",
+    terms: "18+, Welcome Bonus: New Players only, 1st Deposit, Min Deposit: £10, max £15 bonus, valid for 14 days, bets must be placed at a min. odds of 1/1 (2.00) or greater and be settled within 14 days of placement. System bets no eligible. GambleAware | 18+",
   },
 ];
 
 const howWeRate = [
-  { title: "Offer value", text: "What you actually get back after wagering. We weight stake-not-returned offers below cash-back." },
-  { title: "Markets and odds", text: "We compare price quality across the EPL, Champions League and weekend coupons." },
-  { title: "Wagering terms", text: "Lower turnover requirements and shorter expiries score higher." },
-  { title: "Payments and support", text: "Withdrawal speeds, deposit methods and live chat responsiveness." },
+  { title: "Match the qualifier", text: "Check the minimum stake, odds and payment method before choosing an offer." },
+  { title: "Read expiry first", text: "Free bets often expire quickly, so pick an offer you can realistically use in time." },
+  { title: "Know the stake rules", text: "Many free bets are stake-not-returned, which changes the real value of a winning bet." },
+  { title: "Choose by betting style", text: "A bigger headline deal is not always best if the qualifying terms do not fit how you bet." },
 ];
 
 const faqs = [
   {
     q: "What is a free bet?",
-    a: "A free bet is a stake-not-returned token that lets you place a bet without risking your own money. If it wins, you keep the winnings (not the stake).",
+    a: "A free bet is usually a stake-not-returned token. If it wins, you keep the winnings, but the free-bet stake itself is not normally paid back.",
   },
   {
     q: "How do I claim a free bet?",
-    a: "Register with the bookmaker, deposit the minimum qualifying amount, place a qualifying bet, and the free bet is credited automatically once the qualifying bet settles.",
+    a: "Choose an offer, open the bookmaker, register, deposit the required amount and place the qualifying bet. The free bet is usually credited after that qualifying bet settles.",
   },
   {
     q: "Are free bets really free?",
-    a: "Yes, but they come with wagering and time-based terms. We list the key terms next to every offer so you can compare like-for-like.",
+    a: "They can be valuable, but every offer has conditions. Read the exact ad terms under the offer headline before signing up.",
   },
   {
-    q: "Can I claim more than one free bet?",
-    a: "Yes. Each offer is one-per-customer per brand, but you can claim a free bet from every brand on this page, as long as you are a new customer at each.",
+    q: "Which free bet offer should I choose?",
+    a: "Start with the offer that matches your normal stake size, preferred sport and timeline. Do not chase the biggest headline figure if the terms are awkward for you.",
   },
 ];
 ---
 
 <BaseLayout
-  title="Best Free Bets and Sign-Up Offers (May 2026) - Oddstips"
-  description="Compare the best UK free bet offers from Bet365, William Hill, Paddy Power and more. Wagering terms, ratings and exclusive Oddstips codes."
-  seo={page?.seo}
+  title="Best Free Bets and Bookmaker Sign-Up Offers (May 2026) - Oddstips"
+  description="Compare current bookmaker free bet and bonus offers, with the exact promotional terms shown directly under every offer headline."
 >
   <nav class="breadcrumbs" aria-label="Breadcrumb">
     <a href="/">Home</a> <span class="sep">/</span> <span aria-current="page">Free Bets</span>
@@ -112,114 +218,78 @@ const faqs = [
   <section class="hero" aria-labelledby="hero-heading">
     <div>
       <p class="eyebrow">Updated {lastUpdated}</p>
-      <h1 id="hero-heading">Best free bets and sign-up offers</h1>
+      <h1 id="hero-heading">Best free bets and bookmaker sign-up offers</h1>
       <p class="lede">
-        We've claimed every free bet on this page. These are the four offers worth your time right now, ranked by real
-        value after wagering, market quality and withdrawal speed.
+        Compare the headline deal, exact ad terms, qualifying action and expiry in one place. Pick the offer that
+        fits how you actually bet, then open the bookmaker when you are ready.
       </p>
       <ul class="hero-points">
-        <li><span class="check">v</span> Exclusive Oddstips codes</li>
-        <li><span class="check">v</span> Wagering and expiry shown up-front</li>
-        <li><span class="check">v</span> Independent, no paid placements</li>
+        <li><span class="check">v</span> Covering all markets and bet types</li>
+        <li><span class="check">v</span> Reward, qualifying action and expiry shown clearly</li>
+        <li><span class="check">v</span> Fast comparison across current bookmaker offers</li>
       </ul>
     </div>
     <aside class="hero-side" aria-label="Quick stats">
-      <div><strong>4</strong><span>Top offers</span></div>
-      <div><strong>140</strong><span>Total free bet value</span></div>
-      <div><strong>1x</strong><span>Avg wagering</span></div>
+      <div><strong>{offers.length}</strong><span>Offers compared</span></div>
+      <div><strong>All</strong><span>Market types covered</span></div>
+      <div><strong>Quick</strong><span>Offer value check</span></div>
     </aside>
   </section>
 
   <section class="comparison" aria-labelledby="compare-heading">
     <div class="section-head">
-      <h2 id="compare-heading">Comparison table</h2>
-      <p>All offers ranked by overall score.</p>
+      <h2 id="compare-heading">Compare free bet offers</h2>
+      <p>Start with the headline offer, read the exact terms, then use the CTA if the deal fits.</p>
     </div>
-    <div class="comparison-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Bookmaker</th>
-            <th>Offer</th>
-            <th>Wagering</th>
-            <th>Min deposit</th>
-            <th>Expiry</th>
-            <th>Rating</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {offers.map((offer) => (
-            <tr>
-              <td>
-                <a class="brand-link" href={`/reviews/${offer.slug}/`}>
-                  <span class="brand-logo" style={`background:${offer.color}`}>{offer.brand.slice(0, 2)}</span>
-                  <strong>{offer.brand}</strong>
-                </a>
-              </td>
-              <td>{offer.headline}</td>
-              <td>{offer.wagering}</td>
-              <td>{offer.min}</td>
-              <td>{offer.expiry}</td>
-              <td>
-                <div class="stars" aria-label={`${offer.rating} out of 5`}>
-                  <span class="stars-fill" style={`--w:${(offer.rating / 5) * 100}%`}></span>
-                </div>
-                <small>{offer.rating}/5</small>
-              </td>
-              <td>
-                <a class="row-cta" href={`/reviews/${offer.slug}/`} rel="nofollow">Claim</a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div class="offer-grid">
+      {offers.map((offer) => (
+        <article class="offer-card" id={offer.slug} style={`--offer-bg:${offer.color}`}>
+          <div class="offer-card-inner">
+            <header class="offer-card-head">
+              <img class="bookmaker-logo" src={offer.logoSrc} alt={`${offer.brand} logo`} decoding="async" />
+              <span class="stars" aria-label="Five star bookmaker rating">★★★★★</span>
+              <a class="review-link" href={offer.reviewHref} rel="nofollow noopener" target="_blank">
+                {offer.brand} Review
+              </a>
+            </header>
+
+            <h3>{offer.headline}</h3>
+
+            <p class="terms">{offer.terms}</p>
+
+            <p class="offer-description">
+              <span class="check-mark" aria-hidden="true">✓</span>
+              <span>{offer.description}</span>
+            </p>
+
+            <a class="cta" href={offer.offerHref} rel="nofollow sponsored noopener" target="_blank">{offer.cta}</a>
+
+            <dl class="offer-meta">
+              <div>
+                <dt>Customer</dt>
+                <dd>{offer.customer}</dd>
+              </div>
+              <div>
+                <dt>Qualifying action</dt>
+                <dd>{offer.qualifying}</dd>
+              </div>
+              <div>
+                <dt>Reward</dt>
+                <dd>{offer.reward}</dd>
+              </div>
+              <div>
+                <dt>Expiry</dt>
+                <dd>{offer.expiry}</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+      ))}
     </div>
-  </section>
-
-  <section class="offer-stack" aria-labelledby="stack-heading">
-    <h2 id="stack-heading">In-depth offer reviews</h2>
-    {offers.map((offer, i) => (
-      <article class="offer-detail" id={offer.slug}>
-        <div class="offer-rank">#{i + 1}</div>
-        <header class="offer-head">
-          <span class="logo" style={`background:${offer.color}`}>{offer.brand.slice(0, 2)}</span>
-          <div>
-            <span class="badge">{offer.badge}</span>
-            <h3>{offer.brand}</h3>
-            <p>{offer.headline}</p>
-          </div>
-          <div class="rating-block">
-            <div class="stars stars-lg" aria-label={`${offer.rating} out of 5`}>
-              <span class="stars-fill" style={`--w:${(offer.rating / 5) * 100}%`}></span>
-            </div>
-            <strong>{offer.rating}/5</strong>
-          </div>
-        </header>
-
-        <div class="offer-body">
-          <div class="key-facts">
-            <div><span class="label">Wagering</span><strong>{offer.wagering}</strong></div>
-            <div><span class="label">Min deposit</span><strong>{offer.min}</strong></div>
-            <div><span class="label">Expiry</span><strong>{offer.expiry}</strong></div>
-            <div><span class="label">Code</span><strong>{offer.code}</strong></div>
-          </div>
-
-          <ul class="pros">
-            {offer.pros.map((pro) => (
-              <li><span class="check">v</span> {pro}</li>
-            ))}
-          </ul>
-
-          <a class="cta" href={`/reviews/${offer.slug}/`} rel="nofollow">{offer.cta}</a>
-          <p class="terms">{offer.terms}</p>
-        </div>
-      </article>
-    ))}
   </section>
 
   <section class="how-we-rate" aria-labelledby="how-heading">
-    <h2 id="how-heading">How we rate free bet offers</h2>
+    <h2 id="how-heading">How to choose a free bet offer</h2>
     <div class="rate-grid">
       {howWeRate.map((item) => (
         <div class="rate-card">
@@ -229,13 +299,6 @@ const faqs = [
       ))}
     </div>
   </section>
-
-  {page?.content && (
-    <section class="panel cms-content">
-      <h2>{page?.title || "Editorial"}</h2>
-      <div class="content" set:html={page.content} />
-    </section>
-  )}
 
   <section class="faqs" aria-labelledby="faq-heading">
     <h2 id="faq-heading">Free bet FAQs</h2>
@@ -250,8 +313,8 @@ const faqs = [
   </section>
 
   <section class="responsible-band">
-    <strong>18+ only. Please gamble responsibly.</strong>
-    <p>BeGambleAware.org. GamCare.org.uk. Self-exclusion via GamStop.co.uk.</p>
+    <strong>We respect responsible gambling.</strong>
+    <p>Compare the value first, choose offers that fit your normal betting style, and only bet what you are comfortable with.</p>
   </section>
 </BaseLayout>
 
@@ -317,149 +380,183 @@ const faqs = [
 
   /* COMPARISON */
   .comparison { margin-top: 2rem; }
-  .comparison-scroll {
-    background: var(--ot-surface);
-    border: 1px solid var(--ot-border);
-    border-radius: var(--ot-radius);
-    overflow-x: auto;
-  }
-  .comparison table { border-collapse: collapse; min-width: 760px; width: 100%; }
-  .comparison th {
-    background: #f6f8fc;
-    color: var(--ot-muted);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    padding: 0.85rem 1rem;
-    text-align: left;
-    text-transform: uppercase;
-  }
-  .comparison td { border-top: 1px solid var(--ot-border); padding: 0.85rem 1rem; vertical-align: middle; }
-  .brand-link { align-items: center; color: var(--ot-text); display: flex; gap: 0.6rem; text-decoration: none; }
-  .brand-logo {
-    align-items: center;
-    border-radius: 6px;
-    color: #fff;
-    display: inline-flex;
-    font-size: 0.78rem;
-    font-weight: 900;
-    height: 28px;
-    justify-content: center;
-    width: 44px;
-  }
-  .stars { background: #ebeef4; border-radius: 999px; height: 6px; overflow: hidden; width: 100px; }
-  .stars-lg { height: 9px; width: 140px; }
-  .stars-fill { background: var(--ot-gold); display: block; height: 100%; width: var(--w, 0%); }
-  .row-cta {
-    background: var(--ot-green);
-    border-radius: 999px;
-    color: #fff;
-    font-size: 0.82rem;
-    font-weight: 900;
-    padding: 0.5rem 0.9rem;
-    text-decoration: none;
-  }
-  .row-cta:hover { background: var(--ot-green-2); }
-
-  /* OFFER STACK */
-  .offer-stack { display: grid; gap: 1rem; margin-top: 2.5rem; }
-  .offer-detail {
-    background: var(--ot-surface);
-    border: 1px solid var(--ot-border);
-    border-radius: var(--ot-radius);
-    padding: 1.5rem;
-    position: relative;
-  }
-  .offer-rank {
-    background: var(--ot-ink);
-    border-radius: 8px;
-    color: var(--ot-gold);
-    font-size: 0.85rem;
-    font-weight: 900;
-    left: -10px;
-    padding: 0.25rem 0.55rem;
-    position: absolute;
-    top: -10px;
-  }
-  .offer-head {
-    align-items: center;
-    border-bottom: 1px solid var(--ot-border);
+  .offer-grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: auto 1fr auto;
-    padding-bottom: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
   }
-  .logo {
-    align-items: center;
-    border-radius: 12px;
+
+  .offer-card {
+    background: var(--offer-bg);
     color: #fff;
-    display: inline-flex;
-    font-size: 1.1rem;
-    font-weight: 900;
-    height: 64px;
-    justify-content: center;
-    width: 88px;
+    min-width: 0;
   }
-  .badge {
-    background: var(--ot-gold);
-    border-radius: 999px;
-    color: var(--ot-ink);
-    display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    padding: 0.25rem 0.6rem;
-    text-transform: uppercase;
-  }
-  .offer-head h3 { font-size: 1.4rem; margin: 0.4rem 0 0.2rem; }
-  .offer-head p { color: var(--ot-text-2); font-weight: 800; margin: 0; }
-  .rating-block { text-align: right; }
-  .rating-block strong { color: var(--ot-ink); display: block; font-size: 1rem; margin-top: 0.35rem; }
 
-  .offer-body { padding-top: 1.25rem; }
-  .key-facts {
-    background: var(--ot-surface-2);
-    border-radius: var(--ot-radius-sm);
+  .offer-card-inner {
     display: grid;
-    gap: 0;
-    grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 1.25rem;
-    overflow: hidden;
+    gap: 1.1rem;
+    min-width: 0;
+    padding: 1.65rem;
+    text-align: center;
   }
-  .key-facts > div { border-right: 1px solid var(--ot-border); padding: 0.8rem 1rem; }
-  .key-facts > div:last-child { border-right: 0; }
-  .label {
-    color: var(--ot-muted);
-    display: block;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.25rem;
-    text-transform: uppercase;
-  }
-  .key-facts strong { color: var(--ot-text); }
 
-  .pros { color: var(--ot-text-2); display: grid; gap: 0.45rem; list-style: none; margin: 0 0 1.25rem; padding: 0; }
-  .pros .check { background: var(--ot-green); color: #fff; }
+  .offer-card-head {
+    align-items: center;
+    display: grid;
+    gap: 0.45rem;
+    justify-items: center;
+  }
+
+  .bookmaker-logo {
+    display: block;
+    height: 52px;
+    max-width: min(230px, 86%);
+    object-fit: contain;
+    width: auto;
+  }
+
+  .stars {
+    color: #ffc928;
+    font-size: 1.28rem;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .review-link {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .review-link:hover { color: #ffe2c7; }
+
+  .offer-card h3 {
+    color: #fff;
+    font-size: clamp(1.35rem, 2.1vw, 1.65rem);
+    line-height: 1.15;
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .offer-description {
+    align-items: center;
+    color: #fff;
+    display: flex;
+    font-size: 0.98rem;
+    font-weight: 700;
+    gap: 0.75rem;
+    justify-content: center;
+    line-height: 1.55;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .offer-description span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .check-mark {
+    color: #fff;
+    flex: 0 0 auto;
+    font-size: 1.55rem;
+    font-weight: 900;
+    line-height: 1;
+  }
 
   .cta {
-    background: var(--ot-green);
-    border-radius: 999px;
+    background: var(--ot-brand-orange);
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
     color: #fff;
-    display: inline-block;
-    font-size: 1rem;
+    display: block;
+    font-size: 1.15rem;
     font-weight: 900;
-    padding: 0.85rem 1.5rem;
+    justify-self: center;
+    max-width: 100%;
+    min-width: min(280px, 100%);
+    padding: 0.9rem 1.35rem;
     text-decoration: none;
   }
-  .cta:hover { background: var(--ot-green-2); }
-  .terms { color: var(--ot-muted); font-size: 0.78rem; margin: 0.85rem 0 0; }
+  .cta:hover { background: #d95800; }
+
+  .terms {
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+
+  .offer-meta {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: grid;
+    gap: 0;
+    grid-template-columns: 1fr 1fr;
+    margin: 0;
+    text-align: left;
+  }
+
+  .offer-meta div {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    min-width: 0;
+    padding: 0.75rem;
+  }
+
+  .offer-meta div:nth-child(odd) {
+    border-right: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .offer-meta div:nth-last-child(-n+2) {
+    border-bottom: 0;
+  }
+
+  .offer-meta dt {
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    margin: 0 0 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .offer-meta dd {
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
 
   @media (max-width: 720px) {
-    .offer-head { grid-template-columns: auto 1fr; }
-    .rating-block { grid-column: 1 / -1; text-align: left; }
-    .key-facts { grid-template-columns: 1fr 1fr; }
-    .key-facts > div:nth-child(2n) { border-right: 0; }
+    .offer-grid {
+      grid-template-columns: 1fr;
+    }
+    .offer-card-inner {
+      padding: 1.45rem 1.15rem;
+    }
+    .bookmaker-logo { height: 48px; }
+    .offer-description {
+      align-items: flex-start;
+      text-align: left;
+    }
+    .offer-meta {
+      grid-template-columns: 1fr;
+    }
+    .offer-meta div,
+    .offer-meta div:nth-child(odd),
+    .offer-meta div:nth-last-child(-n+2) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      border-right: 0;
+    }
+    .offer-meta div:last-child {
+      border-bottom: 0;
+    }
   }
 
   /* HOW WE RATE */
@@ -475,9 +572,6 @@ const faqs = [
   .rate-card p { color: var(--ot-text-2); margin: 0; }
   @media (max-width: 880px) { .rate-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 540px) { .rate-grid { grid-template-columns: 1fr; } }
-
-  .cms-content { margin-top: 2.5rem; }
-  .cms-content .content :global(p) { color: var(--ot-text-2); }
 
   .faqs { margin-top: 2.5rem; }
   .faq-list { display: grid; gap: 0.5rem; }

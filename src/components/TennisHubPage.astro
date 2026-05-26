@@ -37,7 +37,7 @@ const fallbackSeo = getCategorySeoCopy(category.slug);
 const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
 const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
 
-const categoryName = category.name || "Tennis";
+const categoryName = category.name || "Sport";
 const sportLabel = categoryName.toLowerCase();
 ---
 
@@ -66,10 +66,10 @@ const sportLabel = categoryName.toLowerCase();
   <main class="hub-main">
     <DateRail />
 
-    <section class="post-list tennis-list" aria-labelledby="latest-tennis-heading" data-date-filter-section>
+    <section class="post-list sport-list" aria-labelledby="latest-sport-heading" data-date-filter-section>
       <header class="post-list-head">
         <p class="eyebrow on-orange">{categoryName} tips</p>
-        <h2 id="latest-tennis-heading">{categoryName} Predictions</h2>
+        <h2 id="latest-sport-heading">{categoryName} Predictions</h2>
         <p class="post-list-meta">
           <span data-date-count data-singular="match" data-plural="matches">
             {posts.length} {posts.length === 1 ? "match" : "matches"}
@@ -91,7 +91,7 @@ const sportLabel = categoryName.toLowerCase();
     )}
   </main>
 
-  <CategorySidebar currentPath={category.uri} />
+  <CategorySidebar currentPath={category.uri} showInternational={false} showPopularLeagues={false} />
 </div>
 
 <style>
@@ -195,7 +195,7 @@ const sportLabel = categoryName.toLowerCase();
     box-shadow: var(--ot-shadow-sm);
     overflow: hidden;
   }
-  .tennis-list { border-top: 4px solid var(--ot-brand-orange); }
+  .sport-list { border-top: 4px solid var(--ot-brand-orange); }
   .post-list-head {
     align-items: end;
     background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);

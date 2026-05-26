@@ -4,10 +4,19 @@ import { summarizeTip } from "@/lib/tips";
 
 type Props = {
   heading?: string;
+  hubHref?: string;
+  hubLabel?: string;
   posts: WpPost[];
+  sportLabel?: string;
 };
 
-const { heading = "All England Premier League Predictions", posts } = Astro.props;
+const {
+  heading = "Related Predictions",
+  hubHref,
+  hubLabel = "Category hub",
+  posts,
+  sportLabel = "tip",
+} = Astro.props;
 
 function formatKickoff(dateIso?: string) {
   if (!dateIso) {
@@ -27,9 +36,9 @@ function formatKickoff(dateIso?: string) {
 {posts.length > 0 && (
   <section class="related-tips" aria-labelledby="related-tips-heading">
     <div class="related-heading">
-      <p class="eyebrow">League hub</p>
+      <p class="eyebrow">Category hub</p>
       <h2 id="related-tips-heading">{heading}</h2>
-      <a href="/football/united-kingdom/england-premier-league/">England Premier League hub</a>
+      {hubHref && <a href={hubHref}>{hubLabel}</a>}
     </div>
 
     <div class="related-list">
@@ -41,8 +50,8 @@ function formatKickoff(dateIso?: string) {
         return (
           <a class="related-card" href={href}>
             {kickoff && <span class="related-kickoff">{kickoff}</span>}
-            <span class="related-fixture">{summary.fixture || post.title || "Football tip"}</span>
-            <small>View 1x2 tip &rarr;</small>
+            <span class="related-fixture">{summary.fixture || post.title || "Betting tip"}</span>
+            <small>View {sportLabel} tip &rarr;</small>
           </a>
         );
       })}
