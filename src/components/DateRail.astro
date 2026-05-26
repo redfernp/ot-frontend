@@ -100,11 +100,13 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
 <script is:inline>
   (() => {
-    if (window.__otDateRailReady) {
+    const scriptVersion = "date-filter-v2";
+
+    if (window.__otDateRailReady === scriptVersion) {
       return;
     }
 
-    window.__otDateRailReady = true;
+    window.__otDateRailReady = scriptVersion;
 
     const isoPattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -157,27 +159,45 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       }).format(new Date(`${isoDate}T00:00:00Z`));
     }
 
-    function cleanDateQuery() {
+    function queryDate() {
       const url = new URL(window.location.href);
+      const value = url.searchParams.get("date");
 
-      if (!url.searchParams.has("date")) {
-        return;
-      }
+      return value && isoPattern.test(value) ? value : null;
+    }
 
-      url.searchParams.delete("date");
+    function syncDateQuery(activeDate) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("date", activeDate);
       window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
     }
 
-    function updateRails(activeDate) {
+    function availableDates() {
+      const rows = Array.from(document.querySelectorAll("[data-date-filter-section] [data-tip-date]"));
+
+      return new Set(
+        rows
+          .map((row) => row.dataset.tipDate)
+          .filter((date) => date && isoPattern.test(date))
+      );
+    }
+
+    function updateRails(activeDate, available) {
       const today = londonTodayIso();
+      const hasAvailability = available.size > 0;
 
       document.querySelectorAll("[data-date-rail]").forEach((rail) => {
         rail.querySelectorAll("[data-date-link]").forEach((link) => {
           const offset = Number(link.dataset.dateOffset || 0);
           const isoDate = addDays(today, offset);
+          const hasTips = !hasAvailability || available.has(isoDate);
 
           link.dataset.date = isoDate;
           link.classList.toggle("active", isoDate === activeDate);
+          link.classList.toggle("is-empty", !hasTips);
+          link.disabled = !hasTips;
+          link.setAttribute("aria-disabled", String(!hasTips));
+          link.title = hasTips ? "" : "No tips currently loaded for this date";
 
           if (isoDate === activeDate) {
             link.setAttribute("aria-current", "date");
@@ -261,9 +281,15 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       return dates[0] || preferredDate;
     }
 
-    function applyDate(activeDate) {
-      updateRails(activeDate);
+    function applyDate(activeDate, updateUrl = false) {
+      const available = availableDates();
+      updateRails(activeDate, available);
       updateSections(activeDate);
+
+      if (updateUrl) {
+        syncDateQuery(activeDate);
+      }
+
       window.requestAnimationFrame(revealActiveDate);
     }
 
@@ -276,23 +302,25 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
       event.preventDefault();
 
+      if (link.disabled || link.getAttribute("aria-disabled") === "true") {
+        return;
+      }
+
       const nextDate = link.dataset.date;
 
       if (!nextDate || !isoPattern.test(nextDate)) {
         return;
       }
 
-      applyDate(nextDate);
+      applyDate(nextDate, true);
     });
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
-        cleanDateQuery();
-        applyDate(initialActiveDate(londonTodayIso()));
+        applyDate(initialActiveDate(queryDate() || londonTodayIso()));
       }, { once: true });
     } else {
-      cleanDateQuery();
-      applyDate(initialActiveDate(londonTodayIso()));
+      applyDate(initialActiveDate(queryDate() || londonTodayIso()));
     }
   })();
 </script>
@@ -347,6 +375,17 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
   .date-item:hover {
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
+  }
+
+  .date-item.is-empty {
+    color: #7e91b7;
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .date-item.is-empty:hover {
+    background: transparent;
+    color: #7e91b7;
   }
 
   .date-item strong {

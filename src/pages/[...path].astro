@@ -196,7 +196,7 @@ if (routeType === "page") {
 }
 
 if (routeType === "category") {
-  category = await getCategory(categorySlug || "");
+  category = await getCategory(categorySlug || "", 100);
 
   if (!category && requireLiveData) {
     throw new Error(`Live WordPress category not found for ${categorySlug}`);
