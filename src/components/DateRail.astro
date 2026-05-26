@@ -195,8 +195,6 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
           link.dataset.date = isoDate;
           link.classList.toggle("active", isoDate === activeDate);
           link.classList.toggle("is-empty", !hasTips);
-          link.disabled = !hasTips;
-          link.setAttribute("aria-disabled", String(!hasTips));
           link.title = hasTips ? "" : "No tips currently loaded for this date";
 
           if (isoDate === activeDate) {
@@ -302,10 +300,6 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
       event.preventDefault();
 
-      if (link.disabled || link.getAttribute("aria-disabled") === "true") {
-        return;
-      }
-
       const nextDate = link.dataset.date;
 
       if (!nextDate || !isoPattern.test(nextDate)) {
@@ -379,12 +373,11 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
   .date-item.is-empty {
     color: #7e91b7;
-    cursor: not-allowed;
     opacity: 0.45;
   }
 
   .date-item.is-empty:hover {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.06);
     color: #7e91b7;
   }
 
