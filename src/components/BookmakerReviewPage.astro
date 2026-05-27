@@ -51,7 +51,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
 <article class="review">
   <section class="hero" style={`--brand-color:${bookmaker.color}`}>
     <div class="hero-main">
-      <div class="logo">{bookmaker.brand.slice(0, 2).toUpperCase()}</div>
+      <div class="logo">{bookmaker.brand}</div>
       <div class="hero-text">
         <p class="eyebrow">Bookmaker review</p>
         <h1>{bookmaker.brand} review</h1>
@@ -116,7 +116,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
       <p class="bonus-terms">{bookmaker.bonus.terms}</p>
     </div>
     <div class="bonus-cta-card">
-      <span class="logo logo-lg">{bookmaker.brand.slice(0, 2).toUpperCase()}</span>
+      <span class="logo logo-lg">{bookmaker.brand}</span>
       <strong>{bookmaker.brand}</strong>
       <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
       <p>18+. T&amp;Cs apply.</p>
@@ -183,7 +183,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
 
     <aside class="review-sidebar" aria-label="Review sidebar">
       <div class="sidebar-card sticky-card">
-        <span class="logo logo-md">{bookmaker.brand.slice(0, 2).toUpperCase()}</span>
+        <span class="logo logo-md">{bookmaker.brand}</span>
         <strong>{bookmaker.brand}</strong>
         <div class="sidebar-rating">
           <div class="stars"><span class="stars-fill" style={`--w:${ratingPct}%`}></span></div>
@@ -236,11 +236,16 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
     color: #fff;
     display: inline-flex;
     flex: 0 0 auto;
-    font-size: 1.4rem;
+    font-size: clamp(0.9rem, 2vw, 1.05rem);
     font-weight: 900;
     height: 72px;
     justify-content: center;
-    width: 100px;
+    line-height: 1.05;
+    max-width: 160px;
+    overflow-wrap: anywhere;
+    padding: 0.4rem 0.65rem;
+    text-align: center;
+    width: 132px;
   }
   .hero h1 { color: #fff; margin: 0; }
   .hero .eyebrow { color: var(--ot-gold); }
@@ -429,8 +434,15 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
     padding: 1.5rem;
     text-align: center;
   }
-  .logo-lg { background: var(--brand-color, var(--ot-ink-2)); height: 60px; width: 120px; }
-  .logo-md { background: var(--brand-color, var(--ot-ink-2)); color: #fff; height: 40px; width: 64px; }
+  .logo-lg { background: var(--brand-color, var(--ot-ink-2)); height: 60px; width: 160px; }
+  .logo-md {
+    background: var(--brand-color, var(--ot-ink-2));
+    color: #fff;
+    font-size: clamp(0.74rem, 1.4vw, 0.85rem);
+    height: auto;
+    min-height: 42px;
+    width: 124px;
+  }
   .bonus-cta-card strong { color: #fff; font-size: 1.1rem; }
   .bonus-cta-card p { color: #aab8d3; font-size: 0.75rem; margin: 0; }
   @media (max-width: 720px) { .bonus-module { grid-template-columns: 1fr; } }
