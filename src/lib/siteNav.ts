@@ -8,66 +8,11 @@ export type NavLink = {
   path: string;
 };
 
-export type NavLinkWithBlurb = NavLink & {
-  blurb: string;
-};
-
 export type CountryGroup = {
   country: string;
   path: string;
   children: NavLink[];
 };
-
-export const homeSports: NavLink[] = [
-  { label: "Football", path: "/football/" },
-  { label: "Tennis", path: "/tennis/" },
-  { label: "Cricket", path: "/cricket/" },
-  { label: "Snooker", path: "/snooker/" },
-  { label: "Darts", path: "/darts/" },
-  { label: "Basketball", path: "/basketball/" },
-];
-
-export const homeLeagues: NavLink[] = [
-  { label: "English Premier League", path: "/football/united-kingdom/england-premier-league/" },
-  { label: "English Championship", path: "/football/united-kingdom/england-championship/" },
-  { label: "Scottish Premiership", path: "/football/united-kingdom/scotland-premiership/" },
-  { label: "UEFA Champions League", path: "/football/uefa/uefa-champions-league/" },
-  { label: "UEFA Europa League", path: "/football/uefa/uefa-europa-league/" },
-  { label: "UEFA Conference League", path: "/football/uefa/uefa-europa-conference-league/" },
-  { label: "Spanish La Liga", path: "/football/spain/spain-primera-liga/" },
-  { label: "Italian Serie A", path: "/football/italy/italy-serie-a/" },
-  { label: "German Bundesliga", path: "/football/germany/germany-bundesliga-i/" },
-];
-
-export const homeRegions: NavLinkWithBlurb[] = [
-  { label: "United Kingdom Football Tips", path: "/football/united-kingdom/", blurb: "Tips for every football game in England, Scotland, Wales & Northern Ireland" },
-  { label: "Spanish Football Tips", path: "/football/spain/", blurb: "Tips for every football game in Spain from bottom leagues to La Liga." },
-  { label: "Italian Football Tips", path: "/football/italy/", blurb: "Free predictions for every football game in Italy, including cups and Serie A/B/C." },
-  { label: "French Football Tips", path: "/football/france/", blurb: "All France Football tips covered, including La Ligue 1/2 and Coupe de France" },
-  { label: "German Football Tips", path: "/football/germany/", blurb: "All Germany football tips including Bundesliga, DFB-Pokal, DFL-Supercup" },
-  { label: "Dutch Football Tips", path: "/football/holland/", blurb: "Free predictions for every football game in Netherlands, including the Dutch Eredivisie." },
-  { label: "China Football Tips", path: "/football/china/", blurb: "Tips for every football game in China, including the Chinese Super League." },
-  { label: "US Football Tips", path: "/football/usa/", blurb: "Betting tips for every football game in USA, including Major League Soccer." },
-  { label: "Portuguese Football Tips", path: "/football/portugal/", blurb: "Free Tips for all football games in Portugal, including Portugal's Primeira Ligas." },
-  { label: "Brazilian Football Tips", path: "/football/brazil/", blurb: "Tips for every football game in Brazil, including the Brasileiro Serie A." },
-  { label: "Mexican Football Tips", path: "/football/mexico/", blurb: "Tips for every football game in Mexico, including the Mexican Liga MX." },
-  { label: "Belgian Football Tips", path: "/football/belgium/", blurb: "Free predictions for every football game in Belgium, including the Belgian Jupiler Pro." },
-  { label: "Swiss Football Tips", path: "/football/switzerland/", blurb: "Tips for every football game in Switzerland, including the Swiss Super League." },
-  { label: "Russian Football Tips", path: "/football/russia/", blurb: "Betting tips for every football game in Russia, including Russian Premier League." },
-  { label: "Ukrainian Football Tips", path: "/football/ukraine/", blurb: "Free Tips for all football games in Ukraine, including Ukrainian Premier League." },
-  { label: "Turkish Football Tips", path: "/football/turkey/", blurb: "Tips for every football game in Turkey, including the Turkish SuperLig." },
-  { label: "Japanese Football Tips", path: "/football/japan/", blurb: "Betting tips for every football game in Japan, including Japanese J1 League." },
-  { label: "Argentinian Football Tips", path: "/football/argentina/", blurb: "Free Tips for all football games in Argentina, including Argentinian Primera Division." },
-  { label: "Scottish Football Tips", path: "/football/scotland/", blurb: "Tips for every football game in Scotland, including the Scottish Premier League." },
-  { label: "Polish Football Tips", path: "/football/poland/", blurb: "Betting tips for every football game in Poland, including Polish Ekstraklasa." },
-  { label: "Australian Football Tips", path: "/football/australia/", blurb: "Free Tips for all football games in Australia, including Australian A-League." },
-  { label: "UAE Football Tips", path: "/football/uae/", blurb: "Tips for every football game in UAE, including the Arabian Gulf League." },
-  { label: "Qatar Football Tips", path: "/football/qatar/", blurb: "Betting tips for every football game in Qatar, including the Qatar Stars League." },
-  { label: "Greek Football Tips", path: "/football/greece/", blurb: "Free Tips for all football games in Greece, including the Super League Greece." },
-  { label: "Indian Football Tips", path: "/football/india/", blurb: "Tips for every football game in India, including the Indian Super League." },
-  { label: "Egyptian Football Tips", path: "/football/egypt/", blurb: "Betting tips for every football game in Egypt, including the Egyptian Premier League." },
-  { label: "Irish Football Tips", path: "/football/ireland/", blurb: "Free Tips for all football games in Ireland, including Irish Premier League." },
-];
 
 export const footballCountries: CountryGroup[] = [
   {

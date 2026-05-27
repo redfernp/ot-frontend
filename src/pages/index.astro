@@ -1,13 +1,9 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import PostListItem from "@/components/PostListItem.astro";
-import { getCategoryPostTitles } from "@/lib/graphql";
-import {
-  homeLatestSections,
-  homeLeagues,
-  homeRegions,
-  homeSports,
-} from "@/lib/siteNav";
+import { getCategoryPostTitles, getMenu } from "@/lib/graphql";
+import { cmsLinkToPath } from "@/lib/cmsContent";
+import { homeLatestSections } from "@/lib/siteNav";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 
 const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
@@ -26,6 +22,33 @@ const sections = latestBySport.map((section) => ({
     ? section.posts
     : !hasWpGraphQL && section.slug === "football" ? placeholderRelatedTips.slice(0, 4) : [],
 }));
+
+// Sports band: filter the Main Navigation WP menu to items whose path is a
+// sport hub (e.g. /football/, /tennis/). Anything else in the nav (free bets,
+// about, external affiliate link) is skipped so the band shows sports only.
+// Snooker is currently absent from main-nav; if you want it on the homepage,
+// add it to the WP menu.
+const sportPathPattern = /^\/(football|tennis|cricket|snooker|darts|basketball)\/$/;
+const mainNav = await getMenu("main-navigation");
+const homeSportTiles = (mainNav?.menuItems ?? [])
+  .map((item) => ({
+    label: toTitleCase(item.label),
+    path: cmsLinkToPath(item.url) ?? "",
+  }))
+  .filter((tile) => sportPathPattern.test(tile.path));
+
+// Leagues band: shared with the sub-category sidebar — single source in WP.
+const popularLeaguesMenu = await getMenu("popular-leagues");
+const homeLeagueTiles = (popularLeaguesMenu?.menuItems ?? [])
+  .map((item) => ({
+    label: item.label,
+    path: cmsLinkToPath(item.url) ?? "",
+  }))
+  .filter((tile) => tile.label && tile.path);
+
+function toTitleCase(value: string) {
+  return value.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
 ---
 
 <BaseLayout
@@ -57,32 +80,36 @@ const sections = latestBySport.map((section) => ({
     <p class="hero-be">18+ &middot; Please gamble responsibly &middot; BeGambleAware.org</p>
   </section>
 
-  <section class="section sports-band" aria-labelledby="sports-heading">
-    <header class="section-head">
-      <p class="eyebrow">Browse by sport</p>
-      <h2 id="sports-heading">Most Popular Sports Tips</h2>
-    </header>
-    <div class="sport-tiles">
-      {homeSports.map((sport) => (
-        <a class="sport-tile" href={sport.path}>
-          <span class="sport-label">{sport.label}</span>
-          <span class="sport-arrow" aria-hidden="true">&rarr;</span>
-        </a>
-      ))}
-    </div>
-  </section>
+  {homeSportTiles.length > 0 && (
+    <section class="section sports-band" aria-labelledby="sports-heading">
+      <header class="section-head">
+        <p class="eyebrow">Browse by sport</p>
+        <h2 id="sports-heading">Most Popular Sports Tips</h2>
+      </header>
+      <div class="sport-tiles">
+        {homeSportTiles.map((sport) => (
+          <a class="sport-tile" href={sport.path}>
+            <span class="sport-label">{sport.label}</span>
+            <span class="sport-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 
-  <section class="section leagues-band" aria-labelledby="leagues-heading">
-    <header class="section-head">
-      <p class="eyebrow">Most popular football</p>
-      <h2 id="leagues-heading">Most Popular Football League Betting Tips</h2>
-    </header>
-    <div class="league-tiles">
-      {homeLeagues.map((league) => (
-        <a class="league-tile" href={league.path}>{league.label}</a>
-      ))}
-    </div>
-  </section>
+  {homeLeagueTiles.length > 0 && (
+    <section class="section leagues-band" aria-labelledby="leagues-heading">
+      <header class="section-head">
+        <p class="eyebrow">Most popular football</p>
+        <h2 id="leagues-heading">{popularLeaguesMenu?.name || "Most Popular Football League Betting Tips"}</h2>
+      </header>
+      <div class="league-tiles">
+        {homeLeagueTiles.map((league) => (
+          <a class="league-tile" href={league.path}>{league.label}</a>
+        ))}
+      </div>
+    </section>
+  )}
 
   {sections.map((section) => (
     <section class="section latest-section" aria-labelledby={`latest-${section.slug}`}>
@@ -103,20 +130,6 @@ const sections = latestBySport.map((section) => ({
     </section>
   ))}
 
-  <section class="section regions-section" aria-labelledby="regions-heading">
-    <header class="section-head">
-      <p class="eyebrow">Country &amp; region coverage</p>
-      <h2 id="regions-heading">Top 27 Football Betting Regions &amp; Leagues</h2>
-    </header>
-    <div class="regions-grid">
-      {homeRegions.map((region) => (
-        <a class="region-card" href={region.path}>
-          <strong>{region.label}</strong>
-          <span>{region.blurb}</span>
-        </a>
-      ))}
-    </div>
-  </section>
 </BaseLayout>
 
 <style>
@@ -319,39 +332,4 @@ const sections = latestBySport.map((section) => ({
     color: #fff;
   }
 
-  /* REGIONS GRID */
-  .regions-grid {
-    display: grid;
-    gap: 0.75rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .region-card {
-    background: var(--ot-surface);
-    border: 1px solid var(--ot-border);
-    border-top: 3px solid var(--ot-brand-blue);
-    border-radius: var(--ot-radius);
-    box-shadow: var(--ot-shadow-sm);
-    color: var(--ot-text);
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    padding: 1rem 1.1rem;
-    text-decoration: none;
-    transition: border-top-color 140ms ease, transform 140ms ease;
-  }
-  .region-card:hover {
-    border-top-color: var(--ot-brand-orange);
-    transform: translateY(-2px);
-  }
-  .region-card strong {
-    color: var(--ot-brand-blue-dark);
-    font-size: 0.98rem;
-  }
-  .region-card span {
-    color: var(--ot-text-2);
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-  @media (max-width: 880px) { .regions-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .regions-grid { grid-template-columns: 1fr; } }
 </style>
