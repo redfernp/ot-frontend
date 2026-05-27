@@ -106,6 +106,10 @@ const heroLede =
     flex-direction: column;
     gap: 1.75rem;
     min-width: 0;
+    /* Grid column gives us minmax(0, 1fr) but a flex column container with
+       wide intrinsic content (DateRail's 3290px-wide scrollable list) blows
+       past the column allocation. width: 100% pins us to the column width. */
+    width: 100%;
   }
 
   /* POST LIST (matches football post-list pattern) */
