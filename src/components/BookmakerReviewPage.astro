@@ -3,6 +3,7 @@ export type Bookmaker = {
   slug: string;
   brand: string;
   color: string;
+  offerHref?: string;
   rating: number;
   tagline: string;
   established: string;
@@ -23,6 +24,7 @@ export type Bookmaker = {
   scores: Array<{ label: string; value: number }>;
   sections: Array<{ id: string; title: string; body: string }>;
   faqs: Array<{ q: string; a: string }>;
+  verdict?: string;
 };
 
 type Props = {
@@ -31,6 +33,11 @@ type Props = {
 
 const { bookmaker } = Astro.props;
 const ratingPct = (bookmaker.rating / 5) * 100;
+const offerHref = bookmaker.offerHref ?? "#bonus";
+const isExternalOffer = /^https?:\/\//.test(offerHref);
+const offerRel = isExternalOffer ? "nofollow sponsored noopener" : "nofollow";
+const offerTarget = isExternalOffer ? "_blank" : undefined;
+const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker.rating.toFixed(1)} on the Oddstips scorecard. It is a strong option for the markets and audience covered above. If the welcome offer suits you, claim it via the button below; otherwise compare alternatives on our free bets page.`;
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -64,7 +71,7 @@ const ratingPct = (bookmaker.rating / 5) * 100;
       <div class="hero-cta-block">
         <span class="bonus-tag">Welcome offer</span>
         <p class="bonus-headline">{bookmaker.bonus.headline}</p>
-        <a class="cta" href="#bonus" rel="nofollow">{bookmaker.bonus.cta}</a>
+        <a class="cta" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
         <p class="bonus-terms">{bookmaker.bonus.terms}</p>
       </div>
     </aside>
@@ -111,7 +118,7 @@ const ratingPct = (bookmaker.rating / 5) * 100;
     <div class="bonus-cta-card">
       <span class="logo logo-lg">{bookmaker.brand.slice(0, 2).toUpperCase()}</span>
       <strong>{bookmaker.brand}</strong>
-      <a class="cta cta-block" href="#" rel="nofollow">{bookmaker.bonus.cta}</a>
+      <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
       <p>18+. T&amp;Cs apply.</p>
     </div>
   </section>
@@ -154,12 +161,8 @@ const ratingPct = (bookmaker.rating / 5) * 100;
         </div>
         <div>
           <h2 id="verdict-heading">Oddstips verdict</h2>
-          <p>
-            {bookmaker.brand} earns a {bookmaker.rating.toFixed(1)} on the Oddstips scorecard. It's a top recommendation
-            for the markets and audience covered in the sections above. If the welcome offer suits you, claim it via the
-            button below; otherwise compare alternatives on our <a href="/free-bets/">free bets page</a>.
-          </p>
-          <a class="cta" href="#" rel="nofollow">{bookmaker.bonus.cta}</a>
+          <p set:html={verdictCopy} />
+          <a class="cta" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
         </div>
       </section>
 
@@ -187,7 +190,7 @@ const ratingPct = (bookmaker.rating / 5) * 100;
           <small>{bookmaker.rating.toFixed(1)} / 5</small>
         </div>
         <p class="sidebar-headline">{bookmaker.bonus.headline}</p>
-        <a class="cta cta-block" href="#bonus" rel="nofollow">{bookmaker.bonus.cta}</a>
+        <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
         <p class="card-terms">18+. T&amp;Cs apply.</p>
       </div>
 
@@ -208,7 +211,7 @@ const ratingPct = (bookmaker.rating / 5) * 100;
     <strong>{bookmaker.brand}</strong>
     <span>{bookmaker.bonus.headline}</span>
   </div>
-  <a href="#bonus" rel="nofollow">{bookmaker.bonus.cta}</a>
+  <a href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
 </div>
 
 <style>

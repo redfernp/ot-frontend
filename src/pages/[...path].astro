@@ -5,6 +5,7 @@ import FootballHubPage from "@/components/FootballHubPage.astro";
 import GenericPage from "@/components/GenericPage.astro";
 import TennisHubPage from "@/components/TennisHubPage.astro";
 import TipPostPage from "@/components/TipPostPage.astro";
+import { bookmakers } from "@/lib/bookmakers";
 import { getCategory, getPage, getPages, getPost, getRelatedPosts, type WpPost } from "@/lib/graphql";
 import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
 import { placeholderRelatedTips, placeholderTennisTips } from "@/lib/relatedTips";
@@ -114,11 +115,11 @@ export async function getStaticPaths() {
     ...priorityCategoryRoutes.map((route) => ({ ...route, routeType: "category" as const })),
     ...priorityPostRoutes.map((route) => ({ ...route, routeType: "post" as const })),
   ];
+  const reviewPaths = Object.keys(bookmakers).map((slug) => `reviews/${slug}`);
   const reservedPaths = new Set([
     "",
     "free-bets",
-    "reviews/bet365",
-    "reviews/william-hill",
+    ...reviewPaths,
     ...routes.map((route) => route.path),
   ]);
   const wordpressPages = await getPages();
