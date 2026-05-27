@@ -5,10 +5,6 @@ import DateRail from "@/components/DateRail.astro";
 import { getInternationalTips, type WpCategory, type WpPost } from "@/lib/graphql";
 import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
-import { footballByRegion, footballPopularLeagues } from "@/lib/siteNav";
-import { topDivisions } from "@/lib/topDivisions";
-
-const topLeaguesSorted = [...topDivisions].sort((a, b) => a.league.localeCompare(b.league));
 
 // Reads ACF Pro fields category_top_seo_text + category_bottom_seo_text from WP.
 // Falls back to src/lib/categorySeoCopy for dev preview / unpopulated categories.
@@ -43,9 +39,6 @@ const liveInternational = await getInternationalTips(6).catch(() => []);
 const internationalPosts = liveInternational.length || !hasWpGraphQL
   ? (liveInternational.length ? liveInternational : placeholderInternationalTips)
   : [];
-
-// Top inline league chips for the hero (popular subset, taken from real IA)
-const heroLeagueChips = footballPopularLeagues.slice(0, 8);
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -64,14 +57,9 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
       <p class="hub-lede" set:html={category.description} />
     ) : (
       <p class="hub-lede">
-        Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with Bet365 odds, value angles and accumulator picks. Pick a league below or browse the latest predictions.
+        Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with Bet365 odds, value angles and accumulator picks. Browse the latest predictions below.
       </p>
     )}
-    <ul class="hero-chips">
-      {heroLeagueChips.map((link) => (
-        <li><a href={link.path}>{link.label}</a></li>
-      ))}
-    </ul>
   </div>
   <div class="hub-hero-pattern" aria-hidden="true"></div>
 </header>
@@ -121,53 +109,6 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
         <div class="seo-prose" set:html={bottomSeo} />
       </section>
     )}
-
-    <section class="by-region nav-block" aria-labelledby="by-region-heading">
-      <p class="block-eyebrow">Every country covered</p>
-      <h2 id="by-region-heading">Every Football Betting Tip By Country</h2>
-      <div class="region-grid">
-        <div>
-          <h3>European Football Betting Tips</h3>
-          <ul class="region-list">
-            {footballByRegion.european.map((link) => (
-              <li><a href={link.path}>{link.label}</a></li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3>Americas Football Betting Tips</h3>
-          <ul class="region-list">
-            {footballByRegion.americas.map((link) => (
-              <li><a href={link.path}>{link.label}</a></li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3>Rest Of World Football Betting Tips</h3>
-          <ul class="region-list">
-            {footballByRegion.restOfWorld.map((link) => (
-              <li><a href={link.path}>{link.label}</a></li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section class="all-top-leagues nav-block" aria-labelledby="all-top-leagues-heading">
-      <p class="block-eyebrow">Top flights</p>
-      <h2 id="all-top-leagues-heading">All Top Leagues</h2>
-      <p class="block-sub">The first-tier league for every country we cover. Pick a league for that division's tips.</p>
-      <ul class="region-list top-leagues-list">
-        {topLeaguesSorted.map((div) => (
-          <li>
-            <a href={div.leaguePath}>
-              <span>{div.league}</span>
-              <small>{div.country}</small>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
   </main>
 
   <CategorySidebar currentPath={category.uri} />
@@ -225,7 +166,7 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
     color: #d5e7f7;
     font-size: 1rem;
     line-height: 1.6;
-    margin: 0 0 1.4rem;
+    margin: 0;
     max-width: 64ch;
   }
   .hub-lede :global(p) {
@@ -244,30 +185,6 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
     text-decoration-color: var(--ot-brand-orange);
   }
   .hub-lede :global(strong) { color: #fff; }
-  .hero-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .hero-chips a {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    color: #fff;
-    display: inline-block;
-    font-size: 0.82rem;
-    font-weight: 700;
-    padding: 0.35rem 0.85rem;
-    text-decoration: none;
-    transition: background 120ms ease, border-color 120ms ease;
-  }
-  .hero-chips a:hover {
-    background: var(--ot-brand-orange);
-    border-color: var(--ot-brand-orange);
-  }
 
   .hub-layout {
     display: grid;
@@ -279,27 +196,6 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
     display: grid;
     gap: 1.75rem;
     min-width: 0;
-  }
-
-  .section-head { margin-bottom: 1rem; }
-  .section-head h2 {
-    color: var(--ot-text);
-    font-size: clamp(1.3rem, 2.2vw, 1.6rem);
-    margin: 0;
-  }
-  .section-sub {
-    color: var(--ot-muted);
-    font-size: 0.92rem;
-    margin: 0.4rem 0 0;
-    max-width: 60ch;
-  }
-  .block-eyebrow {
-    color: var(--ot-brand-blue);
-    font-size: 0.72rem;
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    margin: 0 0 0.3rem;
-    text-transform: uppercase;
   }
 
   /* POST LIST */
@@ -349,20 +245,6 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
     font-size: 0.95rem;
     margin: 0;
     padding: 1.5rem 1.25rem;
-  }
-
-  /* NAV BLOCK (reused for region grid) */
-  .nav-block {
-    background: var(--ot-surface);
-    border: 1px solid var(--ot-border);
-    border-radius: var(--ot-radius);
-    box-shadow: var(--ot-shadow-sm);
-    padding: 1.25rem 1.4rem;
-  }
-  .nav-block h2 {
-    color: var(--ot-text);
-    font-size: 1.25rem;
-    margin: 0 0 1rem;
   }
 
   /* SEO CONTENT */
@@ -456,84 +338,8 @@ const heroLeagueChips = footballPopularLeagues.slice(0, 8);
     width: 22px;
   }
 
-  /* REGION GRID */
-  .by-region .region-grid {
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .by-region h3 {
-    border-bottom: 2px solid var(--ot-brand-blue-soft);
-    color: var(--ot-brand-blue-dark);
-    font-size: 1rem;
-    margin: 0 0 0.65rem;
-    padding-bottom: 0.4rem;
-  }
-  .region-list {
-    columns: 1;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .region-list li a {
-    border-bottom: 1px solid var(--ot-border);
-    color: var(--ot-brand-blue);
-    display: block;
-    font-size: 0.88rem;
-    padding: 0.4rem 0;
-    text-decoration: none;
-  }
-  .region-list li:last-child a { border-bottom: 0; }
-  .region-list li a:hover {
-    color: var(--ot-brand-blue-dark);
-    text-decoration: underline;
-  }
-
-  /* ALL TOP LEAGUES */
-  .all-top-leagues .block-sub {
-    color: var(--ot-muted);
-    font-size: 0.92rem;
-    margin: 0 0 1.1rem;
-    max-width: 60ch;
-  }
-  .top-leagues-list {
-    column-count: 3;
-    column-gap: 1.5rem;
-  }
-  .top-leagues-list li {
-    break-inside: avoid;
-  }
-  .top-leagues-list li a {
-    align-items: baseline;
-    display: flex;
-    gap: 0.4rem;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-  }
-  .top-leagues-list li a span {
-    color: var(--ot-brand-blue);
-    font-size: 0.92rem;
-    font-weight: 700;
-  }
-  .top-leagues-list li a small {
-    color: var(--ot-muted);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .top-leagues-list li a:hover span { color: var(--ot-brand-blue-dark); text-decoration: underline; }
-  .top-leagues-list li a:hover small { color: var(--ot-brand-orange); }
-
-  @media (max-width: 1024px) {
-    .by-region .region-grid { grid-template-columns: repeat(2, 1fr); }
-    .top-leagues-list { column-count: 2; }
-  }
   @media (max-width: 880px) {
     .hub-layout { grid-template-columns: 1fr; }
-    .by-region .region-grid { grid-template-columns: 1fr; }
-    .top-leagues-list { column-count: 1; }
     .hub-hero-inner { padding: 1.75rem 1.5rem 1.5rem; }
     .seo-content { padding: 1.5rem 1.4rem; }
   }
