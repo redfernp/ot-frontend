@@ -1,0 +1,115 @@
+---
+import CouponRow from "@/components/CouponRow.astro";
+import type { WpPost } from "@/lib/graphql";
+
+// Shared list section used by every category-style page. Wraps a CouponRow
+// stream with the standard post-list chrome: eyebrow + heading + count + rows
+// + empty state. Date-filter data-* attributes drive the DateRail filtering JS.
+type Props = {
+  posts: WpPost[];
+  eyebrow: string;
+  // Default eyebrow tone is brand blue. Pass "orange" for sections we want to
+  // emphasise (internationals, primary sport-hub list).
+  eyebrowAccent?: "blue" | "orange";
+  heading: string;
+  // Unique id so the section heading can be linked from aria-labelledby.
+  headingId: string;
+  // Singular/plural labels for the count chip. Defaults to "tip" / "tips".
+  unit?: { singular: string; plural: string };
+  emptyText: string;
+  // Adds the orange top-border treatment used for the headline list on each
+  // sport hub.
+  featured?: boolean;
+};
+
+const {
+  posts,
+  eyebrow,
+  eyebrowAccent = "blue",
+  heading,
+  headingId,
+  unit = { singular: "tip", plural: "tips" },
+  emptyText,
+  featured = false,
+} = Astro.props;
+
+const count = posts.length;
+const unitLabel = count === 1 ? unit.singular : unit.plural;
+---
+
+<section
+  class:list={["post-list", { "is-featured": featured }]}
+  aria-labelledby={headingId}
+  data-date-filter-section
+>
+  <header class="post-list-head">
+    <p class:list={["eyebrow", { "on-orange": eyebrowAccent === "orange" }]}>{eyebrow}</p>
+    <h2 id={headingId}>{heading}</h2>
+    <p class="post-list-meta">
+      <span data-date-count data-singular={unit.singular} data-plural={unit.plural}>
+        {count} {unitLabel}
+      </span>
+    </p>
+  </header>
+  {count > 0 ? (
+    <div class="post-list-rows" data-date-filter-list>
+      {posts.map((post) => <CouponRow post={post} />)}
+    </div>
+  ) : null}
+  <p class="empty-state" data-date-empty hidden={count > 0}>{emptyText}</p>
+</section>
+
+<style>
+  .post-list {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .post-list.is-featured {
+    border-top: 4px solid var(--ot-brand-orange);
+  }
+
+  .post-list-head {
+    align-items: end;
+    background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    justify-content: space-between;
+    padding: 1.1rem 1.25rem;
+  }
+  .post-list-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+    width: 100%;
+  }
+  .post-list-head .eyebrow.on-orange { color: var(--ot-brand-orange); }
+  .post-list-head h2 {
+    color: var(--ot-text);
+    font-size: 1.15rem;
+    margin: 0.2rem 0 0;
+  }
+  .post-list-meta {
+    color: var(--ot-muted);
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  .post-list-rows {
+    display: grid;
+  }
+
+  .empty-state {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
+  }
+</style>

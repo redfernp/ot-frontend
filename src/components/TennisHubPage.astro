@@ -1,8 +1,8 @@
 ---
-import CouponRow from "@/components/CouponRow.astro";
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import DateRail from "@/components/DateRail.astro";
 import HubHero from "@/components/HubHero.astro";
+import TipListSection from "@/components/TipListSection.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderTennisTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
@@ -57,23 +57,16 @@ const heroLede =
   <main class="hub-main">
     <DateRail />
 
-    <section class="post-list sport-list" aria-labelledby="latest-sport-heading" data-date-filter-section>
-      <header class="post-list-head">
-        <p class="eyebrow on-orange">{categoryName} tips</p>
-        <h2 id="latest-sport-heading">{categoryName} Predictions</h2>
-        <p class="post-list-meta">
-          <span data-date-count data-singular="match" data-plural="matches">
-            {posts.length} {posts.length === 1 ? "match" : "matches"}
-          </span>
-        </p>
-      </header>
-      {posts.length > 0 ? (
-        <div class="post-list-rows" data-date-filter-list>
-          {posts.map((post) => <CouponRow post={post} />)}
-        </div>
-      ) : null}
-      <p class="empty-state" data-date-empty hidden={posts.length > 0}>No {sportLabel} tips found for this date. Try another date.</p>
-    </section>
+    <TipListSection
+      posts={posts}
+      eyebrow={`${categoryName} tips`}
+      eyebrowAccent="orange"
+      heading={`${categoryName} Predictions`}
+      headingId="latest-sport-heading"
+      unit={{ singular: "match", plural: "matches" }}
+      emptyText={`No ${sportLabel} tips found for this date. Try another date.`}
+      featured
+    />
 
     {bottomSeo && (
       <section class="seo-content" aria-label="Category guide">
@@ -110,52 +103,6 @@ const heroLede =
        wide intrinsic content (DateRail's 3290px-wide scrollable list) blows
        past the column allocation. width: 100% pins us to the column width. */
     width: 100%;
-  }
-
-  /* POST LIST (matches football post-list pattern) */
-  .post-list {
-    background: var(--ot-surface);
-    border: 1px solid var(--ot-border);
-    border-radius: var(--ot-radius);
-    box-shadow: var(--ot-shadow-sm);
-    overflow: hidden;
-  }
-  .sport-list { border-top: 4px solid var(--ot-brand-orange); }
-  .post-list-head {
-    align-items: end;
-    background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);
-    border-bottom: 1px solid var(--ot-border);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1rem;
-    justify-content: space-between;
-    padding: 1.1rem 1.25rem;
-  }
-  .post-list-head .eyebrow {
-    color: var(--ot-brand-blue);
-    font-size: 0.7rem;
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    margin: 0;
-    text-transform: uppercase;
-    width: 100%;
-  }
-  .post-list-head .eyebrow.on-orange { color: var(--ot-brand-orange); }
-  .post-list-head h2 {
-    color: var(--ot-text);
-    font-size: 1.15rem;
-    margin: 0.2rem 0 0;
-  }
-  .post-list-meta {
-    color: var(--ot-muted);
-    font-size: 0.8rem;
-    margin: 0;
-  }
-  .empty-state {
-    color: var(--ot-muted);
-    font-size: 0.95rem;
-    margin: 0;
-    padding: 1.5rem 1.25rem;
   }
 
   /* SEO CONTENT (matches football SEO content pattern) */
