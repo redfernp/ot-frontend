@@ -208,7 +208,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
 
 <a class="sticky-cta" href={offerHref} rel={offerRel} target={offerTarget}>
   <strong>{bookmaker.brand}</strong>
-  <span>- Claim Welcome Offer</span>
+  <span>Claim Welcome Offer</span>
 </a>
 
 <style>
@@ -576,7 +576,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
     color: #fff;
     display: none;
     gap: 1rem;
-    justify-content: center;
+    justify-content: space-between;
     left: 0;
     padding: 0.65rem 0.85rem;
     position: fixed;
@@ -585,6 +585,15 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
     z-index: 40;
   }
   .sticky-cta strong { color: #fff; font-size: 0.95rem; }
-  .sticky-cta span { color: #aab8d3; font-size: 0.95rem; font-weight: 800; }
+  .sticky-cta span {
+    background: var(--ot-green);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 900;
+    margin-left: auto;
+    padding: 0.6rem 1rem;
+  }
+  .sticky-cta:hover span { background: var(--ot-green-2); }
   @media (max-width: 880px) { .sticky-cta { display: flex; } }
 </style>
