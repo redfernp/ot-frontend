@@ -1,5 +1,6 @@
 ---
 import type { SeoFields } from "@/lib/graphql";
+import { rewriteCmsLink } from "@/lib/cmsContent";
 
 type Props = {
   title?: string;
@@ -12,7 +13,8 @@ type Props = {
 const { title, description, canonical, seo, noindex = true } = Astro.props;
 const pageTitle = seo?.title || title || "Oddstips";
 const pageDescription = seo?.metaDesc || description;
-const canonicalUrl = seo?.canonical || canonical;
+const canonicalUrl = rewriteCmsLink(seo?.canonical || canonical);
+const ogImage = rewriteCmsLink(seo?.opengraphImage?.sourceUrl);
 ---
 
 <title>{pageTitle}</title>
@@ -23,7 +25,7 @@ const canonicalUrl = seo?.canonical || canonical;
 {(seo?.opengraphDescription || pageDescription) && (
   <meta property="og:description" content={seo?.opengraphDescription || pageDescription} />
 )}
-{seo?.opengraphImage?.sourceUrl && <meta property="og:image" content={seo.opengraphImage.sourceUrl} />}
+{ogImage && <meta property="og:image" content={ogImage} />}
 <meta name="twitter:card" content={seo?.opengraphImage?.sourceUrl ? "summary_large_image" : "summary"} />
 <meta name="twitter:title" content={seo?.twitterTitle || seo?.opengraphTitle || pageTitle} />
 {(seo?.twitterDescription || seo?.opengraphDescription || pageDescription) && (
