@@ -69,25 +69,6 @@ export const homeRegions: NavLinkWithBlurb[] = [
   { label: "Irish Football Tips", path: "/football/ireland/", blurb: "Free Tips for all football games in Ireland, including Irish Premier League." },
 ];
 
-export const footballPopularLeagues: NavLink[] = [
-  { label: "English Premier League", path: "/football/united-kingdom/england-premier-league/" },
-  { label: "England Championship", path: "/football/united-kingdom/england-championship/" },
-  { label: "Spanish Primera Liga", path: "/football/spain/spain-primera-liga/" },
-  { label: "Italian Serie A", path: "/football/italy/italy-serie-a/" },
-  { label: "Italy Serie B", path: "/football/italy/italy-serie-b/" },
-  { label: "French Ligue 1", path: "/football/france/france-ligue-1/" },
-  { label: "German Bundesliga", path: "/football/germany/germany-bundesliga-i/" },
-  { label: "Scotland Premiership", path: "/football/united-kingdom/scotland-premiership/" },
-  { label: "UEFA Champions League", path: "/football/uefa/uefa-champions-league/" },
-  { label: "UEFA Europa League", path: "/football/uefa/uefa-europa-league/" },
-  { label: "UEFA Europa Conference League", path: "/football/uefa/uefa-europa-conference-league/" },
-  { label: "UEFA Champions League Qualifying", path: "/football/uefa/uefa-champions-league-qualifying/" },
-  { label: "UEFA Europa League Qualifying", path: "/football/uefa/uefa-europa-league-qualifying/" },
-  { label: "UEFA Europa Conference League Qualifying", path: "/football/uefa/uefa-europa-conference-league-qualifying/" },
-  { label: "England League 1", path: "/football/united-kingdom/england-league-1/" },
-  { label: "England League 2", path: "/football/united-kingdom/england-league-2/" },
-];
-
 export const footballCountries: CountryGroup[] = [
   {
     country: "United Kingdom",
@@ -166,16 +147,6 @@ export const footballCountries: CountryGroup[] = [
       { label: "Europe Friendlies", path: "/football/international/europe-friendlies/" },
     ],
   },
-];
-
-export const footballInternational: NavLink[] = [
-  { label: "World Cup", path: "/football/international/world-cup/" },
-  { label: "European Friendlies", path: "/football/international/europe-friendlies/" },
-  { label: "International Friendlies", path: "/football/international/international-match/" },
-  { label: "FIFA Club World Cup", path: "/football/international/fifa-club-world-cup/" },
-  { label: "CECAFA Cup", path: "/football/international/cecafa-cup/" },
-  { label: "U20 International", path: "/football/international/u20-international/" },
-  { label: "Cosafa U20", path: "/football/international/cosafa-u20-cup/" },
 ];
 
 export const footballByRegion: { european: NavLink[]; americas: NavLink[]; restOfWorld: NavLink[] } = {

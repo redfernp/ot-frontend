@@ -57,6 +57,27 @@ export function rewriteCmsLink(url?: string | null) {
   return url;
 }
 
+// WP menu items return absolute URLs to the Cloudways origin. For internal
+// links we want relative paths so they survive any future domain change
+// without rewriting. External URLs (e.g. affiliate links) stay absolute.
+export function cmsLinkToPath(url?: string | null) {
+  if (!url) {
+    return url ?? undefined;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (knownCmsOrigins().has(parsed.origin)) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+  } catch {
+    return url;
+  }
+
+  return url;
+}
+
 export function rewriteCmsAssetUrls(html = "") {
   const uploadPath = "/wp-content/uploads/";
   const sourceOrigins = new Set([

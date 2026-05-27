@@ -625,3 +625,94 @@ export async function getPages(limit = 100) {
 
   return pages;
 }
+
+export type WpMenuItem = {
+  id: string;
+  databaseId?: number;
+  label: string;
+  url?: string | null;
+  parentDatabaseId?: number | null;
+};
+
+export type WpMenu = {
+  databaseId: number;
+  name: string;
+  slug: string;
+  menuItems: WpMenuItem[];
+};
+
+// Module-level cache so each menu is fetched once per build, not once per page
+// render. CategorySidebar renders on every category / sub-category route, so the
+// same two slugs (popular-leagues, international-games) would otherwise turn
+// into ~30 redundant GraphQL calls per build.
+const menuCache = new Map<string, Promise<WpMenu | null>>();
+
+async function fetchMenu(slug: string): Promise<WpMenu | null> {
+  type MenuResponse = {
+    menus?: {
+      nodes: Array<{
+        databaseId: number;
+        name: string;
+        slug: string;
+        menuItems?: {
+          nodes: Array<{
+            id: string;
+            databaseId?: number;
+            label?: string | null;
+            url?: string | null;
+            parentDatabaseId?: number | null;
+          }>;
+        };
+      }>;
+    };
+  };
+
+  const data = await wpGraphQL<MenuResponse>(
+    `query MenuBySlug($slug: String!) {
+      menus(where: { slug: $slug }) {
+        nodes {
+          databaseId
+          name
+          slug
+          menuItems(first: 100) {
+            nodes {
+              id
+              databaseId
+              label
+              url
+              parentDatabaseId
+            }
+          }
+        }
+      }
+    }`,
+    { slug },
+  );
+
+  const node = data?.menus?.nodes?.[0];
+
+  if (!node) {
+    return null;
+  }
+
+  return {
+    databaseId: node.databaseId,
+    name: node.name,
+    slug: node.slug,
+    menuItems: (node.menuItems?.nodes ?? []).map((item) => ({
+      id: item.id,
+      databaseId: item.databaseId,
+      label: item.label ?? "",
+      url: item.url,
+      parentDatabaseId: item.parentDatabaseId ?? null,
+    })),
+  };
+}
+
+export function getMenu(slug: string): Promise<WpMenu | null> {
+  if (!menuCache.has(slug)) {
+    menuCache.set(slug, fetchMenu(slug).catch(() => null));
+  }
+
+  return menuCache.get(slug)!;
+}

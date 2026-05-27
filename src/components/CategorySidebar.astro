@@ -1,5 +1,6 @@
 ---
-import { footballInternational, footballPopularLeagues } from "@/lib/siteNav";
+import { getMenu } from "@/lib/graphql";
+import { cmsLinkToPath } from "@/lib/cmsContent";
 
 type Props = {
   showPopularLeagues?: boolean;
@@ -8,6 +9,28 @@ type Props = {
 };
 
 const { showPopularLeagues = true, showInternational = true, currentPath } = Astro.props;
+
+// Pull menus from WordPress (Appearance > Menus). Slugs are auto-generated from
+// the menu name; they must stay in sync with WP. The getMenu helper caches the
+// fetch per slug across the build so each menu only hits WPGraphQL once.
+const popularLeaguesMenu = showPopularLeagues ? await getMenu("popular-leagues") : null;
+const internationalMenu = showInternational ? await getMenu("international-games") : null;
+
+type SidebarLink = { label: string; path: string };
+
+function menuToLinks(menu: Awaited<ReturnType<typeof getMenu>>): SidebarLink[] {
+  if (!menu) return [];
+
+  return menu.menuItems
+    .map((item) => ({
+      label: (item.label ?? "").trim(),
+      path: cmsLinkToPath(item.url) ?? "",
+    }))
+    .filter((link) => link.label && link.path);
+}
+
+const popularLeaguesLinks = menuToLinks(popularLeaguesMenu);
+const internationalLinks = menuToLinks(internationalMenu);
 ---
 
 <aside class="cat-sidebar" aria-label="League navigation">
@@ -40,11 +63,11 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
     </button>
   </form>
 
-  {showPopularLeagues && (
+  {showPopularLeagues && popularLeaguesLinks.length > 0 && (
     <div class="sidebar-block">
-      <p class="sidebar-eyebrow">Popular Leagues</p>
+      <p class="sidebar-eyebrow">{popularLeaguesMenu?.name || "Popular Leagues"}</p>
       <ul>
-        {footballPopularLeagues.map((link) => (
+        {popularLeaguesLinks.map((link) => (
           <li>
             <a href={link.path} class:list={{ "is-current": currentPath === link.path }}>
               {link.label}
@@ -55,11 +78,11 @@ const { showPopularLeagues = true, showInternational = true, currentPath } = Ast
     </div>
   )}
 
-  {showInternational && (
+  {showInternational && internationalLinks.length > 0 && (
     <div class="sidebar-block">
-      <p class="sidebar-eyebrow">International Games</p>
+      <p class="sidebar-eyebrow">{internationalMenu?.name || "International Games"}</p>
       <ul>
-        {footballInternational.map((link) => (
+        {internationalLinks.map((link) => (
           <li>
             <a href={link.path} class:list={{ "is-current": currentPath === link.path }}>
               {link.label}
