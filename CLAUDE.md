@@ -2,6 +2,10 @@
 
 Astro headless frontend for Oddstips, powered by WordPress + WPGraphQL.
 
+## Current Continuation Plan
+
+Read `HANDOFF.md` first. It contains the current Claude Code handoff, latest deployed commits, live verification notes, user requirements, and the full technical plan for the next coding/design pass.
+
 ## Repo & Local
 
 - Repo: https://github.com/redfernp/ot-frontend
