@@ -1,0 +1,92 @@
+---
+// Shared brand-blue hero used at the top of every category-style page (sport
+// hubs, sub-categories, leagues). Uniform header treatment so a visit to
+// /football/ and a visit to /football/.../england-premier-league/ feel like
+// the same product.
+type Props = {
+  eyebrow: string;
+  heading: string;
+  // Pre-composed HTML for the lede paragraph(s). Callers should resolve their
+  // own ACF / category.description / fallback chain and hand the result in.
+  // Empty string or undefined hides the lede entirely.
+  ledeHtml?: string;
+};
+
+const { eyebrow, heading, ledeHtml } = Astro.props;
+---
+
+<header class="hub-hero">
+  <div class="hub-hero-inner">
+    <p class="hero-eyebrow">{eyebrow}</p>
+    <h1>{heading}</h1>
+    {ledeHtml && <div class="hub-lede" set:html={ledeHtml} />}
+  </div>
+  <div class="hub-hero-pattern" aria-hidden="true"></div>
+</header>
+
+<style>
+  .hub-hero {
+    background: linear-gradient(135deg, var(--ot-brand-blue) 0%, var(--ot-brand-blue-dark) 100%);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    position: relative;
+  }
+  .hub-hero-pattern {
+    background:
+      radial-gradient(circle at 18px 18px, rgba(255, 255, 255, 0.07) 1.2px, transparent 1.6px) 0 0 / 28px 28px,
+      radial-gradient(900px 240px at 100% 0%, rgba(245, 99, 0, 0.35), transparent 60%);
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+  }
+  .hub-hero-inner {
+    padding: 2.25rem 2rem 1.75rem;
+    position: relative;
+    z-index: 1;
+  }
+  .hub-hero h1 {
+    color: #fff;
+    font-size: clamp(1.65rem, 3vw, 2.5rem);
+    line-height: 1.12;
+    margin: 0 0 0.85rem;
+    max-width: 36ch;
+  }
+  .hero-eyebrow {
+    color: var(--ot-brand-orange);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    margin: 0 0 0.6rem;
+    text-transform: uppercase;
+  }
+  .hub-lede {
+    color: #d5e7f7;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 64ch;
+  }
+  .hub-lede :global(p) {
+    color: #d5e7f7;
+    margin: 0 0 0.65rem;
+  }
+  .hub-lede :global(p:last-child) { margin-bottom: 0; }
+  .hub-lede :global(a) {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.55);
+  }
+  .hub-lede :global(a:hover) {
+    color: var(--ot-brand-orange);
+    text-decoration-color: var(--ot-brand-orange);
+  }
+  .hub-lede :global(strong) { color: #fff; }
+
+  @media (max-width: 880px) {
+    .hub-hero-inner { padding: 1.75rem 1.5rem 1.5rem; }
+  }
+</style>

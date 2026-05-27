@@ -2,6 +2,7 @@
 import CouponRow from "@/components/CouponRow.astro";
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import DateRail from "@/components/DateRail.astro";
+import HubHero from "@/components/HubHero.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
@@ -69,6 +70,13 @@ const isFootballCategory = sportName.toLowerCase() === "football";
 const heading = category.name
   ? `${category.name} ${sportName} Betting Tips & Predictions`
   : "Betting Tips & Predictions";
+
+// Wrap category.description in a <p> so HubHero's :global(p) styles still apply
+// if WP returns plain text rather than markup.
+const descriptionLede = category.description
+  ? (/^\s*<\w+/.test(category.description) ? category.description : `<p>${category.description}</p>`)
+  : "";
+const heroLede = topSeo || descriptionLede || "";
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -80,14 +88,11 @@ const heading = category.name
   ))}
 </nav>
 
-<header class="cat-header">
-  <h1>{heading}</h1>
-  {topSeo ? (
-    <div class="cat-top-seo" set:html={topSeo} />
-  ) : category.description ? (
-    <p class="cat-lede" set:html={category.description} />
-  ) : null}
-</header>
+<HubHero
+  eyebrow={`${sportName} betting`}
+  heading={heading}
+  ledeHtml={heroLede}
+/>
 
 <div class="cat-layout">
   <main class="cat-main">
@@ -134,41 +139,6 @@ const heading = category.name
   .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
   .breadcrumbs a:hover { text-decoration: underline; }
   .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
-
-  .cat-header {
-    border-bottom: 1px solid var(--ot-border);
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.25rem;
-  }
-  .cat-header h1 {
-    color: var(--ot-text);
-    font-size: clamp(1.65rem, 3vw, 2.2rem);
-    margin: 0;
-  }
-  .cat-lede {
-    color: var(--ot-text-2);
-    margin: 0.75rem 0 0;
-    max-width: 70ch;
-  }
-  .cat-top-seo {
-    color: var(--ot-text-2);
-    margin: 0.85rem 0 0;
-    max-width: 70ch;
-  }
-  .cat-top-seo :global(p) { margin: 0 0 0.65rem; }
-  .cat-top-seo :global(p:last-child) { margin-bottom: 0; }
-  .cat-top-seo :global(a) {
-    color: var(--ot-brand-blue);
-    font-weight: 700;
-    text-decoration: underline;
-    text-decoration-color: var(--ot-brand-blue-soft);
-    text-underline-offset: 3px;
-  }
-  .cat-top-seo :global(a:hover) {
-    color: var(--ot-brand-blue-dark);
-    text-decoration-color: var(--ot-brand-blue);
-  }
-  .cat-top-seo :global(strong) { color: var(--ot-text); }
 
   .cat-layout {
     display: grid;

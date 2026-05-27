@@ -2,6 +2,7 @@
 import CouponRow from "@/components/CouponRow.astro";
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import DateRail from "@/components/DateRail.astro";
+import HubHero from "@/components/HubHero.astro";
 import { getInternationalTips, type WpCategory, type WpPost } from "@/lib/graphql";
 import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
@@ -39,6 +40,11 @@ const liveInternational = await getInternationalTips(6).catch(() => []);
 const internationalPosts = liveInternational.length || !hasWpGraphQL
   ? (liveInternational.length ? liveInternational : placeholderInternationalTips)
   : [];
+
+const heroLede =
+  topSeo ||
+  category.description ||
+  "<p>Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with Bet365 odds, value angles and accumulator picks. Browse the latest predictions below.</p>";
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -47,22 +53,11 @@ const internationalPosts = liveInternational.length || !hasWpGraphQL
   <span aria-current="page">{categoryName}</span>
 </nav>
 
-<header class="hub-hero">
-  <div class="hub-hero-inner">
-    <p class="hero-eyebrow">Football 1x2 betting</p>
-    <h1>{categoryName} 1x2 Betting Tips &amp; Predictions</h1>
-    {topSeo ? (
-      <div class="hub-lede" set:html={topSeo} />
-    ) : category.description ? (
-      <p class="hub-lede" set:html={category.description} />
-    ) : (
-      <p class="hub-lede">
-        Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with Bet365 odds, value angles and accumulator picks. Browse the latest predictions below.
-      </p>
-    )}
-  </div>
-  <div class="hub-hero-pattern" aria-hidden="true"></div>
-</header>
+<HubHero
+  eyebrow="Football 1x2 betting"
+  heading={`${categoryName} 1x2 Betting Tips & Predictions`}
+  ledeHtml={heroLede}
+/>
 
 <div class="hub-layout">
   <main class="hub-main">
@@ -123,68 +118,6 @@ const internationalPosts = liveInternational.length || !hasWpGraphQL
   .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
   .breadcrumbs a:hover { text-decoration: underline; }
   .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
-
-  /* HERO */
-  .hub-hero {
-    background: linear-gradient(135deg, var(--ot-brand-blue) 0%, var(--ot-brand-blue-dark) 100%);
-    border-radius: var(--ot-radius);
-    color: #fff;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-    position: relative;
-  }
-  .hub-hero-pattern {
-    background:
-      radial-gradient(circle at 18px 18px, rgba(255, 255, 255, 0.07) 1.2px, transparent 1.6px) 0 0 / 28px 28px,
-      radial-gradient(900px 240px at 100% 0%, rgba(245, 99, 0, 0.35), transparent 60%);
-    inset: 0;
-    pointer-events: none;
-    position: absolute;
-    z-index: 0;
-  }
-  .hub-hero-inner {
-    padding: 2.25rem 2rem 1.75rem;
-    position: relative;
-    z-index: 1;
-  }
-  .hub-hero h1 {
-    color: #fff;
-    font-size: clamp(1.85rem, 3.2vw, 2.5rem);
-    line-height: 1.12;
-    margin: 0 0 0.85rem;
-    max-width: 28ch;
-  }
-  .hero-eyebrow {
-    color: var(--ot-brand-orange);
-    font-size: 0.72rem;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    margin: 0 0 0.6rem;
-    text-transform: uppercase;
-  }
-  .hub-lede {
-    color: #d5e7f7;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin: 0;
-    max-width: 64ch;
-  }
-  .hub-lede :global(p) {
-    color: #d5e7f7;
-    margin: 0 0 0.65rem;
-  }
-  .hub-lede :global(p:last-child) { margin-bottom: 0; }
-  .hub-lede :global(a) {
-    color: #fff;
-    font-weight: 700;
-    text-decoration: underline;
-    text-decoration-color: rgba(255, 255, 255, 0.55);
-  }
-  .hub-lede :global(a:hover) {
-    color: var(--ot-brand-orange);
-    text-decoration-color: var(--ot-brand-orange);
-  }
-  .hub-lede :global(strong) { color: #fff; }
 
   .hub-layout {
     display: grid;
@@ -340,7 +273,6 @@ const internationalPosts = liveInternational.length || !hasWpGraphQL
 
   @media (max-width: 880px) {
     .hub-layout { grid-template-columns: 1fr; }
-    .hub-hero-inner { padding: 1.75rem 1.5rem 1.5rem; }
     .seo-content { padding: 1.5rem 1.4rem; }
   }
 </style>
