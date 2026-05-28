@@ -1,0 +1,143 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import HubHero from "@/components/HubHero.astro";
+import { bookmakers } from "@/lib/bookmakers";
+import { publicSiteOrigin } from "@/lib/cmsContent";
+
+// List in descending rating order so the strongest reviews land at the top.
+const sortedReviews = Object.values(bookmakers).sort((a, b) => b.rating - a.rating);
+
+const canonical = `${publicSiteOrigin()}/reviews/`;
+---
+
+<BaseLayout
+  title="Bookmaker Reviews (May 2026) - Oddstips"
+  description="Read independent reviews of every UK bookmaker we list on Oddstips. Quick verdicts, ratings, app and payment notes and the welcome offer headline."
+  canonical={canonical}
+>
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="sep">/</span>
+    <span aria-current="page">Bookmaker reviews</span>
+  </nav>
+
+  <HubHero
+    eyebrow="Bookmaker reviews"
+    heading="Independent UK Bookmaker Reviews"
+    ledeHtml={`<p>Quick-scan verdicts on every bookmaker we list. Ratings cover odds quality, market depth, the welcome offer, mobile app, customer support and banking. Tap any review for the full breakdown.</p>`}
+  />
+
+  <ul class="review-grid">
+    {sortedReviews.map((bookmaker) => (
+      <li class="review-card" style={`--brand-color:${bookmaker.color}`}>
+        <a class="review-card-link" href={`/reviews/${bookmaker.slug}/`}>
+          <span class="brand">{bookmaker.brand}</span>
+          <div class="rating-row">
+            <strong>{bookmaker.rating.toFixed(1)}</strong>
+            <span class="rating-out">/ 5</span>
+          </div>
+          <p class="tagline">{bookmaker.tagline}</p>
+          <span class="cta-link">Read review &rarr;</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <p class="responsible">18+ only. Gamble responsibly. BeGambleAware.org. GamCare.org.uk.</p>
+</BaseLayout>
+
+<style>
+  .breadcrumbs {
+    color: var(--ot-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs a:hover { text-decoration: underline; }
+  .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
+
+  .review-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .review-card {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-top: 4px solid var(--brand-color, var(--ot-brand-blue));
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+    transition: transform 140ms ease, box-shadow 140ms ease;
+  }
+  .review-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(8, 34, 77, 0.08);
+  }
+
+  .review-card-link {
+    color: var(--ot-text);
+    display: grid;
+    gap: 0.55rem;
+    padding: 1.1rem 1.2rem 1.2rem;
+    text-decoration: none;
+  }
+
+  .brand {
+    color: var(--brand-color, var(--ot-brand-blue));
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+
+  .rating-row {
+    align-items: baseline;
+    display: flex;
+    gap: 0.3rem;
+  }
+  .rating-row strong {
+    color: var(--ot-text);
+    font-size: 1.3rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .rating-row .rating-out {
+    color: var(--ot-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .tagline {
+    color: var(--ot-text-2);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .cta-link {
+    color: var(--ot-brand-orange);
+    font-size: 0.88rem;
+    font-weight: 900;
+    margin-top: 0.4rem;
+  }
+  .review-card:hover .cta-link {
+    text-decoration: underline;
+  }
+
+  .responsible {
+    color: var(--ot-muted);
+    font-size: 0.78rem;
+    margin: 2rem 0 0;
+    text-align: center;
+  }
+
+  @media (max-width: 880px) {
+    .review-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .review-grid { grid-template-columns: 1fr; }
+  }
+</style>

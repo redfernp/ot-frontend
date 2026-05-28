@@ -14,7 +14,10 @@ function wordpressOriginFromEndpoint() {
   }
 }
 
-function publicSiteOrigin() {
+// Public frontend origin. PUBLIC_SITE_URL is set in .env / Cloudflare Pages env
+// (currently https://ot-frontend.pages.dev, later the real live domain). Falls
+// back to the public Oddstips origin used by asset rewriting.
+export function publicSiteOrigin() {
   const explicit = import.meta.env.PUBLIC_SITE_URL;
 
   if (explicit) {

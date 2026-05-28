@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BookmakerReviewPage from "@/components/BookmakerReviewPage.astro";
 import { bookmakers } from "@/lib/bookmakers";
+import { publicSiteOrigin } from "@/lib/cmsContent";
 
 export function getStaticPaths() {
   return Object.entries(bookmakers).map(([slug, bookmaker]) => ({
@@ -11,11 +12,13 @@ export function getStaticPaths() {
 }
 
 const { bookmaker } = Astro.props;
+const canonical = `${publicSiteOrigin()}/reviews/${bookmaker.slug}/`;
 ---
 
 <BaseLayout
   title={`${bookmaker.brand} Review (May 2026) - ${bookmaker.bonus.headline} - Oddstips`}
   description={`In-depth ${bookmaker.brand} review: welcome offer, odds quality, markets, banking and verdict. Updated for May 2026.`}
+  canonical={canonical}
 >
   <BookmakerReviewPage bookmaker={bookmaker} />
 </BaseLayout>
