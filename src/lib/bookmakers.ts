@@ -1,8 +1,10 @@
-// Bookmaker review fixtures. Currently hand-authored; planned to move to an ACF Pro
-// field group on a `bookmaker` CPT (see HANDOFF.md Codex TODO #7).
+// Bookmaker review data. Hand-authored in TypeScript; this is the production
+// data store, not a placeholder. WordPress does not have a Bookmaker custom
+// post type and there is no plan to add one. Edit reviews here, run a build,
+// and the live pages update.
 //
-// These reviews follow the recurring shape of the live UK search results: verdict, offer
-// terms, safety, markets, app, payments, pros/cons and practical FAQs.
+// Each entry follows the same shape: verdict, offer terms, safety, markets,
+// app, payments, pros/cons and practical FAQs.
 
 import type { Bookmaker } from "@/components/BookmakerReviewPage.astro";
 
