@@ -47,10 +47,10 @@ export const placeholderPost: WpPost = {
     <p><a href="https://www.bet365.com/dl/~offer?affiliate=365_643257" rel="nofollow">Back this tip with Bet365.</a></p>
     <h2>Related Reading</h2>
     <p><a href="https://www.oddstips.co.uk/best-football-betting-sites-uk/">Best Football Betting Sites UK</a></p>
-    <p><a href="https://www.everytip.co.uk/go/footballer-tips-tipstrr" rel="nofollow">Recommended Football Tipster - NEW TIPSTER ALERT</a></p>
-    <p><a href="https://www.everytip.co.uk/go/footballer-tips-tipstrr" rel="nofollow" target="_blank">Join The FOOTBALLER TIPS SERVICE Now - See WINNING GRAPH - UPDATED DAILY.</a></p>
+    <p><a href="/go/footballer-tips-tipstrr/" rel="nofollow">Recommended Football Tipster - NEW TIPSTER ALERT</a></p>
+    <p><a href="/go/footballer-tips-tipstrr/" rel="nofollow" target="_blank">Join The FOOTBALLER TIPS SERVICE Now - See WINNING GRAPH - UPDATED DAILY.</a></p>
     <p>
-      <a href="https://www.everytip.co.uk/go/footballer-tips-tipstrr" rel="nofollow" target="_blank">
+      <a href="/go/footballer-tips-tipstrr/" rel="nofollow" target="_blank">
         <img src="https://www.oddstips.co.uk/wp-content/uploads/2021/06/new-football-tipster.jpg" width="1992" height="1083" alt="Recommended football tipster results graph" />
       </a>
     </p>

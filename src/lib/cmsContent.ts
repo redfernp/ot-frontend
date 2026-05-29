@@ -1,3 +1,5 @@
+import { affiliateLinks } from "@/lib/affiliateLinks";
+
 const publicWordPressOrigin = "https://www.oddstips.co.uk";
 
 function wordpressOriginFromEndpoint() {
@@ -79,6 +81,35 @@ export function cmsLinkToPath(url?: string | null) {
   }
 
   return url;
+}
+
+// WP-authored HTML can contain bare EveryTip /go/ affiliate URLs (e.g. in
+// generic page bodies like /thanks-for-signing-up/). The site now self-hosts
+// the same cloak at oddstips.co.uk/go/{slug}/ with GA4 tracking, so rewrite
+// any matching link to the local cloak. Unknown slugs are left untouched: if
+// WP content links to an EveryTip slug we have not yet registered in
+// affiliateLinks, the original URL survives so the link still works.
+const everytipGoPattern = /https?:\/\/(?:www\.)?everytip\.co\.uk\/go\/([a-z0-9-]+)\/?/gi;
+
+function rewriteAffiliateLinksInHtml(html: string): string {
+  return html.replace(everytipGoPattern, (match, slug: string) => {
+    if (Object.prototype.hasOwnProperty.call(affiliateLinks, slug)) {
+      return `/go/${slug}/`;
+    }
+    return match;
+  });
+}
+
+// Single-call rewriter for WP-authored HTML content. Handles:
+//   - /wp-content/uploads/ asset URLs (swaps CMS origin for public origin)
+//   - EveryTip /go/{slug} affiliate URLs (swaps for the local /go/{slug}/ cloak)
+//
+// Apply this everywhere WP HTML is rendered via <... set:html={...} />. Today
+// that's only GenericPage. TipPostPage's lede/relatedReading and the category
+// SEO copy do not yet pass through here; extend as needed when content bleed
+// is observed.
+export function rewriteCmsHtml(html = "") {
+  return rewriteAffiliateLinksInHtml(rewriteCmsAssetUrls(html));
 }
 
 export function rewriteCmsAssetUrls(html = "") {

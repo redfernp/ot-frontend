@@ -1,0 +1,96 @@
+---
+// Affiliate cloak. Every outbound affiliate URL on Oddstips routes through
+// /go/{slug}/ so we can fire a GA4 affiliate_click event before navigating to
+// the partner network (currently EveryTip). The user lands here for a fraction
+// of a second, an event fires, then they redirect.
+//
+// Fallback chain (most reliable first):
+//   1. GA4 event_callback redirects once analytics confirms the event
+//   2. setTimeout 1000ms hard fallback in case event_callback never fires
+//      (no GA4 ID configured, GA4 blocked by adblocker, network failure)
+//   3. <meta http-equiv="refresh"> after 2s for users with JS disabled
+//
+// The page is noindex,nofollow so search engines don't index the cloak.
+import { affiliateLinks } from "@/lib/affiliateLinks";
+
+export function getStaticPaths() {
+  return Object.entries(affiliateLinks).map(([slug, link]) => ({
+    params: { slug },
+    props: { brand: link.brand, destination: link.destination, slug },
+  }));
+}
+
+const { brand, destination, slug } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta http-equiv="refresh" content={`2;url=${destination}`} />
+    <title>Redirecting to {brand} - Oddstips</title>
+    <link rel="canonical" href={destination} />
+    <style>
+      body {
+        align-items: center;
+        background: #f5f7fb;
+        color: #101828;
+        display: flex;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        font-size: 1rem;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+        padding: 2rem;
+        text-align: center;
+      }
+      h1 { color: #1e73be; font-size: 1.2rem; font-weight: 800; margin: 0 0 0.6rem; }
+      p { color: #5d697a; margin: 0; }
+      a { color: #f56300; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Redirecting to {brand}...</h1>
+      <p>
+        If you are not redirected automatically,
+        <a href={destination} rel="nofollow sponsored noopener">continue to {brand}</a>.
+      </p>
+    </main>
+
+    <script is:inline define:vars={{ slug, brand, destination }}>
+      (function () {
+        var redirected = false;
+        function go() {
+          if (redirected) return;
+          redirected = true;
+          window.location.replace(destination);
+        }
+
+        // Fire the GA4 event if gtag is available (PUBLIC_GA4_ID env var is set).
+        // event_callback redirects as soon as analytics confirms the beacon was
+        // sent. event_timeout caps the wait at 800ms so a slow/blocked GA4 does
+        // not delay the click significantly.
+        if (typeof window.gtag === "function") {
+          try {
+            window.gtag("event", "affiliate_click", {
+              affiliate_slug: slug,
+              affiliate_brand: brand,
+              affiliate_destination: destination,
+              event_callback: go,
+              event_timeout: 800,
+            });
+          } catch (e) {
+            // Fall through to the setTimeout fallback below.
+          }
+        }
+
+        // Hard fallback: always redirect within 1s, even if GA4 never loads
+        // or the callback never fires. Prevents users sitting on this page.
+        setTimeout(go, 1000);
+      })();
+    </script>
+  </body>
+</html>

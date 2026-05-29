@@ -1,6 +1,6 @@
 ---
 import type { WpPost } from "@/lib/graphql";
-import { rewriteCmsAssetUrls } from "@/lib/cmsContent";
+import { rewriteCmsHtml } from "@/lib/cmsContent";
 
 type Props = {
   page: WpPost;
@@ -31,7 +31,7 @@ const breadcrumbs = [
 const modified = page.modified
   ? new Date(page.modified).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
   : null;
-const pageContent = rewriteCmsAssetUrls(page.content || "<p>This page is being updated.</p>");
+const pageContent = rewriteCmsHtml(page.content || "<p>This page is being updated.</p>");
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
