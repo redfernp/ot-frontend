@@ -168,14 +168,29 @@ export async function wpGraphQL<T>(
         ...request,
         signal: controller?.signal,
         // Cloudflare-specific edge-cache hints. Ignored outside CF Workers
-        // (local dev, build host). cacheEverything makes POST responses
-        // cacheable; cacheTtl=300 matches the 5-minute Cache-Control we set
-        // on the SSR page response so WP data and page render expire together.
+        // (local dev, build host).
+        //
+        // cacheEverything makes POST responses cacheable at the edge.
+        // cacheKey gives each unique query+variables its own cache entry
+        // (without this, every WP query collapses into one /graphql cache
+        // slot because the URL is identical).
+        // cacheTtlByStatus FORCES the TTL regardless of the origin response's
+        // Cache-Control header. We use this rather than cacheTtl because
+        // Cloudways WP sets Cache-Control: max-age=0 on every GraphQL
+        // response, which would otherwise cause CF to never cache. 5xx and
+        // 4xx (other than 404) get a 0 TTL so errors do not stick.
         // @ts-expect-error - cf is a Cloudflare-specific RequestInit extension
         cf: {
           cacheEverything: true,
-          cacheTtl: 300,
           cacheKey,
+          cacheTtlByStatus: {
+            "200-299": 300,
+            "404": 60,
+            "300-399": 0,
+            "400-403": 0,
+            "405-499": 0,
+            "500-599": 0,
+          },
         },
       });
     } catch (error) {
