@@ -129,6 +129,64 @@ function todayDateQuery(timeZone = "Europe/London"): DateQuery {
   };
 }
 
+// Edge cache helpers. Cloudflare Pages Functions do not support the cf object
+// on outbound fetches (Workers-only feature), so we use the caches.default API
+// directly. Each unique query+variables combination gets a stable cache key
+// derived from the request body; cached entries live 5 minutes, matching the
+// Cache-Control we set on the SSR page response.
+//
+// caches.default is a Cloudflare runtime global. It is undefined in local dev
+// and during the static build, in which case these helpers no-op and every
+// query goes straight to WP.
+const EDGE_CACHE_TTL_SECONDS = 300;
+
+function edgeCache(): Cache | null {
+  const c = (globalThis as { caches?: { default?: Cache } }).caches;
+  return c?.default ?? null;
+}
+
+function edgeCacheKey(endpointUrl: string, body: string): Request {
+  // The key needs to be a Request whose URL is unique per query. POSTing to
+  // /graphql always hits the same URL, so we synthesise a GET with the body
+  // hashed into the query string. Length is well within CF limits for our
+  // queries.
+  const keyUrl = `${endpointUrl}?__cacheKey=${encodeURIComponent(body)}`;
+  return new Request(keyUrl, { method: "GET" });
+}
+
+async function readEdgeCache<T>(cacheKey: Request): Promise<T | null> {
+  const cache = edgeCache();
+  if (!cache) return null;
+
+  try {
+    const cached = await cache.match(cacheKey);
+    if (!cached) return null;
+    const payload = (await cached.json()) as GraphQLResponse<T>;
+    return payload?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeEdgeCache<T>(cacheKey: Request, payload: GraphQLResponse<T>): void {
+  const cache = edgeCache();
+  if (!cache || payload.errors?.length) return;
+
+  try {
+    const cached = new Response(JSON.stringify(payload), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": `public, max-age=${EDGE_CACHE_TTL_SECONDS}`,
+      },
+    });
+    // Fire-and-forget. We do not block the page render on the cache write.
+    // Cloudflare keeps the response cached until the TTL expires.
+    void cache.put(cacheKey, cached);
+  } catch {
+    // Cache write failure is non-fatal.
+  }
+}
+
 export async function wpGraphQL<T>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -141,6 +199,16 @@ export async function wpGraphQL<T>(
   const retryDelaysMs = options.retryDelaysMs ?? defaultRetryDelaysMs;
 
   const body = JSON.stringify({ query, variables });
+  const cacheKey = edgeCacheKey(endpoint, body);
+
+  // Edge cache lookup. If present, we skip the WP call entirely. Repeated
+  // requests for the same URL within the 5-minute TTL collapse to a single
+  // upstream WP query per data center.
+  const cached = await readEdgeCache<T>(cacheKey);
+  if (cached !== null) {
+    return cached;
+  }
+
   const request = {
     method: "POST",
     headers: {
@@ -149,14 +217,6 @@ export async function wpGraphQL<T>(
     },
     body,
   };
-
-  // Cache key for the Cloudflare edge cache. We POST to /graphql for every
-  // query, so the default URL-only key would collapse every distinct query
-  // into one cache entry (terrible). Using the request body as the key gives
-  // each unique query + variables combination its own edge cache entry.
-  // Body length is well within Cloudflare's 1024-byte cache key limit for our
-  // queries.
-  const cacheKey = `${endpoint}|${body}`;
 
   for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
     let response: Response;
@@ -167,31 +227,6 @@ export async function wpGraphQL<T>(
       response = await fetch(endpoint, {
         ...request,
         signal: controller?.signal,
-        // Cloudflare-specific edge-cache hints. Ignored outside CF Workers
-        // (local dev, build host).
-        //
-        // cacheEverything makes POST responses cacheable at the edge.
-        // cacheKey gives each unique query+variables its own cache entry
-        // (without this, every WP query collapses into one /graphql cache
-        // slot because the URL is identical).
-        // cacheTtlByStatus FORCES the TTL regardless of the origin response's
-        // Cache-Control header. We use this rather than cacheTtl because
-        // Cloudways WP sets Cache-Control: max-age=0 on every GraphQL
-        // response, which would otherwise cause CF to never cache. 5xx and
-        // 4xx (other than 404) get a 0 TTL so errors do not stick.
-        // @ts-expect-error - cf is a Cloudflare-specific RequestInit extension
-        cf: {
-          cacheEverything: true,
-          cacheKey,
-          cacheTtlByStatus: {
-            "200-299": 300,
-            "404": 60,
-            "300-399": 0,
-            "400-403": 0,
-            "405-499": 0,
-            "500-599": 0,
-          },
-        },
       });
     } catch (error) {
       if (attempt < retryDelaysMs.length) {
@@ -233,6 +268,10 @@ export async function wpGraphQL<T>(
     if (payload.errors?.length) {
       throw new Error(payload.errors.map((error) => error.message).join("; "));
     }
+
+    // Store the successful response in the edge cache. Fire-and-forget; this
+    // does not delay the return.
+    writeEdgeCache(cacheKey, payload);
 
     return payload.data ?? null;
   }
