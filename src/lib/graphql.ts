@@ -140,14 +140,23 @@ export async function wpGraphQL<T>(
 
   const retryDelaysMs = options.retryDelaysMs ?? defaultRetryDelaysMs;
 
+  const body = JSON.stringify({ query, variables });
   const request = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...authHeader(),
     },
-    body: JSON.stringify({ query, variables }),
+    body,
   };
+
+  // Cache key for the Cloudflare edge cache. We POST to /graphql for every
+  // query, so the default URL-only key would collapse every distinct query
+  // into one cache entry (terrible). Using the request body as the key gives
+  // each unique query + variables combination its own edge cache entry.
+  // Body length is well within Cloudflare's 1024-byte cache key limit for our
+  // queries.
+  const cacheKey = `${endpoint}|${body}`;
 
   for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
     let response: Response;
@@ -158,6 +167,16 @@ export async function wpGraphQL<T>(
       response = await fetch(endpoint, {
         ...request,
         signal: controller?.signal,
+        // Cloudflare-specific edge-cache hints. Ignored outside CF Workers
+        // (local dev, build host). cacheEverything makes POST responses
+        // cacheable; cacheTtl=300 matches the 5-minute Cache-Control we set
+        // on the SSR page response so WP data and page render expire together.
+        // @ts-expect-error - cf is a Cloudflare-specific RequestInit extension
+        cf: {
+          cacheEverything: true,
+          cacheTtl: 300,
+          cacheKey,
+        },
       });
     } catch (error) {
       if (attempt < retryDelaysMs.length) {
