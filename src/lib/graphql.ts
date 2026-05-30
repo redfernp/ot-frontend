@@ -168,7 +168,7 @@ async function readEdgeCache<T>(cacheKey: Request): Promise<T | null> {
   }
 }
 
-function writeEdgeCache<T>(cacheKey: Request, payload: GraphQLResponse<T>): void {
+async function writeEdgeCache<T>(cacheKey: Request, payload: GraphQLResponse<T>): Promise<void> {
   const cache = edgeCache();
   if (!cache || payload.errors?.length) return;
 
@@ -179,9 +179,12 @@ function writeEdgeCache<T>(cacheKey: Request, payload: GraphQLResponse<T>): void
         "Cache-Control": `public, max-age=${EDGE_CACHE_TTL_SECONDS}`,
       },
     });
-    // Fire-and-forget. We do not block the page render on the cache write.
-    // Cloudflare keeps the response cached until the TTL expires.
-    void cache.put(cacheKey, cached);
+    // Awaited rather than fire-and-forget. In a CF Pages Function, the worker
+    // can be torn down as soon as the Response is returned; a dangling
+    // cache.put() Promise may not complete, leaving the cache empty for the
+    // next visitor. Awaiting adds ~10-50ms to the first request but
+    // guarantees subsequent requests find the cache populated.
+    await cache.put(cacheKey, cached);
   } catch {
     // Cache write failure is non-fatal.
   }
@@ -269,9 +272,10 @@ export async function wpGraphQL<T>(
       throw new Error(payload.errors.map((error) => error.message).join("; "));
     }
 
-    // Store the successful response in the edge cache. Fire-and-forget; this
-    // does not delay the return.
-    writeEdgeCache(cacheKey, payload);
+    // Store the successful response in the edge cache before returning so
+    // subsequent visitors find it populated. See writeEdgeCache for why we
+    // cannot fire-and-forget here.
+    await writeEdgeCache(cacheKey, payload);
 
     return payload.data ?? null;
   }
