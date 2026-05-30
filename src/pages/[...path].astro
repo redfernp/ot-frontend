@@ -5,225 +5,87 @@ import FootballHubPage from "@/components/FootballHubPage.astro";
 import GenericPage from "@/components/GenericPage.astro";
 import TennisHubPage from "@/components/TennisHubPage.astro";
 import TipPostPage from "@/components/TipPostPage.astro";
-import { bookmakers } from "@/lib/bookmakers";
-import { getCategory, getPage, getPages, getPost, getRelatedPosts, type WpPost } from "@/lib/graphql";
-import { placeholderCategory, placeholderPost } from "@/lib/placeholders";
-import { placeholderRelatedTips, placeholderTennisTips } from "@/lib/relatedTips";
+import { getCategory, getPage, getPost, getRelatedPosts, type WpPost } from "@/lib/graphql";
 
-// Per-route dev-preview fallback so routes render with a sensible category name and
-// the multi-fixture placeholder set when WPGraphQL isn't configured. Replaced by real
-// WP data the moment env vars land.
-const categoryFallbacks: Record<string, { name: string; uri: string; slug: string; posts?: typeof placeholderRelatedTips }> = {
-  football: {
-    name: "Football",
-    uri: "/football/",
-    slug: "football",
-  },
-  "england-premier-league": {
-    name: "England Premier League",
-    uri: "/football/united-kingdom/england-premier-league/",
-    slug: "england-premier-league",
-  },
-  tennis: {
-    name: "Tennis",
-    uri: "/tennis/",
-    slug: "tennis",
-    posts: placeholderTennisTips,
-  },
-  cricket: {
-    name: "Cricket",
-    uri: "/cricket/",
-    slug: "cricket",
-  },
-  snooker: {
-    name: "Snooker",
-    uri: "/snooker/",
-    slug: "snooker",
-  },
-  darts: {
-    name: "Darts",
-    uri: "/darts/",
-    slug: "darts",
-  },
-  basketball: {
-    name: "Basketball",
-    uri: "/basketball/",
-    slug: "basketball",
-  },
-};
+// SSR this route at the Cloudflare edge. Tip posts, categories, and generic
+// WP pages all render on demand. The live WP backend publishes new tip posts
+// every ~5 minutes via cron; static rebuilds cannot keep up, so this route
+// stays dynamic with a 5-minute edge cache (max-age + s-maxage) and a
+// 24-hour stale-while-revalidate so already-visited URLs survive a WP outage.
+//
+// See HANDOFF.md Phase 7 for the architectural rationale.
+export const prerender = false;
 
 const simpleSportHubSlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
-export async function getStaticPaths() {
-  const normalizeRoutePath = (uri?: string) => (uri || "")
-    .replace(/^https?:\/\/[^/]+/i, "")
-    .replace(/^\/+|\/+$/g, "");
+// Path resolver: figure out what kind of WP content lives at the requested
+// URL.
+//   - Multi-segment paths (e.g. football/united-kingdom/england-premier-league)
+//     or known sport hub top-levels (football, tennis, ...) are categories.
+//   - Single-segment paths could be a tip post slug OR a generic WP page slug,
+//     so query both in parallel and prefer whichever resolves.
+//   - Anything that does not resolve returns a 404.
+const rawPath = (Astro.params.path || "").replace(/^\/+|\/+$/g, "");
+const segments = rawPath.split("/").filter(Boolean);
 
-  const liveSportCategoryRoutes = [
-    { path: "tennis", categorySlug: "tennis" },
-    { path: "tennis/wta-strasbourg", categorySlug: "wta-strasbourg" },
-    { path: "cricket", categorySlug: "cricket" },
-    { path: "cricket/indian-premier-league", categorySlug: "indian-premier-league" },
-    { path: "snooker", categorySlug: "snooker" },
-    { path: "snooker/snooker-900-2026", categorySlug: "snooker-900-2026" },
-    { path: "basketball", categorySlug: "basketball" },
-    { path: "basketball/argentina-liga-nacional", categorySlug: "argentina-liga-nacional" },
-    { path: "darts", categorySlug: "darts" },
-    { path: "darts/premier-league-darts-2026", categorySlug: "premier-league-darts-2026" },
-  ].map((route) => ({ ...route, requireLiveData: true }));
-  const liveSportPostRoutes = [
-    {
-      path: "emma-navarro-vs-iva-jovic-19-05-2026-free-fixed-odds-tip-tennis-betting-prediction",
-      postSlug: "emma-navarro-vs-iva-jovic-19-05-2026-free-fixed-odds-tip-tennis-betting-prediction",
-    },
-    {
-      path: "chennai-super-kings-vs-sunrisers-hyderabad-t20-18-05-2026-free-fixed-odds-tip-cricket-betting-prediction",
-      postSlug: "chennai-super-kings-vs-sunrisers-hyderabad-t20-18-05-2026-free-fixed-odds-tip-cricket-betting-prediction",
-    },
-    {
-      path: "luca-brecel-vs-ronnie-osullivan-17-05-2026-free-fixed-odds-tip-snooker-betting-prediction",
-      postSlug: "luca-brecel-vs-ronnie-osullivan-17-05-2026-free-fixed-odds-tip-snooker-betting-prediction",
-    },
-    {
-      path: "gimnasia-comodoro-vs-independiente-de-oliva-19-05-2026-free-fixed-odds-tip-basketball-betting-prediction",
-      postSlug: "gimnasia-comodoro-vs-independiente-de-oliva-19-05-2026-free-fixed-odds-tip-basketball-betting-prediction",
-    },
-    {
-      path: "luke-humphries-vs-michael-van-gerwen-21-05-2026-free-fixed-odds-tip-darts-betting-prediction",
-      postSlug: "luke-humphries-vs-michael-van-gerwen-21-05-2026-free-fixed-odds-tip-darts-betting-prediction",
-    },
-  ].map((route) => ({ ...route, requireLiveData: true }));
-  const priorityCategoryRoutes = [
-    {
-      path: "football",
-      categorySlug: "football",
-    },
-    {
-      path: "football/united-kingdom/england-premier-league",
-      categorySlug: "england-premier-league",
-    },
-    ...liveSportCategoryRoutes,
-  ];
-  const priorityPostRoutes = [
-    {
-      path: "sunderland-v-chelsea-24-05-2026-free-fixed-odds-tip-football-betting-prediction",
-      postSlug: "sunderland-v-chelsea-24-05-2026-free-fixed-odds-tip-football-betting-prediction",
-    },
-    ...liveSportPostRoutes,
-  ];
-  const routes = [
-    ...priorityCategoryRoutes.map((route) => ({ ...route, routeType: "category" as const })),
-    ...priorityPostRoutes.map((route) => ({ ...route, routeType: "post" as const })),
-  ];
-  const reviewPaths = Object.keys(bookmakers).map((slug) => `reviews/${slug}`);
-  const reservedPaths = new Set([
-    "",
-    "free-bets",
-    ...reviewPaths,
-    ...routes.map((route) => route.path),
-  ]);
-  const wordpressPages = await getPages();
-  const pageRoutes = new Map<string, WpPost>();
-
-  wordpressPages.forEach((page) => {
-    const path = normalizeRoutePath(page.uri);
-
-    if (!path || reservedPaths.has(path)) {
-      return;
-    }
-
-    pageRoutes.set(path, page);
-  });
-
-  return [
-    ...routes.map((route) => {
-      const requireLiveData = "requireLiveData" in route ? route.requireLiveData : false;
-
-      return {
-        params: { path: route.path },
-        props: route.routeType === "post"
-          ? { routeType: route.routeType, postSlug: route.postSlug, requireLiveData }
-          : { routeType: route.routeType, categorySlug: route.categorySlug, requireLiveData },
-      };
-    }),
-    ...Array.from(pageRoutes, ([path, page]) => ({
-      params: { path },
-      props: { routeType: "page" as const, pageUri: page.uri, page },
-    })),
-  ];
+if (segments.length === 0) {
+  return new Response(null, { status: 404 });
 }
 
-type Props = {
-  routeType: "category" | "post" | "page";
-  categorySlug?: string;
-  page?: WpPost;
-  pageUri?: string;
-  postSlug?: string;
-  requireLiveData?: boolean;
-};
-
-const { categorySlug, page: pageProp, pageUri, postSlug, requireLiveData = false, routeType } = Astro.props;
-
-function buildCategoryFallback(slug: string) {
-  const known = categoryFallbacks[slug];
-
-  if (known) {
-    return {
-      id: `fallback-${slug}`,
-      slug: known.slug,
-      uri: known.uri,
-      name: known.name,
-      posts: { nodes: known.posts ?? placeholderRelatedTips },
-    };
-  }
-
-  return {
-    ...placeholderCategory,
-    posts: { nodes: [placeholderPost] },
-  };
-}
+const firstSegment = segments[0];
+const lastSegment = segments[segments.length - 1];
+const looksLikeCategory =
+  segments.length >= 2 || firstSegment === "football" || simpleSportHubSlugs.has(firstSegment);
 
 let category = null;
-let page = pageProp || null;
-let post = null;
+let post: WpPost | null = null;
+let page: WpPost | null = null;
 let relatedPosts: WpPost[] = [];
+let categorySlug = "";
 
-if (routeType === "page") {
-  page = page || await getPage(pageUri || "");
+if (looksLikeCategory) {
+  categorySlug = lastSegment;
+  category = await getCategory(categorySlug, 100).catch(() => null);
 
-  if (!page) {
-    throw new Error(`Live WordPress page not found for ${pageUri}`);
+  if (!category) {
+    return new Response(null, { status: 404 });
+  }
+} else {
+  const slug = firstSegment;
+  const pageUri = `/${slug}/`;
+
+  // Race a post lookup against a page lookup. First non-null wins. If WP is
+  // momentarily unreachable both come back null and we 404; the edge cache
+  // serves prior visitors from stale-while-revalidate.
+  const [postResult, pageResult] = await Promise.all([
+    getPost(slug).catch(() => null),
+    getPage(pageUri).catch(() => null),
+  ]);
+
+  if (postResult) {
+    post = postResult;
+    relatedPosts = await getRelatedPosts(post).catch(() => []);
+  } else if (pageResult) {
+    page = pageResult;
+  } else {
+    return new Response(null, { status: 404 });
   }
 }
 
-if (routeType === "category") {
-  category = await getCategory(categorySlug || "", 100);
-
-  if (!category && requireLiveData) {
-    throw new Error(`Live WordPress category not found for ${categorySlug}`);
-  }
-
-  category = category || buildCategoryFallback(categorySlug || "");
-}
-
-if (routeType === "post") {
-  post = await getPost(postSlug || "");
-
-  if (!post && requireLiveData) {
-    throw new Error(`Live WordPress post not found for ${postSlug}`);
-  }
-
-  post = post || {
-    ...placeholderPost,
-    content: placeholderPost.content || "<p>This placeholder will be replaced by real Paul365 post content.</p>",
-  };
-  relatedPosts = post.slug === placeholderPost.slug ? [] : await getRelatedPosts(post);
-}
+// Edge cache headers. Cloudflare honours these for Worker responses and will
+// keep the rendered HTML on the edge for 5 minutes (matching the WP cron
+// cadence), serving stale-while-revalidate for up to a day after that so an
+// outage on the WP backend cannot break URLs that have been visited at least
+// once.
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+);
 ---
 
 <BaseLayout
   title={page?.title || post?.title || `${category?.name || "Category"} Betting Tips`}
-  description={page?.seo?.metaDesc || post?.excerpt || category?.description || "Oddstips staging page proof of concept."}
+  description={page?.seo?.metaDesc || post?.excerpt || category?.description || ""}
   seo={page?.seo || post?.seo || category?.seo}
 >
   {page ? (
@@ -232,7 +94,7 @@ if (routeType === "post") {
     <TipPostPage post={post} relatedPosts={relatedPosts} />
   ) : category && categorySlug === "football" ? (
     <FootballHubPage category={category} />
-  ) : category && simpleSportHubSlugs.has(categorySlug || "") ? (
+  ) : category && simpleSportHubSlugs.has(categorySlug) ? (
     <TennisHubPage category={category} />
   ) : (
     category && <CategoryTipsPage category={category} />
