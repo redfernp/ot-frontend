@@ -1,2 +1,8 @@
 User-agent: *
-Disallow: /
+Allow: /
+
+# /go/* are affiliate cloak redirectors with their own noindex meta tags;
+# crawlers should not waste budget on them.
+Disallow: /go/
+
+Sitemap: https://www.oddstips.co.uk/sitemap.xml

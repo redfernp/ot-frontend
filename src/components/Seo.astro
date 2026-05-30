@@ -10,7 +10,10 @@ type Props = {
   noindex?: boolean;
 };
 
-const { title, description, canonical, seo, noindex = true } = Astro.props;
+// Default to indexable for go-live. Pages that need explicit noindex can
+// still opt in by passing noindex={true} (e.g. /go/{slug}/ cloaks already
+// set their own robots meta directly).
+const { title, description, canonical, seo, noindex = false } = Astro.props;
 const pageTitle = seo?.title || title || "Oddstips";
 const pageDescription = seo?.metaDesc || description;
 const canonicalUrl = rewriteCmsLink(seo?.canonical || canonical);

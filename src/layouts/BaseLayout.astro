@@ -1,6 +1,5 @@
 ---
 import Seo from "@/components/Seo.astro";
-import StagingBanner from "@/components/StagingBanner.astro";
 import type { SeoFields } from "@/lib/graphql";
 
 type Props = {
@@ -77,8 +76,6 @@ const ga4Id = PUBLIC_GA4_ID;
     )}
   </head>
   <body>
-    <StagingBanner />
-
     <header class="site-header">
       <input class="nav-toggle" type="checkbox" id="ot-nav-toggle" aria-hidden="true" />
       <div class="header-inner">

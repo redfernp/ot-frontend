@@ -1,2 +1,12 @@
+# Removed William Hill review (affiliate closed). Redirect to the free bets list.
 /reviews/william-hill /free-bets/ 301
 /reviews/william-hill/ /free-bets/ 301
+
+# WordPress lives on Cloudways. The frontend rewrites WP-authored image URLs
+# to start with /wp-content/uploads/... under www.oddstips.co.uk; this 200
+# (proxy/rewrite) rule fetches those assets transparently from the live WP
+# backend so the public-facing URLs stay on the oddstips.co.uk domain.
+/wp-content/* https://wordpress-514209-2167081.cloudwaysapps.com/wp-content/:splat 200
+
+# wp-json (REST API), wp-login, wp-includes are not exposed via the frontend;
+# editors use the cloudwaysapps URL directly for wp-admin.
