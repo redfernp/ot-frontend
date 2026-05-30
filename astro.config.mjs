@@ -1,20 +1,55 @@
-import { defineConfig } from "astro/config";
+import { defineConfig, envField } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 
-// Hybrid render strategy:
-//   - output: "static" (default) keeps every page prerendered at build time
-//   - The Cloudflare adapter is installed so individual routes can opt into
-//     edge-rendered SSR via `export const prerender = false`
-//   - Currently SSR pages: src/pages/[...path].astro (tip posts, categories,
-//     generic WP pages). Edge cache TTLs are set per response.
+// Hybrid render strategy: pages prerender at build by default; routes that
+// opt out via `export const prerender = false` are SSR-rendered at the
+// Cloudflare edge with our Cache-Control headers. See src/pages/[...path].astro
+// and HANDOFF.md Phase 7 for the rationale.
 //
-// Why hybrid: the live WP backend publishes new tip posts every ~5 minutes
-// via cron, which a pure static build cannot keep up with. Static stays for
-// stable surfaces (homepage, free-bets, reviews, go cloaks); WP-content
-// surfaces render on demand at the Cloudflare edge with 5-minute cache +
-// 24-hour stale-while-revalidate. See HANDOFF.md Phase 7.
+// Env schema (Astro 5): declares every env var the app touches so values
+// reach the SSR worker bundle reliably. import.meta.env in Astro 5 stops
+// inlining non-PUBLIC vars into the server runtime; astro:env is the
+// supported escape hatch.
+//
+// All vars are access:"public" so they bake into the worker at build time.
+// WP_BASIC_AUTH_PASSWORD is a staging-only credential; once the live WP
+// drops basic auth this field can be removed entirely.
 export default defineConfig({
   output: "static",
   adapter: cloudflare(),
   site: "https://www.oddstips.co.uk",
+  env: {
+    schema: {
+      WPGRAPHQL_ENDPOINT: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "",
+      }),
+      WP_BASIC_AUTH_USER: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "",
+      }),
+      WP_BASIC_AUTH_PASSWORD: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "",
+      }),
+      PUBLIC_SITE_URL: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "https://www.oddstips.co.uk",
+      }),
+      PUBLIC_GA4_ID: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "",
+      }),
+    },
+  },
 });

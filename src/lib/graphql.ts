@@ -73,13 +73,23 @@ export type SeoFields = {
   }>;
 };
 
-const endpoint = import.meta.env.WPGRAPHQL_ENDPOINT;
+// Env vars come via Astro 5's astro:env schema (declared in astro.config.mjs)
+// rather than import.meta.env so the values reliably reach the SSR worker
+// bundle. Without this, [...path].astro running on the Cloudflare edge sees
+// `undefined` for WPGRAPHQL_ENDPOINT and every category / tip post 404s.
+import {
+  WPGRAPHQL_ENDPOINT,
+  WP_BASIC_AUTH_USER,
+  WP_BASIC_AUTH_PASSWORD,
+} from "astro:env/server";
+
+const endpoint = WPGRAPHQL_ENDPOINT;
 const defaultRetryDelaysMs = [1000, 2000, 4000];
 const parentSportCategorySlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
 function authHeader(): Record<string, string> {
-  const user = import.meta.env.WP_BASIC_AUTH_USER;
-  const password = import.meta.env.WP_BASIC_AUTH_PASSWORD;
+  const user = WP_BASIC_AUTH_USER;
+  const password = WP_BASIC_AUTH_PASSWORD;
 
   if (!user || !password) {
     return {};

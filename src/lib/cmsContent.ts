@@ -1,30 +1,30 @@
 import { affiliateLinks } from "@/lib/affiliateLinks";
+// astro:env schema (see astro.config.mjs). Using these imports rather than
+// import.meta.env ensures the values are available to the SSR worker at
+// runtime, not just at build time for static pages.
+import { WPGRAPHQL_ENDPOINT, PUBLIC_SITE_URL } from "astro:env/server";
 
 const publicWordPressOrigin = "https://www.oddstips.co.uk";
 
 function wordpressOriginFromEndpoint() {
-  const endpoint = import.meta.env.WPGRAPHQL_ENDPOINT;
-
-  if (!endpoint) {
+  if (!WPGRAPHQL_ENDPOINT) {
     return null;
   }
 
   try {
-    return new URL(endpoint).origin;
+    return new URL(WPGRAPHQL_ENDPOINT).origin;
   } catch {
     return null;
   }
 }
 
 // Public frontend origin. PUBLIC_SITE_URL is set in .env / Cloudflare Pages env
-// (currently https://ot-frontend.pages.dev, later the real live domain). Falls
-// back to the public Oddstips origin used by asset rewriting.
+// (https://www.oddstips.co.uk on live). Falls back to the public Oddstips
+// origin used by asset rewriting.
 export function publicSiteOrigin() {
-  const explicit = import.meta.env.PUBLIC_SITE_URL;
-
-  if (explicit) {
+  if (PUBLIC_SITE_URL) {
     try {
-      return new URL(explicit).origin;
+      return new URL(PUBLIC_SITE_URL).origin;
     } catch {
       // fall through to default
     }

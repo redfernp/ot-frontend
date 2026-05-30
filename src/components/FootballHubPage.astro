@@ -24,7 +24,8 @@ type Props = {
 };
 
 const { category } = Astro.props;
-const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
+import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
+const hasWpGraphQL = Boolean(WPGRAPHQL_ENDPOINT);
 const livePosts = category.posts?.nodes ?? [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
 

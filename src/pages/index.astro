@@ -6,7 +6,8 @@ import { cmsLinkToPath } from "@/lib/cmsContent";
 import { homeLatestSections } from "@/lib/siteNav";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 
-const hasWpGraphQL = Boolean(import.meta.env.WPGRAPHQL_ENDPOINT);
+import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
+const hasWpGraphQL = Boolean(WPGRAPHQL_ENDPOINT);
 const latestBySport = await Promise.all(
   homeLatestSections.map(async (section) => ({
     ...section,

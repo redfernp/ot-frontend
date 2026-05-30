@@ -53,7 +53,8 @@ const primaryNav: NavItem[] = [
 // When unset (e.g. in dev), the gtag snippet is omitted entirely and the
 // affiliate cloak in src/pages/go/[slug].astro falls through to its hard
 // 1-second redirect fallback.
-const ga4Id = import.meta.env.PUBLIC_GA4_ID;
+import { PUBLIC_GA4_ID } from "astro:env/server";
+const ga4Id = PUBLIC_GA4_ID;
 ---
 
 <!doctype html>
