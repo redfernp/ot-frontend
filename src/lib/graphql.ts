@@ -140,13 +140,20 @@ function todayDateQuery(timeZone = "Europe/London"): DateQuery {
 // Edge cache helpers. Cloudflare Pages Functions do not support the cf object
 // on outbound fetches (Workers-only feature), so we use the caches.default API
 // directly. Each unique query+variables combination gets a stable cache key
-// derived from the request body; cached entries live 5 minutes, matching the
-// Cache-Control we set on the SSR page response.
+// derived from the request body.
 //
 // caches.default is a Cloudflare runtime global. It is undefined in local dev
 // and during the static build, in which case these helpers no-op and every
 // query goes straight to WP.
-const EDGE_CACHE_TTL_SECONDS = 300;
+//
+// TTL was 300s (5 min) originally to match the WP cron cadence for publishing
+// new tips. Raised to 1800s (30 min) to reduce WP server load on a memory-
+// constrained 2GB Cloudways box; tip pages don't typically change content
+// after publish, and the homepage's "latest tips" list isn't critical to be
+// up-to-the-minute. stale-while-revalidate=86400 on the page response means
+// new tips appear after at most 30 min, but existing URLs survive a 24h
+// upstream outage.
+const EDGE_CACHE_TTL_SECONDS = 1800;
 
 function edgeCache(): Cache | null {
   const c = (globalThis as { caches?: { default?: Cache } }).caches;

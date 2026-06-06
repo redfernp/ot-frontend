@@ -45,11 +45,12 @@ let categorySlug = "";
 
 if (looksLikeCategory) {
   categorySlug = lastSegment;
-  // Was 100; reduced to 30 because the WPGraphQL query pulls full post_content
-  // for each row (needed for the tip Match Signals strip on category cards),
-  // and 100 of those was a ~5-10MB JSON payload that pegged the 2GB WP server
-  // post-bulk-delete. Category UI displays nowhere near 100 cards anyway.
-  category = await getCategory(categorySlug, 30).catch(() => null);
+  // Was 100; reduced to 15 because the 2GB Cloudways WP server cannot handle
+  // larger category queries reliably. Category list UI shows ~6-12 cards
+  // above the fold; 15 is enough buffer. graphql.ts also drops the content
+  // field from the posts list query (tip cards use excerpt instead) and
+  // bumped the edge cache TTL to 30 min, both to reduce upstream load.
+  category = await getCategory(categorySlug, 15).catch(() => null);
 
   if (!category) {
     return new Response(null, { status: 404 });
@@ -77,13 +78,16 @@ if (looksLikeCategory) {
 }
 
 // Edge cache headers. Cloudflare honours these for Worker responses and will
-// keep the rendered HTML on the edge for 5 minutes (matching the WP cron
-// cadence), serving stale-while-revalidate for up to a day after that so an
-// outage on the WP backend cannot break URLs that have been visited at least
-// once.
+// keep the rendered HTML on the edge for 30 minutes, serving
+// stale-while-revalidate for up to a day after that so an outage on the WP
+// backend cannot break URLs that have been visited at least once.
+//
+// Raised from 5 min to 30 min in response to memory-constrained 2GB
+// Cloudways backend struggling under repeated worker requests on cache miss.
+// At 30 min, each URL hits WP at most twice per hour per CF data center.
 Astro.response.headers.set(
   "Cache-Control",
-  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+  "public, max-age=1800, s-maxage=1800, stale-while-revalidate=86400",
 );
 ---
 
