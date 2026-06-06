@@ -388,7 +388,6 @@ export async function getCategory(slug: string, postLimit = 30) {
           uri
           title
           excerpt
-          content
           date
         }
       }
@@ -524,7 +523,6 @@ async function getChildCategoryPosts(slug: string, postLimit: number) {
           uri
           title
           excerpt
-          content
           date
         }
       }
@@ -655,7 +653,6 @@ export async function getRelatedPosts(post: WpPost, limit = 6) {
           uri
           title
           excerpt
-          content
           date
         }
       }
