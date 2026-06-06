@@ -1,2 +1,6 @@
-/*
+# Affiliate cloak pages get an extra layer of crawler protection on top of
+# the per-page noindex meta tag they already render. Robots.txt also
+# disallows /go/, but defence in depth is cheap. Everything else on the
+# site is indexable.
+/go/*
   X-Robots-Tag: noindex, nofollow

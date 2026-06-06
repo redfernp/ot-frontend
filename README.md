@@ -20,15 +20,18 @@ Environment variables:
 - `WP_BASIC_AUTH_PASSWORD` if staging WordPress uses basic auth
 - `PUBLIC_SITE_URL`
 
-## Staging Safety
+## Crawler Policy
 
-The shell includes:
+The site is publicly indexable as of go-live. The only paths still
+flagged noindex are affiliate cloak redirectors:
 
-- `public/robots.txt` blocking crawlers.
-- `public/_headers` with `X-Robots-Tag: noindex, nofollow`.
-- A visible staging banner in the layout.
+- `public/robots.txt` allows everything except `Disallow: /go/`.
+- `public/_headers` sets `X-Robots-Tag: noindex, nofollow` on `/go/*`
+  only.
+- Individual `/go/{slug}/` pages render their own `<meta name="robots"
+  content="noindex,nofollow">` for belt-and-braces.
 
-Do not commit `.env` files or staging credentials.
+Do not commit `.env` files or production credentials.
 
 ## Template Targets
 
