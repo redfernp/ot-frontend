@@ -84,7 +84,15 @@ import {
 } from "astro:env/server";
 
 const endpoint = WPGRAPHQL_ENDPOINT;
-const defaultRetryDelaysMs = [1000, 2000, 4000];
+// Circuit-breaker defaults. The Cloudflare worker has a hard wall-clock
+// budget; if WP is hanging we want to fail fast rather than burn the entire
+// budget on retries and have CF reset the connection (524). With these
+// values, worst-case fetch time is 5s + 0.5s wait + 5s = 10.5s, well inside
+// any sane upstream limit, and the visitor either gets a fresh response or
+// a clean 404 (which CF's stale-while-revalidate of 24h then masks for
+// already-visited URLs).
+const defaultRetryDelaysMs = [500];
+const defaultTimeoutMs = 5000;
 const parentSportCategorySlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
 function authHeader(): Record<string, string> {
@@ -200,6 +208,7 @@ export async function wpGraphQL<T>(
   }
 
   const retryDelaysMs = options.retryDelaysMs ?? defaultRetryDelaysMs;
+  const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
 
   const body = JSON.stringify({ query, variables });
   const cacheKey = edgeCacheKey(endpoint, body);
@@ -223,13 +232,13 @@ export async function wpGraphQL<T>(
 
   for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
     let response: Response;
-    const controller = options.timeoutMs ? new AbortController() : undefined;
-    const timeout = controller ? setTimeout(() => controller.abort(), options.timeoutMs) : undefined;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       response = await fetch(endpoint, {
         ...request,
-        signal: controller?.signal,
+        signal: controller.signal,
       });
     } catch (error) {
       if (attempt < retryDelaysMs.length) {
@@ -239,9 +248,7 @@ export async function wpGraphQL<T>(
 
       throw new Error(`WPGraphQL request failed after ${attempt + 1} attempts: ${formatError(error)}`);
     } finally {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      clearTimeout(timeout);
     }
 
     if (!response.ok) {
