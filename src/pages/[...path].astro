@@ -45,7 +45,11 @@ let categorySlug = "";
 
 if (looksLikeCategory) {
   categorySlug = lastSegment;
-  category = await getCategory(categorySlug, 100).catch(() => null);
+  // Was 100; reduced to 30 because the WPGraphQL query pulls full post_content
+  // for each row (needed for the tip Match Signals strip on category cards),
+  // and 100 of those was a ~5-10MB JSON payload that pegged the 2GB WP server
+  // post-bulk-delete. Category UI displays nowhere near 100 cards anyway.
+  category = await getCategory(categorySlug, 30).catch(() => null);
 
   if (!category) {
     return new Response(null, { status: 404 });
