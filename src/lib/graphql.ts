@@ -342,21 +342,14 @@ export async function getCategories(limit = 25) {
 }
 
 export async function getCategory(slug: string, postLimit = 30) {
-  // ACF Pro fields on the Category taxonomy (added by Paul):
-  //   category_top_seo_text     (WYSIWYG)   -> rendered under H1 on the category page
-  //   category_bottom_seo_text  (textarea)  -> rendered under the tips list
-  // WPGraphQL for ACF exposes each ACF field as its own object type, with the actual
-  // value living on a per-field-type inner property (Editor for wp_editor, the field
-  // name itself for textarea).
+  // Core category + posts query. Deliberately does NOT include ACF fields:
+  // WPGraphQL fails the ENTIRE query with a schema-validation error if any
+  // referenced field is missing from the schema (e.g. ACF Pro field group not
+  // exposed yet, plugin disabled, field type changed). When that happened
+  // pre-fix, every category page on live 404'd. ACF fields are queried
+  // separately below so a failure there is contained.
   const data = await wpGraphQL<{
-    category?: WpCategory & {
-      categoryTopSeoText?: {
-        categoryTopSeoTextEditor?: string;
-      };
-      categoryBottomSeoText?: {
-        categoryBottomSeoText?: string;
-      };
-    };
+    category?: WpCategory;
     posts?: {
       nodes: WpPost[];
     };
@@ -380,12 +373,6 @@ export async function getCategory(slug: string, postLimit = 30) {
             url
           }
         }
-        categoryTopSeoText {
-          categoryTopSeoTextEditor
-        }
-        categoryBottomSeoText {
-          categoryBottomSeoText
-        }
       }
       posts(first: $postLimit, where: { categoryName: $categoryName, orderby: { field: DATE, order: DESC } }) {
         nodes {
@@ -406,21 +393,67 @@ export async function getCategory(slug: string, postLimit = 30) {
     return null;
   }
 
+  // Optional ACF SEO copy. Wrapped in its own query + catch so a missing or
+  // renamed field cannot take down category resolution. Inner field name
+  // matches what live WP currently exposes (categoryTopSeoText.categoryTopSeoText).
+  // If the field group is later switched back to a wp_editor type the inner
+  // name becomes categoryTopSeoTextEditor; in that case this query fails
+  // silently and CategoryTipsPage falls back to src/lib/categorySeoCopy.ts.
+  const acf = await getCategoryAcfSeo(slug);
+
+  const mergedCategory = {
+    ...data.category,
+    ...(acf ?? {}),
+  };
+
   if (parentSportCategorySlugs.has(slug) && !data.posts?.nodes?.length) {
     const childPosts = await getChildCategoryPosts(slug, postLimit);
 
     if (childPosts.length) {
       return {
-        ...data.category,
+        ...mergedCategory,
         posts: { nodes: childPosts },
       };
     }
   }
 
   return {
-    ...data.category,
+    ...mergedCategory,
     posts: data.posts,
   };
+}
+
+type CategoryAcfSeo = {
+  categoryTopSeoText?: {
+    categoryTopSeoText?: string;
+  };
+  categoryBottomSeoText?: {
+    categoryBottomSeoText?: string;
+  };
+};
+
+async function getCategoryAcfSeo(slug: string): Promise<CategoryAcfSeo | null> {
+  try {
+    const data = await wpGraphQL<{
+      category?: CategoryAcfSeo;
+    }>(
+      `query CategoryAcfSeo($slug: ID!) {
+        category(id: $slug, idType: SLUG) {
+          categoryTopSeoText {
+            categoryTopSeoText
+          }
+          categoryBottomSeoText {
+            categoryBottomSeoText
+          }
+        }
+      }`,
+      { slug },
+    );
+
+    return data?.category ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function getChildCategoryDatabaseIds(slug: string) {

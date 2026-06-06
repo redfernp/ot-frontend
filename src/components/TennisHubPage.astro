@@ -12,7 +12,7 @@ import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
 type CategoryWithSeo = WpCategory & {
   posts?: { nodes: WpPost[] };
   categoryTopSeoText?: {
-    categoryTopSeoTextEditor?: string;
+    categoryTopSeoText?: string;
   };
   categoryBottomSeoText?: {
     categoryBottomSeoText?: string;
@@ -31,7 +31,7 @@ const fallbackPosts = category.slug === "tennis" ? placeholderTennisTips : [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : fallbackPosts;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
-const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
+const topSeo = category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "";
 const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
 
 const categoryName = category.name || "Sport";

@@ -12,7 +12,7 @@ type CategoryWithPosts = WpCategory & {
     nodes: WpPost[];
   };
   categoryTopSeoText?: {
-    categoryTopSeoTextEditor?: string;
+    categoryTopSeoText?: string;
   };
   categoryBottomSeoText?: {
     categoryBottomSeoText?: string;
@@ -31,7 +31,7 @@ const livePosts = category.posts?.nodes ?? [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
-const topSeo = category.categoryTopSeoText?.categoryTopSeoTextEditor || fallbackSeo.top || "";
+const topSeo = category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "";
 const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
 
 function titleCaseSegment(segment: string) {
