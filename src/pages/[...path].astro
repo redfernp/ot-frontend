@@ -5,35 +5,78 @@ import FootballHubPage from "@/components/FootballHubPage.astro";
 import GenericPage from "@/components/GenericPage.astro";
 import TennisHubPage from "@/components/TennisHubPage.astro";
 import TipPostPage from "@/components/TipPostPage.astro";
-import { getCategory, getPage, getPost, getRelatedPosts, type WpPost } from "@/lib/graphql";
+import {
+  getAllCategorySlugs,
+  getAllPostSlugs,
+  getCategory,
+  getPage,
+  getPages,
+  getPost,
+  getRelatedPosts,
+  type WpPost,
+} from "@/lib/graphql";
 
-// SSR this route at the Cloudflare edge. Tip posts, categories, and generic
-// WP pages all render on demand. The live WP backend publishes new tip posts
-// every ~5 minutes via cron; static rebuilds cannot keep up, so this route
-// stays dynamic with a 5-minute edge cache (max-age + s-maxage) and a
-// 24-hour stale-while-revalidate so already-visited URLs survive a WP outage.
+// Static prerender every WP-backed URL at build time. Reverted from SSR
+// because the 2GB Cloudways WP backend (shared with 8 other apps + Imunify360
+// scans) cannot reliably serve worker queries on cache miss; every cold visit
+// would push WP into PHP-FPM exhaustion. Building all pages once per deploy
+// hits WP ~2000 times in a controlled sequence, then visitors hit pure static
+// HTML afterwards with no upstream load.
 //
-// See HANDOFF.md Phase 7 for the architectural rationale.
-export const prerender = false;
+// Trade-off: new tips published between builds aren't visible until the next
+// build. With an hourly external cron triggering CF Pages rebuilds, freshness
+// is "within the last hour" rather than "within the last 5 min". Acceptable
+// given the alternative is the site being intermittently down.
+export const prerender = true;
 
 const simpleSportHubSlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
-// Path resolver: figure out what kind of WP content lives at the requested
-// URL.
-//   - Multi-segment paths (e.g. football/united-kingdom/england-premier-league)
-//     or known sport hub top-levels (football, tennis, ...) are categories.
-//   - Single-segment paths could be a tip post slug OR a generic WP page slug,
-//     so query both in parallel and prefer whichever resolves.
-//   - Anything that does not resolve returns a 404.
+export async function getStaticPaths() {
+  // Fetch all enumerable WP URLs in parallel. Each helper paginates internally
+  // and is intentionally slug/uri-only to keep the WP load light during this
+  // phase. Heavier per-page queries happen below when each individual page
+  // renders.
+  // Limits: chosen to keep build under ~10 mins on a stressed 2GB WP backend.
+  // Most-recent posts first (DESC date order), so older tips fall off as the
+  // limit is exceeded. Categories typically number 200-500; posts have been
+  // pruned to ~14 days of cron output so 500 should cover everything current.
+  const [categories, posts, pages] = await Promise.all([
+    getAllCategorySlugs(500).catch(() => []),
+    getAllPostSlugs(500).catch(() => []),
+    getPages(50).catch(() => []),
+  ]);
+
+  const seen = new Set<string>();
+  const paths: Array<{ params: { path: string } }> = [];
+
+  function add(path: string | undefined | null) {
+    if (!path) return;
+    const cleaned = path.replace(/^\/+|\/+$/g, "");
+    if (!cleaned) return;
+    if (seen.has(cleaned)) return;
+    seen.add(cleaned);
+    paths.push({ params: { path: cleaned } });
+  }
+
+  // Categories preserve their full WP uri (e.g. football/united-kingdom/england-premier-league).
+  categories.forEach((cat) => add(cat.uri));
+
+  // Posts are flat single-segment slugs.
+  posts.forEach((post) => add(post.slug));
+
+  // Pages use their full uri, but skip ones already handled elsewhere (e.g. /).
+  pages.forEach((page) => add(page.uri));
+
+  return paths;
+}
+
+// Path resolver, per-page render. Runs at build time for every path returned
+// from getStaticPaths above.
 const rawPath = (Astro.params.path || "").replace(/^\/+|\/+$/g, "");
 const segments = rawPath.split("/").filter(Boolean);
 
-if (segments.length === 0) {
-  return new Response(null, { status: 404 });
-}
-
-const firstSegment = segments[0];
-const lastSegment = segments[segments.length - 1];
+const firstSegment = segments[0] ?? "";
+const lastSegment = segments[segments.length - 1] ?? "";
 const looksLikeCategory =
   segments.length >= 2 || firstSegment === "football" || simpleSportHubSlugs.has(firstSegment);
 
@@ -45,23 +88,11 @@ let categorySlug = "";
 
 if (looksLikeCategory) {
   categorySlug = lastSegment;
-  // Was 100; reduced to 15 because the 2GB Cloudways WP server cannot handle
-  // larger category queries reliably. Category list UI shows ~6-12 cards
-  // above the fold; 15 is enough buffer. graphql.ts also drops the content
-  // field from the posts list query (tip cards use excerpt instead) and
-  // bumped the edge cache TTL to 30 min, both to reduce upstream load.
   category = await getCategory(categorySlug, 15).catch(() => null);
-
-  if (!category) {
-    return new Response(null, { status: 404 });
-  }
 } else {
   const slug = firstSegment;
   const pageUri = `/${slug}/`;
 
-  // Race a post lookup against a page lookup. First non-null wins. If WP is
-  // momentarily unreachable both come back null and we 404; the edge cache
-  // serves prior visitors from stale-while-revalidate.
   const [postResult, pageResult] = await Promise.all([
     getPost(slug).catch(() => null),
     getPage(pageUri).catch(() => null),
@@ -72,23 +103,13 @@ if (looksLikeCategory) {
     relatedPosts = await getRelatedPosts(post).catch(() => []);
   } else if (pageResult) {
     page = pageResult;
-  } else {
-    return new Response(null, { status: 404 });
   }
 }
 
-// Edge cache headers. Cloudflare honours these for Worker responses and will
-// keep the rendered HTML on the edge for 30 minutes, serving
-// stale-while-revalidate for up to a day after that so an outage on the WP
-// backend cannot break URLs that have been visited at least once.
-//
-// Raised from 5 min to 30 min in response to memory-constrained 2GB
-// Cloudways backend struggling under repeated worker requests on cache miss.
-// At 30 min, each URL hits WP at most twice per hour per CF data center.
-Astro.response.headers.set(
-  "Cache-Control",
-  "public, max-age=1800, s-maxage=1800, stale-while-revalidate=86400",
-);
+// If nothing resolved, render an empty BaseLayout so the build doesn't fail
+// for this single page. Astro's static build cannot return a 404 Response;
+// we accept that an unresolved path will produce a "Page not available"
+// page rather than fail the whole build for thousands of other URLs.
 ---
 
 <BaseLayout
@@ -104,7 +125,12 @@ Astro.response.headers.set(
     <FootballHubPage category={category} />
   ) : category && simpleSportHubSlugs.has(categorySlug) ? (
     <TennisHubPage category={category} />
+  ) : category ? (
+    <CategoryTipsPage category={category} />
   ) : (
-    category && <CategoryTipsPage category={category} />
+    <div style="max-width:680px;margin:6rem auto;padding:2rem;text-align:center;">
+      <h1 style="font-size:2rem;margin-bottom:1rem;">Page not available</h1>
+      <p>This tip may have been removed or rescheduled. Browse our <a href="/football/">latest football tips</a> or visit the <a href="/">homepage</a> for today's top picks.</p>
+    </div>
   )}
 </BaseLayout>

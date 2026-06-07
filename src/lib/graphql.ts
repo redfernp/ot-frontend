@@ -297,6 +297,91 @@ export async function wpGraphQL<T>(
   return null;
 }
 
+// Lightweight slug-only fetch for static-build path enumeration. Returns just
+// slug + uri for every published post (paginated under the hood), no content
+// or SEO fields, so it's cheap on the WP backend even when fetching thousands
+// of rows. Used by [...path].astro getStaticPaths to enumerate every tip post
+// URL to prerender at build time.
+export async function getAllPostSlugs(limit = 5000) {
+  type PostsSlugResponse = {
+    posts?: {
+      pageInfo?: { hasNextPage?: boolean; endCursor?: string | null };
+      nodes: Array<{ slug: string; uri?: string }>;
+    };
+  };
+
+  const collected: Array<{ slug: string; uri?: string }> = [];
+  let cursor: string | null = null;
+  const perPage = 100;
+
+  while (collected.length < limit) {
+    const data: PostsSlugResponse | null = await wpGraphQL<PostsSlugResponse>(
+      `query AllPostSlugs($cursor: String, $perPage: Int!) {
+        posts(first: $perPage, after: $cursor, where: { orderby: { field: DATE, order: DESC } }) {
+          pageInfo { hasNextPage endCursor }
+          nodes { slug uri }
+        }
+      }`,
+      { cursor, perPage },
+    );
+
+    const nodes = data?.posts?.nodes ?? [];
+    nodes.forEach((node) => {
+      if (node.slug) collected.push({ slug: node.slug, uri: node.uri });
+    });
+
+    const hasNext = data?.posts?.pageInfo?.hasNextPage ?? false;
+    const endCursor: string | null = data?.posts?.pageInfo?.endCursor ?? null;
+    if (!hasNext || !endCursor) break;
+    cursor = endCursor;
+  }
+
+  return collected.slice(0, limit);
+}
+
+// Lightweight slug-only fetch for all categories (paginated). Used alongside
+// getAllPostSlugs for static-build path enumeration. Each category's full uri
+// is preserved so nested categories (football/united-kingdom/england-premier-league)
+// build into the correct route.
+export async function getAllCategorySlugs(limit = 2000) {
+  type CategoriesSlugResponse = {
+    categories?: {
+      pageInfo?: { hasNextPage?: boolean; endCursor?: string | null };
+      nodes: Array<{ slug: string; uri?: string; count?: number | null }>;
+    };
+  };
+
+  const collected: Array<{ slug: string; uri: string }> = [];
+  let cursor: string | null = null;
+  const perPage = 100;
+
+  while (collected.length < limit) {
+    const data: CategoriesSlugResponse | null = await wpGraphQL<CategoriesSlugResponse>(
+      `query AllCategorySlugs($cursor: String, $perPage: Int!) {
+        categories(first: $perPage, after: $cursor, where: { hideEmpty: true }) {
+          pageInfo { hasNextPage endCursor }
+          nodes { slug uri count }
+        }
+      }`,
+      { cursor, perPage },
+    );
+
+    const nodes = data?.categories?.nodes ?? [];
+    nodes.forEach((node) => {
+      if (node.slug && node.uri) {
+        collected.push({ slug: node.slug, uri: node.uri });
+      }
+    });
+
+    const hasNext = data?.categories?.pageInfo?.hasNextPage ?? false;
+    const endCursor: string | null = data?.categories?.pageInfo?.endCursor ?? null;
+    if (!hasNext || !endCursor) break;
+    cursor = endCursor;
+  }
+
+  return collected.slice(0, limit);
+}
+
 export async function getLatestPosts(limit = 8) {
   const data = await wpGraphQL<{
     posts: {
