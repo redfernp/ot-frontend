@@ -36,14 +36,17 @@ export async function getStaticPaths() {
   // and is intentionally slug/uri-only to keep the WP load light during this
   // phase. Heavier per-page queries happen below when each individual page
   // renders.
-  // Limits: chosen to keep build under ~10 mins on a stressed 2GB WP backend.
-  // Most-recent posts first (DESC date order), so older tips fall off as the
-  // limit is exceeded. Categories typically number 200-500; posts have been
-  // pruned to ~14 days of cron output so 500 should cover everything current.
+  // Limits: chosen to keep build under CF Pages' 20min limit on a slow WP
+  // backend (~4-7s per page query). With 100 categories + 100 posts + 20
+  // pages = ~220 pages × 4s avg = ~15 mins, leaves headroom.
+  // Most-recent posts first (DESC date order), older tips fall off.
+  // Older long-tail categories also fall off, but the most popular ones
+  // (typically top-level sports + major leagues) appear first in the
+  // hideEmpty: true ordering.
   const [categories, posts, pages] = await Promise.all([
-    getAllCategorySlugs(500).catch(() => []),
-    getAllPostSlugs(500).catch(() => []),
-    getPages(50).catch(() => []),
+    getAllCategorySlugs(100).catch(() => []),
+    getAllPostSlugs(100).catch(() => []),
+    getPages(20).catch(() => []),
   ]);
 
   const seen = new Set<string>();
