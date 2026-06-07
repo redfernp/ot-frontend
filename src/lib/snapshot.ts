@@ -88,6 +88,15 @@ export type Snapshot = {
 // Loader — fetches the snapshot once per build, caches in module state.
 // -----------------------------------------------------------------------------
 
+// Health-check thresholds. If the loaded snapshot has fewer categories OR
+// fewer posts than these, we treat the snapshot as broken and FAIL THE BUILD.
+// This is the guardrail that prevents a bad snapshot fetch (Imunify360
+// bot-blocking, WP down, file corrupted, etc.) from silently deploying a
+// 32-page site that overwrites the previous healthy ~3900-page deploy.
+// Tune these only if the real site genuinely drops below these counts.
+const MIN_HEALTHY_CATEGORIES = 100;
+const MIN_HEALTHY_POSTS = 100;
+
 let snapshotPromise: Promise<Snapshot | null> | null = null;
 
 function snapshotUrl(): string | null {
@@ -108,73 +117,84 @@ function snapshotUrl(): string | null {
 async function fetchSnapshot(): Promise<Snapshot | null> {
   const url = snapshotUrl();
   if (!url) {
+    // No WP endpoint configured. Only legitimate for very first deploys
+    // before the plugin is installed. We return null and the build will
+    // produce minimal static pages, which is acceptable for that scenario.
     console.warn("[snapshot] No WPGRAPHQL_ENDPOINT set; snapshot unavailable. Build will produce minimal static pages.");
     return null;
   }
 
   // Add a cache-buster so any WP-side or CDN cache layer doesn't serve a
-  // stale empty response from before the plugin was installed. Use a real
-  // browser-ish User-Agent so bot protection (Imunify360 / WAFs) is less
-  // likely to challenge or block the request.
+  // stale empty response. Use a real browser User-Agent so bot protection
+  // (Imunify360 / WAFs) is less likely to challenge or block the request.
+  // The previous "OddstipsBuild/1.0" UA tripped Imunify360 bot-protection
+  // and caused a deploy that wiped 3900 pages — see the incident on
+  // 2026-06-07 around 20:20 UTC for details.
   const cacheBuster = Date.now();
   const urlWithBuster = `${url}?cb=${cacheBuster}`;
   console.log(`[snapshot] Fetching ${urlWithBuster}`);
   const start = Date.now();
 
-  try {
-    const response = await fetch(urlWithBuster, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; OddstipsBuild/1.0)",
-      },
-    });
+  const response = await fetch(urlWithBuster, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    },
+  });
 
-    const status = response.status;
-    const contentType = response.headers.get("content-type") || "(none)";
-    const contentLength = response.headers.get("content-length") || "(none)";
-    const xCache = response.headers.get("x-cache") || "(none)";
+  const status = response.status;
+  const contentType = response.headers.get("content-type") || "(none)";
+  const contentLength = response.headers.get("content-length") || "(none)";
+  const xCache = response.headers.get("x-cache") || "(none)";
 
-    console.log(
-      `[snapshot] Response: HTTP ${status}, content-type=${contentType}, content-length=${contentLength}, x-cache=${xCache}`,
+  console.log(
+    `[snapshot] Response: HTTP ${status}, content-type=${contentType}, content-length=${contentLength}, x-cache=${xCache}`,
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `[snapshot] FETCH FAILED: HTTP ${status}. Refusing to build a degraded site ` +
+        `that would overwrite the existing healthy deploy. First 500 chars of body:\n${body.slice(0, 500)}`,
     );
-
-    if (!response.ok) {
-      const body = await response.text();
-      console.warn(
-        `[snapshot] HTTP ${status} fetching snapshot. First 500 chars of body:\n${body.slice(0, 500)}`,
-      );
-      return null;
-    }
-
-    const rawText = await response.text();
-    const ms = Date.now() - start;
-
-    if (rawText.length < 100) {
-      console.warn(`[snapshot] Response body suspiciously small (${rawText.length} bytes). First 500 chars:\n${rawText.slice(0, 500)}`);
-    }
-
-    let data: Snapshot;
-    try {
-      data = JSON.parse(rawText) as Snapshot;
-    } catch (parseError) {
-      console.warn(`[snapshot] JSON parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}. First 500 chars of body:\n${rawText.slice(0, 500)}`);
-      return null;
-    }
-
-    const sizeMb = (rawText.length / 1024 / 1024).toFixed(2);
-    console.log(
-      `[snapshot] Loaded in ${ms}ms: ${data.categories?.length ?? 0} categories, ${data.posts?.length ?? 0} posts, ${data.pages?.length ?? 0} pages (${sizeMb} MB)`,
-    );
-
-    if ((data.categories?.length ?? 0) === 0 && (data.posts?.length ?? 0) === 0) {
-      console.warn(`[snapshot] Snapshot has zero categories AND zero posts. First 500 chars of body:\n${rawText.slice(0, 500)}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.warn(`[snapshot] Fetch failed: ${error instanceof Error ? error.message : String(error)}; build will use empty snapshot`);
-    return null;
   }
+
+  const rawText = await response.text();
+  const ms = Date.now() - start;
+
+  let data: Snapshot;
+  try {
+    data = JSON.parse(rawText) as Snapshot;
+  } catch (parseError) {
+    throw new Error(
+      `[snapshot] JSON PARSE FAILED: ${parseError instanceof Error ? parseError.message : String(parseError)}. ` +
+        `Refusing to build. First 500 chars of body:\n${rawText.slice(0, 500)}`,
+    );
+  }
+
+  const cats = data.categories?.length ?? 0;
+  const posts = data.posts?.length ?? 0;
+  const pages = data.pages?.length ?? 0;
+  const sizeMb = (rawText.length / 1024 / 1024).toFixed(2);
+  console.log(
+    `[snapshot] Loaded in ${ms}ms: ${cats} categories, ${posts} posts, ${pages} pages (${sizeMb} MB)`,
+  );
+
+  // HEALTH CHECK. If the snapshot is suspiciously thin, abort the build so
+  // CF Pages does not deploy a degraded site over the last healthy deploy.
+  // Common causes: Imunify360 bot-protection returning a JSON error body,
+  // WP down, snapshot file truncated, plugin not generating, etc.
+  if (cats < MIN_HEALTHY_CATEGORIES || posts < MIN_HEALTHY_POSTS) {
+    throw new Error(
+      `[snapshot] HEALTH CHECK FAILED. Got ${cats} categories and ${posts} posts ` +
+        `(thresholds: >= ${MIN_HEALTHY_CATEGORIES} categories AND >= ${MIN_HEALTHY_POSTS} posts). ` +
+        `Refusing to build a degraded site that would overwrite the existing healthy deploy. ` +
+        `First 500 chars of response body:\n${rawText.slice(0, 500)}`,
+    );
+  }
+
+  return data;
 }
 
 export function loadSnapshot(): Promise<Snapshot | null> {
