@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import CouponRow from "@/components/CouponRow.astro";
-import { wpGraphQL, type WpPost } from "@/lib/graphql";
+import { getPost, type WpPost } from "@/lib/graphql";
 import { cleanOdds, extractTime, findFirstLink, splitTipBody, summarizeTip } from "@/lib/tips";
 
 type SportSample = {
@@ -97,57 +97,33 @@ const sportRequests = liveSportSamples.map((sport, index) => {
   return {
     ...sport,
     alias,
-    postKey: `${alias}Post`,
     slug,
-    variable: `${alias}PostSlug`,
   };
 });
 
-const variableDefs = sportRequests.map((sport) => `$${sport.variable}: ID!`).join(", ");
-const sportFields = sportRequests
-  .map(
-    (sport) => `
-      ${sport.postKey}: post(id: $${sport.variable}, idType: SLUG) {
-        ...SportTipPost
-      }
-    `,
-  )
-  .join("\n");
-const sportVariables = Object.fromEntries(sportRequests.map((sport) => [sport.variable, sport.postSlug]));
-
-let sampleData: Record<string, WpPost | undefined> | null = null;
-let sampleError: string | undefined;
-
-try {
-  sampleData = await wpGraphQL<Record<string, WpPost | undefined>>(
-    `query SportTipSamples(${variableDefs}) {
-      ${sportFields}
+// Look up each diagnostic sample via the snapshot-backed getPost. Hardcoded
+// slugs go stale quickly (they reference specific past fixtures), so most
+// lookups will return null in practice; that's fine for a diagnostic page,
+// the empty-state rendering handles it gracefully below.
+const sampleResults = await Promise.all(
+  sportRequests.map(async (sport) => {
+    try {
+      const post = await getPost(sport.postSlug);
+      return { sport, post: post ?? undefined, error: undefined as string | undefined };
+    } catch (error) {
+      return { sport, post: undefined, error: errorMessage(error) };
     }
+  }),
+);
 
-    fragment SportTipPost on Post {
-      id
-      slug
-      uri
-      title
-      excerpt
-      content
-      date
-    }`,
-    sportVariables,
-    { retryDelaysMs: [], timeoutMs: 18000 },
-  );
-} catch (error) {
-  sampleError = errorMessage(error);
-}
-
-const samples: SportSample[] = sportRequests.map((sport) => ({
+const samples: SportSample[] = sampleResults.map(({ sport, post, error }) => ({
   label: sport.label,
   path: sport.path,
   slug: sport.slug,
   categoryName: sport.categoryName,
   categoryPath: sport.categoryPath,
-  post: sampleData?.[sport.postKey],
-  error: sampleError,
+  post,
+  error,
 }));
 
 const panels = samples.map((sample) => {

@@ -1,35 +1,45 @@
-type GraphQLResponse<T> = {
-  data?: T;
-  errors?: Array<{ message: string }>;
-};
+// Frontend data layer.
+//
+// Historical context: this file used to make ~hundreds of WPGraphQL POSTs per
+// build, one per category/post/page render. Against the 2GB Cloudways WP
+// backend, that produced 15-min builds that frequently failed under load.
+//
+// Now: a separate WP plugin (Oddstips Snapshot Generator) writes the entire
+// site dataset to a single JSON file at /wp-content/uploads/tips-snapshot.json.
+// loadSnapshot() in src/lib/snapshot.ts fetches that file once per build and
+// caches it in module state. Every getCategory / getPost / getPage / etc call
+// below reads from the in-memory snapshot, no network roundtrip.
+//
+// The only function in this file that still hits WP at build time is getMenu
+// (WP nav menus aren't in the snapshot yet). Menus are cached at module level
+// so each unique menu slug fires exactly one WPGraphQL POST per build,
+// typically two total (popular-leagues + international-games).
 
-type DateQueryParts = {
-  year: number;
-  month: number;
-  day: number;
-};
+import {
+  WPGRAPHQL_ENDPOINT,
+  WP_BASIC_AUTH_USER,
+  WP_BASIC_AUTH_PASSWORD,
+} from "astro:env/server";
+import {
+  allCategorySlugsFrom,
+  allPagesFrom,
+  allPostSlugsFrom,
+  categoriesFrom,
+  findCategoryBySlug,
+  findPageByUri,
+  findPostBySlug,
+  latestPostsFrom,
+  loadSnapshot,
+  postsForCategory,
+  relatedPosts,
+  type SnapshotCategory,
+  type SnapshotPage,
+  type SnapshotPost,
+} from "./snapshot";
 
-type DateQuery = {
-  after: DateQueryParts;
-  before: DateQueryParts;
-  inclusive: boolean;
-};
-
-type WpGraphQLOptions = {
-  retryDelaysMs?: number[];
-  timeoutMs?: number;
-};
-
-type ChildCategoryConnection = {
-  pageInfo?: {
-    hasNextPage?: boolean;
-    endCursor?: string | null;
-  };
-  nodes: Array<{
-    databaseId?: number;
-    count?: number | null;
-  }>;
-};
+// -----------------------------------------------------------------------------
+// Types (preserved from the old WPGraphQL-typed shape so consumers don't change)
+// -----------------------------------------------------------------------------
 
 export type WpPost = {
   id: string;
@@ -73,559 +83,87 @@ export type SeoFields = {
   }>;
 };
 
-// Env vars come via Astro 5's astro:env schema (declared in astro.config.mjs)
-// rather than import.meta.env so the values reliably reach the SSR worker
-// bundle. Without this, [...path].astro running on the Cloudflare edge sees
-// `undefined` for WPGRAPHQL_ENDPOINT and every category / tip post 404s.
-import {
-  WPGRAPHQL_ENDPOINT,
-  WP_BASIC_AUTH_USER,
-  WP_BASIC_AUTH_PASSWORD,
-} from "astro:env/server";
+// -----------------------------------------------------------------------------
+// Snapshot-backed data accessors
+// -----------------------------------------------------------------------------
 
-const endpoint = WPGRAPHQL_ENDPOINT;
-// Timeouts. The frontend is now fully static (no runtime wpGraphQL calls);
-// these only fire at build time. We can afford a longer per-query timeout
-// because slow WP responses are recoverable inside a build, whereas at
-// runtime they'd burn the Cloudflare worker's wall-clock budget. 30s gives
-// even a stressed 2GB Cloudways backend room to respond before a query is
-// considered failed.
-const defaultRetryDelaysMs = [1000, 3000];
-const defaultTimeoutMs = 30000;
-const parentSportCategorySlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
-
-function authHeader(): Record<string, string> {
-  const user = WP_BASIC_AUTH_USER;
-  const password = WP_BASIC_AUTH_PASSWORD;
-
-  if (!user || !password) {
-    return {};
-  }
-
+function postToWp(post: SnapshotPost): WpPost {
   return {
-    Authorization: `Basic ${btoa(`${user}:${password}`)}`,
-  };
-}
-
-function wait(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
-function formatError(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
-function todayDateQuery(timeZone = "Europe/London"): DateQuery {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "numeric",
-    timeZone,
-    year: "numeric",
-  }).formatToParts(new Date());
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const today = {
-    year: Number(values.year),
-    month: Number(values.month),
-    day: Number(values.day),
-  };
-
-  return {
-    after: today,
-    before: today,
-    inclusive: true,
-  };
-}
-
-// Edge cache helpers. Cloudflare Pages Functions do not support the cf object
-// on outbound fetches (Workers-only feature), so we use the caches.default API
-// directly. Each unique query+variables combination gets a stable cache key
-// derived from the request body.
-//
-// caches.default is a Cloudflare runtime global. It is undefined in local dev
-// and during the static build, in which case these helpers no-op and every
-// query goes straight to WP.
-//
-// TTL was 300s (5 min) originally to match the WP cron cadence for publishing
-// new tips. Raised to 1800s (30 min) to reduce WP server load on a memory-
-// constrained 2GB Cloudways box; tip pages don't typically change content
-// after publish, and the homepage's "latest tips" list isn't critical to be
-// up-to-the-minute. stale-while-revalidate=86400 on the page response means
-// new tips appear after at most 30 min, but existing URLs survive a 24h
-// upstream outage.
-const EDGE_CACHE_TTL_SECONDS = 1800;
-
-function edgeCache(): Cache | null {
-  const c = (globalThis as { caches?: { default?: Cache } }).caches;
-  return c?.default ?? null;
-}
-
-function edgeCacheKey(endpointUrl: string, body: string): Request {
-  // The key needs to be a Request whose URL is unique per query. POSTing to
-  // /graphql always hits the same URL, so we synthesise a GET with the body
-  // hashed into the query string. Length is well within CF limits for our
-  // queries.
-  const keyUrl = `${endpointUrl}?__cacheKey=${encodeURIComponent(body)}`;
-  return new Request(keyUrl, { method: "GET" });
-}
-
-async function readEdgeCache<T>(cacheKey: Request): Promise<T | null> {
-  const cache = edgeCache();
-  if (!cache) return null;
-
-  try {
-    const cached = await cache.match(cacheKey);
-    if (!cached) return null;
-    const payload = (await cached.json()) as GraphQLResponse<T>;
-    return payload?.data ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function writeEdgeCache<T>(cacheKey: Request, payload: GraphQLResponse<T>): Promise<void> {
-  const cache = edgeCache();
-  if (!cache || payload.errors?.length) return;
-
-  try {
-    const cached = new Response(JSON.stringify(payload), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": `public, max-age=${EDGE_CACHE_TTL_SECONDS}`,
-      },
-    });
-    // Awaited rather than fire-and-forget. In a CF Pages Function, the worker
-    // can be torn down as soon as the Response is returned; a dangling
-    // cache.put() Promise may not complete, leaving the cache empty for the
-    // next visitor. Awaiting adds ~10-50ms to the first request but
-    // guarantees subsequent requests find the cache populated.
-    await cache.put(cacheKey, cached);
-  } catch {
-    // Cache write failure is non-fatal.
-  }
-}
-
-export async function wpGraphQL<T>(
-  query: string,
-  variables: Record<string, unknown> = {},
-  options: WpGraphQLOptions = {},
-): Promise<T | null> {
-  if (!endpoint) {
-    return null;
-  }
-
-  const retryDelaysMs = options.retryDelaysMs ?? defaultRetryDelaysMs;
-  const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
-
-  const body = JSON.stringify({ query, variables });
-  const cacheKey = edgeCacheKey(endpoint, body);
-
-  // Edge cache lookup. If present, we skip the WP call entirely. Repeated
-  // requests for the same URL within the 5-minute TTL collapse to a single
-  // upstream WP query per data center.
-  const cached = await readEdgeCache<T>(cacheKey);
-  if (cached !== null) {
-    return cached;
-  }
-
-  const request = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeader(),
-    },
-    body,
-  };
-
-  for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
-    let response: Response;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-      response = await fetch(endpoint, {
-        ...request,
-        signal: controller.signal,
-      });
-    } catch (error) {
-      if (attempt < retryDelaysMs.length) {
-        await wait(retryDelaysMs[attempt]);
-        continue;
-      }
-
-      throw new Error(`WPGraphQL request failed after ${attempt + 1} attempts: ${formatError(error)}`);
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (!response.ok) {
-      const message = `WPGraphQL request failed: ${response.status} ${response.statusText}`;
-
-      if (response.status >= 500 && attempt < retryDelaysMs.length) {
-        await wait(retryDelaysMs[attempt]);
-        continue;
-      }
-
-      throw new Error(message);
-    }
-
-    let payload: GraphQLResponse<T>;
-
-    try {
-      payload = (await response.json()) as GraphQLResponse<T>;
-    } catch (error) {
-      if (attempt < retryDelaysMs.length) {
-        await wait(retryDelaysMs[attempt]);
-        continue;
-      }
-
-      throw new Error(`WPGraphQL response was not valid JSON after ${attempt + 1} attempts: ${formatError(error)}`);
-    }
-
-    if (payload.errors?.length) {
-      throw new Error(payload.errors.map((error) => error.message).join("; "));
-    }
-
-    // Store the successful response in the edge cache before returning so
-    // subsequent visitors find it populated. See writeEdgeCache for why we
-    // cannot fire-and-forget here.
-    await writeEdgeCache(cacheKey, payload);
-
-    return payload.data ?? null;
-  }
-
-  return null;
-}
-
-// Lightweight slug-only fetch for static-build path enumeration. Returns just
-// slug + uri for every published post (paginated under the hood), no content
-// or SEO fields, so it's cheap on the WP backend even when fetching thousands
-// of rows. Used by [...path].astro getStaticPaths to enumerate every tip post
-// URL to prerender at build time.
-export async function getAllPostSlugs(limit = 5000) {
-  type PostsSlugResponse = {
-    posts?: {
-      pageInfo?: { hasNextPage?: boolean; endCursor?: string | null };
-      nodes: Array<{ slug: string; uri?: string }>;
-    };
-  };
-
-  const collected: Array<{ slug: string; uri?: string }> = [];
-  let cursor: string | null = null;
-  const perPage = 100;
-
-  while (collected.length < limit) {
-    const data: PostsSlugResponse | null = await wpGraphQL<PostsSlugResponse>(
-      `query AllPostSlugs($cursor: String, $perPage: Int!) {
-        posts(first: $perPage, after: $cursor, where: { orderby: { field: DATE, order: DESC } }) {
-          pageInfo { hasNextPage endCursor }
-          nodes { slug uri }
-        }
-      }`,
-      { cursor, perPage },
-    );
-
-    const nodes = data?.posts?.nodes ?? [];
-    nodes.forEach((node) => {
-      if (node.slug) collected.push({ slug: node.slug, uri: node.uri });
-    });
-
-    const hasNext = data?.posts?.pageInfo?.hasNextPage ?? false;
-    const endCursor: string | null = data?.posts?.pageInfo?.endCursor ?? null;
-    if (!hasNext || !endCursor) break;
-    cursor = endCursor;
-  }
-
-  return collected.slice(0, limit);
-}
-
-// Lightweight slug-only fetch for all categories (paginated). Used alongside
-// getAllPostSlugs for static-build path enumeration. Each category's full uri
-// is preserved so nested categories (football/united-kingdom/england-premier-league)
-// build into the correct route.
-export async function getAllCategorySlugs(limit = 2000) {
-  type CategoriesSlugResponse = {
-    categories?: {
-      pageInfo?: { hasNextPage?: boolean; endCursor?: string | null };
-      nodes: Array<{ slug: string; uri?: string; count?: number | null }>;
-    };
-  };
-
-  const collected: Array<{ slug: string; uri: string }> = [];
-  let cursor: string | null = null;
-  const perPage = 100;
-
-  while (collected.length < limit) {
-    const data: CategoriesSlugResponse | null = await wpGraphQL<CategoriesSlugResponse>(
-      `query AllCategorySlugs($cursor: String, $perPage: Int!) {
-        categories(first: $perPage, after: $cursor, where: { hideEmpty: true }) {
-          pageInfo { hasNextPage endCursor }
-          nodes { slug uri count }
-        }
-      }`,
-      { cursor, perPage },
-    );
-
-    const nodes = data?.categories?.nodes ?? [];
-    nodes.forEach((node) => {
-      if (node.slug && node.uri) {
-        collected.push({ slug: node.slug, uri: node.uri });
-      }
-    });
-
-    const hasNext = data?.categories?.pageInfo?.hasNextPage ?? false;
-    const endCursor: string | null = data?.categories?.pageInfo?.endCursor ?? null;
-    if (!hasNext || !endCursor) break;
-    cursor = endCursor;
-  }
-
-  return collected.slice(0, limit);
-}
-
-export async function getLatestPosts(limit = 8) {
-  const data = await wpGraphQL<{
-    posts: {
-      nodes: WpPost[];
-    };
-  }>(
-    `query LatestPosts($limit: Int!) {
-      posts(first: $limit, where: { orderby: { field: DATE, order: DESC } }) {
-        nodes {
-          id
-          slug
-          uri
-          title
-          excerpt
-          date
-          modified
-          seo {
-            title
-            metaDesc
-            canonical
-          }
-        }
-      }
-    }`,
-    { limit },
-  );
-
-  return data?.posts.nodes ?? [];
-}
-
-export async function getCategories(limit = 25) {
-  const data = await wpGraphQL<{
+    id: post.id,
+    slug: post.slug,
+    uri: post.uri,
+    title: post.title,
+    excerpt: post.excerpt,
+    content: post.content,
+    date: post.date,
+    modified: post.modified,
+    seo: post.seo as SeoFields,
     categories: {
-      nodes: WpCategory[];
-    };
-  }>(
-    `query Categories($limit: Int!) {
-      categories(first: $limit, where: { hideEmpty: true }) {
-        nodes {
-          id
-          slug
-          uri
-          name
-          description
-          seo {
-            title
-            metaDesc
-            canonical
-          }
-        }
-      }
-    }`,
-    { limit },
-  );
+      nodes: (post.categories?.nodes ?? []).map((c) => ({
+        id: c.id,
+        databaseId: c.databaseId,
+        slug: c.slug,
+        uri: c.uri,
+        name: c.name,
+      })),
+    },
+  };
+}
 
-  return data?.categories.nodes ?? [];
+function categoryToWp(cat: SnapshotCategory): WpCategory & {
+  categoryTopSeoText?: { categoryTopSeoText?: string };
+  categoryBottomSeoText?: { categoryBottomSeoText?: string };
+} {
+  return {
+    id: cat.id,
+    databaseId: cat.databaseId,
+    slug: cat.slug,
+    uri: cat.uri,
+    name: cat.name,
+    description: cat.description,
+    seo: cat.seo as SeoFields,
+    categoryTopSeoText: cat.categoryTopSeoText,
+    categoryBottomSeoText: cat.categoryBottomSeoText,
+  };
+}
+
+function pageToWp(page: SnapshotPage): WpPost {
+  return {
+    id: page.id,
+    slug: page.slug,
+    uri: page.uri,
+    title: page.title,
+    content: page.content,
+    modified: page.modified,
+    seo: page.seo as SeoFields,
+  };
+}
+
+export async function getLatestPosts(limit = 8): Promise<WpPost[]> {
+  const snapshot = await loadSnapshot();
+  return latestPostsFrom(snapshot, limit).map(postToWp);
+}
+
+export async function getCategories(limit = 25): Promise<WpCategory[]> {
+  const snapshot = await loadSnapshot();
+  return categoriesFrom(snapshot, limit).map(categoryToWp);
 }
 
 export async function getCategory(slug: string, postLimit = 30) {
-  // Core category + posts query. Deliberately does NOT include ACF fields:
-  // WPGraphQL fails the ENTIRE query with a schema-validation error if any
-  // referenced field is missing from the schema (e.g. ACF Pro field group not
-  // exposed yet, plugin disabled, field type changed). When that happened
-  // pre-fix, every category page on live 404'd. ACF fields are queried
-  // separately below so a failure there is contained.
-  const data = await wpGraphQL<{
-    category?: WpCategory;
-    posts?: {
-      nodes: WpPost[];
-    };
-  }>(
-    `query CategoryBySlug($slug: ID!, $categoryName: String!, $postLimit: Int!) {
-      category(id: $slug, idType: SLUG) {
-        id
-        databaseId
-        slug
-        uri
-        name
-        description
-        seo {
-          title
-          metaDesc
-          canonical
-          opengraphTitle
-          opengraphDescription
-          breadcrumbs {
-            text
-            url
-          }
-        }
-      }
-      posts(first: $postLimit, where: { categoryName: $categoryName, orderby: { field: DATE, order: DESC } }) {
-        nodes {
-          id
-          slug
-          uri
-          title
-          excerpt
-          date
-        }
-      }
-    }`,
-    { slug, categoryName: slug, postLimit },
-  );
+  const snapshot = await loadSnapshot();
+  const cat = findCategoryBySlug(snapshot, slug);
+  if (!cat) return null;
 
-  if (!data?.category) {
-    return null;
-  }
-
-  // Optional ACF SEO copy. Wrapped in its own query + catch so a missing or
-  // renamed field cannot take down category resolution. Inner field name
-  // matches what live WP currently exposes (categoryTopSeoText.categoryTopSeoText).
-  // If the field group is later switched back to a wp_editor type the inner
-  // name becomes categoryTopSeoTextEditor; in that case this query fails
-  // silently and CategoryTipsPage falls back to src/lib/categorySeoCopy.ts.
-  const acf = await getCategoryAcfSeo(slug);
-
-  const mergedCategory = {
-    ...data.category,
-    ...(acf ?? {}),
-  };
-
-  if (parentSportCategorySlugs.has(slug) && !data.posts?.nodes?.length) {
-    const childPosts = await getChildCategoryPosts(slug, postLimit);
-
-    if (childPosts.length) {
-      return {
-        ...mergedCategory,
-        posts: { nodes: childPosts },
-      };
-    }
-  }
+  const posts = postsForCategory(snapshot, slug, postLimit).map(postToWp);
 
   return {
-    ...mergedCategory,
-    posts: data.posts,
+    ...categoryToWp(cat),
+    posts: { nodes: posts },
   };
 }
 
-type CategoryAcfSeo = {
-  categoryTopSeoText?: {
-    categoryTopSeoText?: string;
-  };
-  categoryBottomSeoText?: {
-    categoryBottomSeoText?: string;
-  };
-};
-
-async function getCategoryAcfSeo(slug: string): Promise<CategoryAcfSeo | null> {
-  try {
-    const data = await wpGraphQL<{
-      category?: CategoryAcfSeo;
-    }>(
-      `query CategoryAcfSeo($slug: ID!) {
-        category(id: $slug, idType: SLUG) {
-          categoryTopSeoText {
-            categoryTopSeoText
-          }
-          categoryBottomSeoText {
-            categoryBottomSeoText
-          }
-        }
-      }`,
-      { slug },
-    );
-
-    return data?.category ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function getChildCategoryDatabaseIds(slug: string) {
-  const ids: string[] = [];
-  let after: string | null = null;
-
-  do {
-    const data: {
-      category?: {
-        children?: ChildCategoryConnection;
-      };
-    } | null = await wpGraphQL(
-      `query ChildCategoryIds($slug: ID!, $after: String) {
-        category(id: $slug, idType: SLUG) {
-          children(first: 100, after: $after) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              databaseId
-              count
-            }
-          }
-        }
-      }`,
-      { slug, after },
-    );
-
-    const connection: ChildCategoryConnection | undefined = data?.category?.children;
-
-    connection?.nodes.forEach((node) => {
-      if (typeof node.databaseId === "number" && node.count !== null && node.count !== 0) {
-        ids.push(String(node.databaseId));
-      }
-    });
-
-    after = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor || null : null;
-  } while (after);
-
-  return ids;
-}
-
-async function getChildCategoryPosts(slug: string, postLimit: number) {
-  const categoryIds = await getChildCategoryDatabaseIds(slug);
-
-  if (!categoryIds.length) {
-    return [];
-  }
-
-  const data = await wpGraphQL<{
-    posts?: {
-      nodes: WpPost[];
-    };
-  }>(
-    `query ChildCategoryPosts($categoryIds: [ID], $postLimit: Int!) {
-      posts(first: $postLimit, where: { categoryIn: $categoryIds, orderby: { field: DATE, order: DESC } }) {
-        nodes {
-          id
-          slug
-          uri
-          title
-          excerpt
-          date
-        }
-      }
-    }`,
-    { categoryIds, postLimit },
-  );
-
-  return data?.posts?.nodes ?? [];
-}
-
-export async function getInternationalTips(limit = 6) {
-  const dateQuery = todayDateQuery();
+export async function getInternationalTips(limit = 6): Promise<WpPost[]> {
+  const snapshot = await loadSnapshot();
   const candidateSlugs = [
     "international-match",
     "international",
@@ -634,212 +172,80 @@ export async function getInternationalTips(limit = 6) {
   ];
 
   for (const slug of candidateSlugs) {
-    const posts = await getCategoryPostTitles(slug, limit, dateQuery).catch(() => []);
-
-    if (posts.length) {
-      return posts;
-    }
+    const posts = postsForCategory(snapshot, slug, limit);
+    if (posts.length) return posts.map(postToWp);
   }
-
   return [];
 }
 
-export async function getCategoryPostTitles(slug: string, limit = 4, dateQuery?: DateQuery) {
-  // Lightweight query: titles + URIs only. Used by homepage "Latest X Tips" sections
-  // where the live site renders title-only cards.
-  const data = await wpGraphQL<{
-    posts?: {
-      nodes: WpPost[];
-    };
-  }>(
-    `query CategoryPostTitles($slug: String!, $limit: Int!, $dateQuery: DateQueryInput) {
-      posts(first: $limit, where: { categoryName: $slug, orderby: { field: DATE, order: DESC }, dateQuery: $dateQuery }) {
-        nodes {
-          id
-          slug
-          uri
-          title
-          date
-        }
-      }
-    }`,
-    { slug, limit, dateQuery },
+export async function getCategoryPostTitles(
+  slug: string,
+  limit = 4,
+  _dateQuery?: unknown,
+): Promise<WpPost[]> {
+  // _dateQuery is ignored in snapshot mode — we can't filter by kickoff window
+  // because that data isn't in the snapshot. Caller's responsibility to filter
+  // returned posts if they need a specific date.
+  const snapshot = await loadSnapshot();
+  return postsForCategory(snapshot, slug, limit).map(postToWp);
+}
+
+export async function getPost(slug: string): Promise<WpPost | null> {
+  const snapshot = await loadSnapshot();
+  const post = findPostBySlug(snapshot, slug);
+  return post ? postToWp(post) : null;
+}
+
+export async function getRelatedPosts(post: WpPost, limit = 6): Promise<WpPost[]> {
+  const snapshot = await loadSnapshot();
+  const related = relatedPosts(
+    snapshot,
+    {
+      slug: post.slug,
+      categories: {
+        nodes: (post.categories?.nodes ?? []).map((c) => ({
+          id: c.id,
+          databaseId: c.databaseId ?? 0,
+          slug: c.slug,
+          uri: c.uri,
+          name: c.name,
+        })),
+      },
+    },
+    limit,
   );
-
-  return data?.posts?.nodes ?? [];
+  return related.map(postToWp);
 }
 
-export async function getPost(slug: string) {
-  const data = await wpGraphQL<{
-    post?: WpPost & {
-      content?: string;
-      categories?: {
-        nodes: WpCategory[];
-      };
-    };
-  }>(
-    `query PostBySlug($slug: ID!) {
-      post(id: $slug, idType: SLUG) {
-        id
-        slug
-        uri
-        title
-        excerpt
-        content
-        date
-        modified
-        seo {
-          title
-          metaDesc
-          canonical
-          opengraphTitle
-          opengraphDescription
-          opengraphImage {
-            sourceUrl
-          }
-          twitterTitle
-          twitterDescription
-          breadcrumbs {
-            text
-            url
-          }
-        }
-        categories {
-          nodes {
-            id
-            databaseId
-            slug
-            uri
-            name
-          }
-        }
-      }
-    }`,
-    { slug },
-  );
-
-  return data?.post ?? null;
+export async function getPage(uri: string): Promise<WpPost | null> {
+  const snapshot = await loadSnapshot();
+  const page = findPageByUri(snapshot, uri);
+  return page ? pageToWp(page) : null;
 }
 
-export async function getRelatedPosts(post: WpPost, limit = 6) {
-  const categoryIds = (post.categories?.nodes ?? [])
-    .map((category) => category.databaseId)
-    .filter((id): id is number => typeof id === "number")
-    .map(String);
-
-  if (!categoryIds.length) {
-    return [];
-  }
-
-  const data = await wpGraphQL<{
-    posts?: {
-      nodes: WpPost[];
-    };
-  }>(
-    `query RelatedPosts($categoryIds: [ID], $limit: Int!) {
-      posts(first: $limit, where: { categoryIn: $categoryIds, orderby: { field: DATE, order: DESC } }) {
-        nodes {
-          id
-          slug
-          uri
-          title
-          excerpt
-          date
-        }
-      }
-    }`,
-    { categoryIds, limit: limit + 1 },
-  );
-
-  return (data?.posts?.nodes ?? []).filter((related) => related.slug !== post.slug).slice(0, limit);
+export async function getPages(_limit = 100): Promise<WpPost[]> {
+  const snapshot = await loadSnapshot();
+  return allPagesFrom(snapshot).map(pageToWp);
 }
 
-export async function getPage(slug: string) {
-  const data = await wpGraphQL<{
-    page?: WpPost & {
-      content?: string;
-    };
-  }>(
-    `query PageBySlug($slug: ID!) {
-      page(id: $slug, idType: URI) {
-        id
-        slug
-        uri
-        title
-        content
-        modified
-        seo {
-          title
-          metaDesc
-          canonical
-          opengraphTitle
-          opengraphDescription
-          breadcrumbs {
-            text
-            url
-          }
-        }
-      }
-    }`,
-    { slug },
-  );
-
-  return data?.page ?? null;
+// Slug-only listings for [...path].astro getStaticPaths.
+export async function getAllPostSlugs(limit = 5000) {
+  const snapshot = await loadSnapshot();
+  return allPostSlugsFrom(snapshot, limit);
 }
 
-export async function getPages(limit = 100) {
-  type PagesResponse = {
-    pages?: {
-      pageInfo?: {
-        hasNextPage?: boolean;
-        endCursor?: string | null;
-      };
-      nodes: WpPost[];
-    };
-  };
-
-  const pages: WpPost[] = [];
-  let after: string | null = null;
-
-  do {
-    const data: PagesResponse | null = await wpGraphQL<PagesResponse>(
-      `query Pages($limit: Int!, $after: String) {
-        pages(first: $limit, after: $after) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          nodes {
-            id
-            slug
-            uri
-            title
-            content
-            modified
-            seo {
-              title
-              metaDesc
-              canonical
-              opengraphTitle
-              opengraphDescription
-              breadcrumbs {
-                text
-                url
-              }
-            }
-          }
-        }
-      }`,
-      { limit, after },
-    );
-
-    const connection: PagesResponse["pages"] = data?.pages;
-    pages.push(...(connection?.nodes ?? []));
-    after = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor || null : null;
-  } while (after);
-
-  return pages;
+export async function getAllCategorySlugs(limit = 2000) {
+  const snapshot = await loadSnapshot();
+  return allCategorySlugsFrom(snapshot, limit);
 }
+
+// -----------------------------------------------------------------------------
+// Menus — still fetched from WPGraphQL because they aren't in the snapshot yet.
+// Cached at module level so each unique menu slug results in exactly one
+// WPGraphQL POST per build (typically 2 total: popular-leagues + international-games).
+// If WP is unreachable, returns null and the consuming component renders an
+// empty menu rather than failing the whole build.
+// -----------------------------------------------------------------------------
 
 export type WpMenuItem = {
   id: string;
@@ -856,11 +262,60 @@ export type WpMenu = {
   menuItems: WpMenuItem[];
 };
 
-// Module-level cache so each menu is fetched once per build, not once per page
-// render. CategorySidebar renders on every category / sub-category route, so the
-// same two slugs (popular-leagues, international-games) would otherwise turn
-// into ~30 redundant GraphQL calls per build.
 const menuCache = new Map<string, Promise<WpMenu | null>>();
+
+type GraphQLResponse<T> = {
+  data?: T;
+  errors?: Array<{ message: string }>;
+};
+
+function authHeader(): Record<string, string> {
+  const user = WP_BASIC_AUTH_USER;
+  const password = WP_BASIC_AUTH_PASSWORD;
+  if (!user || !password) return {};
+  return { Authorization: `Basic ${btoa(`${user}:${password}`)}` };
+}
+
+async function lightWpGraphQL<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+): Promise<T | null> {
+  if (!WPGRAPHQL_ENDPOINT) return null;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetch(WPGRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        body: JSON.stringify({ query, variables }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        console.warn(`[graphql] menu query HTTP ${response.status}`);
+        return null;
+      }
+
+      const payload = (await response.json()) as GraphQLResponse<T>;
+      if (payload.errors?.length) {
+        console.warn(`[graphql] menu query errors: ${payload.errors.map((e) => e.message).join("; ")}`);
+        return null;
+      }
+
+      return payload.data ?? null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch (error) {
+    console.warn(`[graphql] menu query failed: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
 
 async function fetchMenu(slug: string): Promise<WpMenu | null> {
   type MenuResponse = {
@@ -882,7 +337,7 @@ async function fetchMenu(slug: string): Promise<WpMenu | null> {
     };
   };
 
-  const data = await wpGraphQL<MenuResponse>(
+  const data = await lightWpGraphQL<MenuResponse>(
     `query MenuBySlug($slug: String!) {
       menus(where: { slug: $slug }) {
         nodes {
@@ -905,10 +360,7 @@ async function fetchMenu(slug: string): Promise<WpMenu | null> {
   );
 
   const node = data?.menus?.nodes?.[0];
-
-  if (!node) {
-    return null;
-  }
+  if (!node) return null;
 
   return {
     databaseId: node.databaseId,
@@ -928,6 +380,5 @@ export function getMenu(slug: string): Promise<WpMenu | null> {
   if (!menuCache.has(slug)) {
     menuCache.set(slug, fetchMenu(slug).catch(() => null));
   }
-
   return menuCache.get(slug)!;
 }
