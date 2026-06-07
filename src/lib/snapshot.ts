@@ -108,25 +108,63 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
     return null;
   }
 
-  console.log(`[snapshot] Fetching ${url}`);
+  // Add a cache-buster so any WP-side or CDN cache layer doesn't serve a
+  // stale empty response from before the plugin was installed. Use a real
+  // browser-ish User-Agent so bot protection (Imunify360 / WAFs) is less
+  // likely to challenge or block the request.
+  const cacheBuster = Date.now();
+  const urlWithBuster = `${url}?cb=${cacheBuster}`;
+  console.log(`[snapshot] Fetching ${urlWithBuster}`);
   const start = Date.now();
 
   try {
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
+    const response = await fetch(urlWithBuster, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; OddstipsBuild/1.0)",
+      },
     });
 
+    const status = response.status;
+    const contentType = response.headers.get("content-type") || "(none)";
+    const contentLength = response.headers.get("content-length") || "(none)";
+    const xCache = response.headers.get("x-cache") || "(none)";
+
+    console.log(
+      `[snapshot] Response: HTTP ${status}, content-type=${contentType}, content-length=${contentLength}, x-cache=${xCache}`,
+    );
+
     if (!response.ok) {
-      console.warn(`[snapshot] HTTP ${response.status} fetching ${url}; build will use empty snapshot`);
+      const body = await response.text();
+      console.warn(
+        `[snapshot] HTTP ${status} fetching snapshot. First 500 chars of body:\n${body.slice(0, 500)}`,
+      );
       return null;
     }
 
-    const data = (await response.json()) as Snapshot;
-    const sizeMb = (JSON.stringify(data).length / 1024 / 1024).toFixed(2);
+    const rawText = await response.text();
     const ms = Date.now() - start;
+
+    if (rawText.length < 100) {
+      console.warn(`[snapshot] Response body suspiciously small (${rawText.length} bytes). First 500 chars:\n${rawText.slice(0, 500)}`);
+    }
+
+    let data: Snapshot;
+    try {
+      data = JSON.parse(rawText) as Snapshot;
+    } catch (parseError) {
+      console.warn(`[snapshot] JSON parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}. First 500 chars of body:\n${rawText.slice(0, 500)}`);
+      return null;
+    }
+
+    const sizeMb = (rawText.length / 1024 / 1024).toFixed(2);
     console.log(
       `[snapshot] Loaded in ${ms}ms: ${data.categories?.length ?? 0} categories, ${data.posts?.length ?? 0} posts, ${data.pages?.length ?? 0} pages (${sizeMb} MB)`,
     );
+
+    if ((data.categories?.length ?? 0) === 0 && (data.posts?.length ?? 0) === 0) {
+      console.warn(`[snapshot] Snapshot has zero categories AND zero posts. First 500 chars of body:\n${rawText.slice(0, 500)}`);
+    }
 
     return data;
   } catch (error) {
