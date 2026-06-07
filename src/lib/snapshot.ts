@@ -58,6 +58,10 @@ export type SnapshotPost = {
   content?: string;
   date: string;
   modified?: string;
+  // Actual fixture kickoff time written by paul365 cron-runner as post_meta
+  // 'event_start'. Used for date-rail filtering / date-grouped lists. Null
+  // for non-tip posts (about, articles).
+  eventStart?: string | null;
   seo: SnapshotSeo;
   categories: { nodes: SnapshotCategoryNode[] };
 };

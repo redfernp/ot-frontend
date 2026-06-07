@@ -11,7 +11,27 @@ const { post, tipDate } = Astro.props;
 const href = post.uri || `/${post.slug}/`;
 const summary = summarizeTip(post);
 const bet365Url = findFirstLink(post.content, /bet365/i);
-const eventDate = tipDate || extractEventDate(post);
+
+// Prefer the structured eventStart timestamp from the snapshot (paul365's
+// event_start post_meta). Fall back to the explicit tipDate prop, then to
+// extracting the date from the post HTML. eventStart is the most reliable
+// because it comes straight from the Bet365 feed; HTML extraction is
+// fragile and depends on title format.
+function eventStartToIsoDate(eventStart?: string | null): string | null {
+  if (!eventStart) return null;
+  const d = new Date(eventStart);
+  if (Number.isNaN(d.getTime())) return null;
+  // Format as YYYY-MM-DD in UTC. The DateRail filter uses this exact format.
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const eventDate =
+  eventStartToIsoDate(post.eventStart) ||
+  tipDate ||
+  extractEventDate(post);
 
 function formatKickoff(dateIso?: string) {
   if (!dateIso) {
@@ -46,10 +66,12 @@ function formatEventDate(isoDate?: string | null) {
   }).format(d);
 }
 
-// Pull just HH:MM for the small pill. summary.kickoff from WP is usually a long
-// phrase ("15:00 (UK time), Sun, 24th May 2026"), so we mine the time out of it
-// and fall back to post.date if nothing usable was found.
+// Pull just HH:MM for the small pill. Prefer the structured eventStart
+// timestamp from paul365's event_start post_meta. Fall back to parsing the
+// kickoff phrase out of post HTML, then to post.date (publish time) as a
+// last resort.
 const kickoffLabel =
+  formatKickoff(post.eventStart ?? undefined) ||
   extractTime(summary.kickoff) ||
   formatKickoff(post.date) ||
   null;

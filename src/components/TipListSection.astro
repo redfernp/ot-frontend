@@ -20,6 +20,10 @@ type Props = {
   // Adds the orange top-border treatment used for the headline list on each
   // sport hub.
   featured?: boolean;
+  // When true, posts are sorted by event date and rendered in date-grouped
+  // sections with a date header between groups. Used on category pages so
+  // visitors can see today's tips first, then upcoming dates underneath.
+  groupByDate?: boolean;
 };
 
 const {
@@ -31,16 +35,66 @@ const {
   unit = { singular: "tip", plural: "tips" },
   emptyText,
   featured = false,
+  groupByDate = false,
 } = Astro.props;
 
 const count = posts.length;
 const unitLabel = count === 1 ? unit.singular : unit.plural;
+
+// Pull a YYYY-MM-DD date key out of a post's eventStart (paul365's
+// event_start post_meta). Posts without an eventStart land in a single
+// "undated" group at the end, but those should be rare since the cron-runner
+// writes event_start on every published tip.
+function dateKey(post: WpPost): string | null {
+  if (!post.eventStart) return null;
+  const d = new Date(post.eventStart);
+  if (Number.isNaN(d.getTime())) return null;
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateHeader(isoDate: string): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(d);
+}
+
+type Group = { date: string | null; posts: WpPost[] };
+
+let groups: Group[] = [];
+if (groupByDate && count > 0) {
+  const map = new Map<string, WpPost[]>();
+  for (const post of posts) {
+    const key = dateKey(post) ?? "__undated";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(post);
+  }
+  groups = Array.from(map.entries())
+    .sort(([a], [b]) => {
+      if (a === "__undated") return 1;
+      if (b === "__undated") return -1;
+      return a.localeCompare(b);
+    })
+    .map(([date, items]) => ({
+      date: date === "__undated" ? null : date,
+      posts: items,
+    }));
+} else {
+  groups = [{ date: null, posts }];
+}
 ---
 
 <section
   class:list={["post-list", { "is-featured": featured }]}
   aria-labelledby={headingId}
   data-date-filter-section
+  data-date-grouped={groupByDate ? "true" : undefined}
 >
   <header class="post-list-head">
     <p class:list={["eyebrow", { "on-orange": eyebrowAccent === "orange" }]}>{eyebrow}</p>
@@ -53,7 +107,26 @@ const unitLabel = count === 1 ? unit.singular : unit.plural;
   </header>
   {count > 0 ? (
     <div class="post-list-rows" data-date-filter-list>
-      {posts.map((post) => <CouponRow post={post} />)}
+      {groupByDate ? (
+        groups.map((group) => (
+          <div class="date-group" data-date-group={group.date ?? ""}>
+            {group.date && (
+              <header
+                class="date-group-head"
+                data-date-group-head={group.date}
+              >
+                <span class="date-group-label">{formatDateHeader(group.date)}</span>
+                <span class="date-group-count">
+                  {group.posts.length} {group.posts.length === 1 ? unit.singular : unit.plural}
+                </span>
+              </header>
+            )}
+            {group.posts.map((post) => <CouponRow post={post} />)}
+          </div>
+        ))
+      ) : (
+        posts.map((post) => <CouponRow post={post} />)
+      )}
     </div>
   ) : null}
   <p class="empty-state" data-date-empty hidden={count > 0}>{emptyText}</p>
@@ -111,5 +184,42 @@ const unitLabel = count === 1 ? unit.singular : unit.plural;
     font-size: 0.95rem;
     margin: 0;
     padding: 1.5rem 1.25rem;
+  }
+
+  /* Date-grouped variant. The date-group wrapper holds the date header plus
+     all rows for that date. JS in DateRail hides whole wrappers when
+     filtering, so wrapping in display: contents avoids any layout shift
+     between date-grouped and flat rendering. */
+  .date-group {
+    display: contents;
+  }
+  .date-group-head {
+    align-items: baseline;
+    background: linear-gradient(180deg, #eaf2ff 0%, #f5f9ff 100%);
+    border-top: 1px solid var(--ot-border);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.7rem 1.25rem;
+  }
+  /* First date-group's header sits right under the post-list-head, no double
+     border. */
+  .date-group:first-child .date-group-head {
+    border-top: 0;
+  }
+  .date-group-label {
+    color: var(--ot-brand-blue-dark);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .date-group-count {
+    color: var(--ot-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 </style>

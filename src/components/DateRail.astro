@@ -233,31 +233,78 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       });
     }
 
+    // Threshold for "today + future" stacking. When today's tip count is at
+    // or above this number, we filter strictly to the active date. Below it,
+    // future dates are revealed underneath so visitors see upcoming tips
+    // without having to click around the rail.
+    const TODAY_LOW_COUNT = 20;
+
+    function setCountText(count, visible) {
+      if (!count) return;
+      const singular = count.dataset.singular || "tip";
+      const plural = count.dataset.plural || "tips";
+      count.textContent = `${visible} ${visible === 1 ? singular : plural}`;
+    }
+
     function updateSections(activeDate) {
+      const today = londonTodayIso();
+
       document.querySelectorAll("[data-date-filter-section]").forEach((section) => {
-        const rows = Array.from(section.querySelectorAll("[data-tip-date]"));
+        const isGrouped = section.dataset.dateGrouped === "true";
         const empty = section.querySelector("[data-date-empty]");
         const count = section.querySelector("[data-date-count]");
-        let visible = 0;
 
+        if (isGrouped) {
+          // Grouped mode: each [data-date-group="YYYY-MM-DD"] wraps a date
+          // header plus that day's CouponRows. Hide/show whole groups.
+          const groups = Array.from(section.querySelectorAll("[data-date-group]"));
+
+          // Count today's tips up front so we can decide whether to stack
+          // future dates underneath.
+          let todayCount = 0;
+          for (const group of groups) {
+            if (group.dataset.dateGroup === today) {
+              todayCount = group.querySelectorAll("[data-tip-date]").length;
+              break;
+            }
+          }
+          const shouldStackFuture =
+            activeDate === today && todayCount < TODAY_LOW_COUNT;
+
+          let totalVisible = 0;
+          groups.forEach((group) => {
+            const groupDate = group.dataset.dateGroup || "";
+            let shouldShow;
+            if (shouldStackFuture) {
+              // Show today + every future date
+              shouldShow = groupDate >= today;
+            } else {
+              // Show only the explicitly active date
+              shouldShow = groupDate === activeDate;
+            }
+            group.hidden = !shouldShow;
+            if (shouldShow) {
+              totalVisible += group.querySelectorAll("[data-tip-date]").length;
+            }
+          });
+
+          if (empty) empty.hidden = totalVisible > 0;
+          setCountText(count, totalVisible);
+          return;
+        }
+
+        // Flat mode (homepage hub lists, sport-hub featured lists): hide
+        // individual rows that don't match the active date.
+        const rows = Array.from(section.querySelectorAll("[data-tip-date]"));
+        let visible = 0;
         rows.forEach((row) => {
           const matches = row.dataset.tipDate === activeDate;
           row.hidden = !matches;
-
-          if (matches) {
-            visible += 1;
-          }
+          if (matches) visible += 1;
         });
 
-        if (empty) {
-          empty.hidden = visible > 0;
-        }
-
-        if (count) {
-          const singular = count.dataset.singular || "tip";
-          const plural = count.dataset.plural || "tips";
-          count.textContent = `${visible} ${visible === 1 ? singular : plural}`;
-        }
+        if (empty) empty.hidden = visible > 0;
+        setCountText(count, visible);
       });
     }
 

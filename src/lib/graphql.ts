@@ -50,6 +50,9 @@ export type WpPost = {
   content?: string;
   date?: string;
   modified?: string;
+  // Actual fixture kickoff time (ISO 8601 string) from paul365's event_start
+  // post_meta. May be null on non-tip posts.
+  eventStart?: string | null;
   seo?: SeoFields;
   categories?: {
     nodes: WpCategory[];
@@ -97,6 +100,7 @@ function postToWp(post: SnapshotPost): WpPost {
     content: post.content,
     date: post.date,
     modified: post.modified,
+    eventStart: post.eventStart ?? null,
     seo: post.seo as SeoFields,
     categories: {
       nodes: (post.categories?.nodes ?? []).map((c) => ({
