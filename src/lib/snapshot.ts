@@ -154,7 +154,7 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(
+    abortBuild(
       `[snapshot] FETCH FAILED: HTTP ${status}. Refusing to build a degraded site ` +
         `that would overwrite the existing healthy deploy. First 500 chars of body:\n${body.slice(0, 500)}`,
     );
@@ -167,7 +167,7 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
   try {
     data = JSON.parse(rawText) as Snapshot;
   } catch (parseError) {
-    throw new Error(
+    abortBuild(
       `[snapshot] JSON PARSE FAILED: ${parseError instanceof Error ? parseError.message : String(parseError)}. ` +
         `Refusing to build. First 500 chars of body:\n${rawText.slice(0, 500)}`,
     );
@@ -186,7 +186,7 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
   // Common causes: Imunify360 bot-protection returning a JSON error body,
   // WP down, snapshot file truncated, plugin not generating, etc.
   if (cats < MIN_HEALTHY_CATEGORIES || posts < MIN_HEALTHY_POSTS) {
-    throw new Error(
+    abortBuild(
       `[snapshot] HEALTH CHECK FAILED. Got ${cats} categories and ${posts} posts ` +
         `(thresholds: >= ${MIN_HEALTHY_CATEGORIES} categories AND >= ${MIN_HEALTHY_POSTS} posts). ` +
         `Refusing to build a degraded site that would overwrite the existing healthy deploy. ` +
@@ -195,6 +195,23 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
   }
 
   return data;
+}
+
+// Hard-fail the build process. We use process.exit(1) rather than throwing
+// because Astro catches errors thrown inside getStaticPaths per-page and
+// falls back to hardcoded routes; the build still exits 0 and CF Pages
+// happily deploys whatever stripped-down dist/ was produced. process.exit
+// terminates the Node build process immediately with a non-zero code, so
+// `npm run build` fails and CF Pages skips the deploy step entirely.
+// This was learned the hard way on 2026-06-07 when a guardrail with throw
+// "worked" (the error printed) but the broken 32-page build deployed anyway.
+function abortBuild(message: string): never {
+  console.error("\n\n========================================");
+  console.error("BUILD ABORTED BY SNAPSHOT HEALTH CHECK");
+  console.error("========================================");
+  console.error(message);
+  console.error("========================================\n\n");
+  process.exit(1);
 }
 
 export function loadSnapshot(): Promise<Snapshot | null> {
