@@ -61,6 +61,14 @@ export async function getStaticPaths() {
     paths.push({ params: { path: cleaned } });
   }
 
+  // Top-level sport hubs are always built, even if the WP category has no
+  // direct posts. With hideEmpty: true on getAllCategorySlugs, the football
+  // parent category is excluded (all its tips live in sub-categories like
+  // /football/argentina/), so its /football/index.html would never be
+  // generated and visitors would get the homepage as a fallback. Hardcoding
+  // the hubs guarantees these critical URLs are always built.
+  ["football", "tennis", "cricket", "basketball", "darts", "snooker"].forEach(add);
+
   // Categories preserve their full WP uri (e.g. football/united-kingdom/england-premier-league).
   categories.forEach((cat) => add(cat.uri));
 
