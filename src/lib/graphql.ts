@@ -84,15 +84,14 @@ import {
 } from "astro:env/server";
 
 const endpoint = WPGRAPHQL_ENDPOINT;
-// Circuit-breaker defaults. The Cloudflare worker has a hard wall-clock
-// budget; if WP is hanging we want to fail fast rather than burn the entire
-// budget on retries and have CF reset the connection (524). With these
-// values, worst-case fetch time is 5s + 0.5s wait + 5s = 10.5s, well inside
-// any sane upstream limit, and the visitor either gets a fresh response or
-// a clean 404 (which CF's stale-while-revalidate of 24h then masks for
-// already-visited URLs).
-const defaultRetryDelaysMs = [500];
-const defaultTimeoutMs = 5000;
+// Timeouts. The frontend is now fully static (no runtime wpGraphQL calls);
+// these only fire at build time. We can afford a longer per-query timeout
+// because slow WP responses are recoverable inside a build, whereas at
+// runtime they'd burn the Cloudflare worker's wall-clock budget. 30s gives
+// even a stressed 2GB Cloudways backend room to respond before a query is
+// considered failed.
+const defaultRetryDelaysMs = [1000, 3000];
+const defaultTimeoutMs = 30000;
 const parentSportCategorySlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
 function authHeader(): Record<string, string> {
