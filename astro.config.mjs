@@ -1,26 +1,31 @@
 import { defineConfig, envField } from "astro/config";
-import cloudflare from "@astrojs/cloudflare";
 
 // Fully static build: every WP-backed URL (category, tip post, page) is
-// prerendered at build time by [...path].astro's getStaticPaths. No SSR
-// worker, no on-demand WP queries from visitor traffic. The 2GB Cloudways
-// WP backend cannot reliably serve worker queries on cache miss, so we
-// instead front-load all WP work into the build itself and serve pure
-// static HTML to visitors.
+// prerendered at build time by [...path].astro's getStaticPaths. Output is
+// pure static HTML; no Worker, no SSR runtime, no on-demand WP queries from
+// visitor traffic. The 2GB Cloudways WP backend cannot reliably serve
+// worker queries on cache miss, so we front-load all WP work into the build
+// and serve pure static HTML to visitors.
 //
-// The cloudflare adapter is kept in case we ever need to add an SSR route
-// (e.g. for forms or auth); with output:"static" it has no runtime effect.
+// Removed the @astrojs/cloudflare adapter: it was auto-generating a
+// _routes.json file that excluded individual static paths from the Worker,
+// and some tip-post slugs exceed CF's 100-char-per-route limit, breaking the
+// deploy. With no adapter and no SSR routes, CF Pages serves all files as
+// pure static without invoking any Worker logic.
+//
+// If we ever need SSR back (e.g. for a form endpoint), re-add the adapter
+// but configure routesStrategy: "include" with manual route patterns short
+// enough to fit the 100-char limit.
 //
 // Trade-off: tips published between builds aren't visible until the next
-// build. We schedule hourly CF Pages rebuilds via external cron + webhook
-// to keep freshness within one hour.
+// build. Schedule hourly CF Pages rebuilds via external cron + webhook to
+// keep freshness within one hour.
 //
 // Env schema (Astro 5): declares every env var the app touches so values
-// reach the build process reliably via astro:env/server imports.
-// All vars are access:"public" so they bake into static output at build time.
+// reach the build process via astro:env/server imports. All vars are
+// access:"public" so they bake into static output at build time.
 export default defineConfig({
   output: "static",
-  adapter: cloudflare(),
   site: "https://www.oddstips.co.uk",
   env: {
     schema: {
