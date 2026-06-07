@@ -308,26 +308,15 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       });
     }
 
-    function initialActiveDate(preferredDate, forcePreferred = false) {
-      if (forcePreferred) {
-        return preferredDate;
-      }
-
-      const rows = Array.from(document.querySelectorAll("[data-date-filter-section] [data-tip-date]"));
-
-      if (!rows.length) {
-        return preferredDate;
-      }
-
-      const dates = rows
-        .map((row) => row.dataset.tipDate)
-        .filter((date) => date && isoPattern.test(date));
-
-      if (dates.includes(preferredDate)) {
-        return preferredDate;
-      }
-
-      return dates[0] || preferredDate;
+    function initialActiveDate(preferredDate, _forcePreferred = false) {
+      // Always default to the preferred date (today, or the ?date= URL param).
+      // Older versions of this function fell back to "first tip date in DOM
+      // order" when today had no tips, but that landed visitors on random
+      // past dates and confused the date-rail active highlight. The empty
+      // state in TipListSection handles no-tips-today gracefully, and the
+      // "today + future stacking" logic still surfaces future dates
+      // underneath today's empty header.
+      return preferredDate;
     }
 
     function applyDate(activeDate, updateUrl = false) {
