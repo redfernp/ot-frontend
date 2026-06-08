@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    Oddstips favicon. Matches the .brand-mark in the site header:
+    gold rounded square with navy "OT" letters. Drawn as vector shapes
+    (circle + rectangles) rather than SVG <text> so it renders identically
+    across systems regardless of installed fonts.
+  -->
+  <rect width="32" height="32" rx="7" fill="#d8ad55"/>
+  <!-- O: ring, drawn as a stroked circle so the inner hole is the gold background -->
+  <circle cx="10" cy="16" r="3.75" stroke="#0b1f3f" stroke-width="2.5" fill="none"/>
+  <!-- T: horizontal bar -->
+  <rect x="17" y="11" width="10" height="2.5" rx="0.4" fill="#0b1f3f"/>
+  <!-- T: vertical stem -->
+  <rect x="20.75" y="11" width="2.5" height="10" rx="0.4" fill="#0b1f3f"/>
+</svg>
