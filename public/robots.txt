@@ -5,4 +5,4 @@ Allow: /
 # crawlers should not waste budget on them.
 Disallow: /go/
 
-Sitemap: https://www.oddstips.co.uk/sitemap.xml
+Sitemap: https://www.oddstips.co.uk/sitemap-index.xml

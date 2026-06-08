@@ -33,11 +33,20 @@ export function publicSiteOrigin() {
   return publicWordPressOrigin;
 }
 
+// All origins we treat as "internal" for the purposes of stripping to a
+// relative path. Includes:
+//   - The WP backend (live Cloudways host derived from WPGRAPHQL_ENDPOINT)
+//   - The staging Cloudways host
+//   - The public site origin (www.oddstips.co.uk on live). Needed because WP
+//     editors sometimes paste the live URL into menu items instead of adding
+//     them via the Categories panel; without this, those items would be
+//     classed as external and open in a new tab.
 const knownCmsOrigins = () =>
   new Set(
     [
       wordpressOriginFromEndpoint(),
       "https://wordpress-514209-5717601.cloudwaysapps.com",
+      publicSiteOrigin(),
     ].filter((v): v is string => Boolean(v)),
   );
 

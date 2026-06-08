@@ -80,6 +80,7 @@ export type SeoFields = {
   };
   twitterTitle?: string;
   twitterDescription?: string;
+  noindex?: boolean;
   breadcrumbs?: Array<{
     text?: string;
     url?: string;

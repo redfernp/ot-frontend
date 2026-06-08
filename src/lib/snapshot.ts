@@ -24,6 +24,11 @@ export type SnapshotSeo = {
   opengraphImage?: { sourceUrl?: string } | null;
   twitterTitle?: string;
   twitterDescription?: string;
+  // True if Yoast resolved this post/page/term to noindex (either via a
+  // per-item override or by inheriting the global content-type setting).
+  // The Astro frontend renders a `<meta name="robots" content="noindex, follow">`
+  // tag for these and skips the self-referencing canonical fallback.
+  noindex?: boolean;
 };
 
 export type SnapshotCategoryNode = {

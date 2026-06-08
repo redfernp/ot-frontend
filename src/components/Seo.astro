@@ -1,6 +1,6 @@
 ---
 import type { SeoFields } from "@/lib/graphql";
-import { rewriteCmsLink } from "@/lib/cmsContent";
+import { rewriteCmsLink, publicSiteOrigin } from "@/lib/cmsContent";
 
 type Props = {
   title?: string;
@@ -10,20 +10,38 @@ type Props = {
   noindex?: boolean;
 };
 
-// Default to indexable for go-live. Pages that need explicit noindex can
-// still opt in by passing noindex={true} (e.g. /go/{slug}/ cloaks already
-// set their own robots meta directly).
+// Default to indexable for go-live. Pages can opt into noindex either by:
+//   - Passing noindex={true} as a prop (used by /go/{slug}/ affiliate cloaks
+//     which also set their own robots meta directly), or
+//   - Yoast marking the underlying post/page/category as noindex (resolved by
+//     the snapshot plugin into seo.noindex).
 const { title, description, canonical, seo, noindex = false } = Astro.props;
 const pageTitle = seo?.title || title || "Oddstips";
 const pageDescription = seo?.metaDesc || description;
-const canonicalUrl = rewriteCmsLink(seo?.canonical || canonical);
+
+// Combined indexability flag. Either source wins.
+const isNoindex = noindex || Boolean(seo?.noindex);
+
+// Canonical resolution order:
+//   1. Yoast's canonical from the snapshot (after rewriting CMS origin to the
+//      public site origin)
+//   2. An explicit canonical prop passed by the page
+//   3. Self-referencing fallback derived from the public origin + current path.
+//      Indexable pages must always have a canonical; missing tags get
+//      flagged by every SEO crawler. Noindex pages skip the fallback to
+//      avoid sending Google a contradictory "don't index but here's the
+//      canonical to use if you do" signal.
+const yoastCanonical = rewriteCmsLink(seo?.canonical || canonical);
+const selfCanonical = `${publicSiteOrigin()}${Astro.url.pathname}`;
+const canonicalUrl = yoastCanonical || (isNoindex ? undefined : selfCanonical);
+
 const ogImage = rewriteCmsLink(seo?.opengraphImage?.sourceUrl);
 ---
 
 <title>{pageTitle}</title>
 {pageDescription && <meta name="description" content={pageDescription} />}
 {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-{noindex && <meta name="robots" content="noindex,nofollow" />}
+{isNoindex && <meta name="robots" content="noindex, follow" />}
 <meta property="og:title" content={seo?.opengraphTitle || pageTitle} />
 {(seo?.opengraphDescription || pageDescription) && (
   <meta property="og:description" content={seo?.opengraphDescription || pageDescription} />
