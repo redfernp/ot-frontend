@@ -197,6 +197,11 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
   return data;
 }
 
+// Minimal local declaration for Node's process global so we don't need to
+// pull in @types/node just for this one usage. `process.exit` is available
+// at runtime because Astro's static build runs under Node.
+declare const process: { exit(code: number): never };
+
 // Hard-fail the build process. We use process.exit(1) rather than throwing
 // because Astro catches errors thrown inside getStaticPaths per-page and
 // falls back to hardcoded routes; the build still exits 0 and CF Pages
@@ -211,7 +216,7 @@ function abortBuild(message: string): never {
   console.error("========================================");
   console.error(message);
   console.error("========================================\n\n");
-  process.exit(1);
+  return process.exit(1);
 }
 
 export function loadSnapshot(): Promise<Snapshot | null> {

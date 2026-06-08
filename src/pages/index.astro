@@ -1,10 +1,12 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import PostListItem from "@/components/PostListItem.astro";
+import WorldCupHero from "@/components/WorldCupHero.astro";
 import { getCategoryPostTitles, getMenu } from "@/lib/graphql";
 import { cmsLinkToPath } from "@/lib/cmsContent";
 import { homeLatestSections } from "@/lib/siteNav";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
+import { loadSnapshot, postsForCategory } from "@/lib/snapshot";
 
 import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
 const hasWpGraphQL = Boolean(WPGRAPHQL_ENDPOINT);
@@ -13,6 +15,18 @@ const latestBySport = await Promise.all(
     ...section,
     posts: await getCategoryPostTitles(section.slug, 4).catch(() => []),
   })),
+);
+
+// World Cup hero: pull tips from the world-cup category, keep only matches
+// that haven't kicked off yet, sort soonest first. If there are no upcoming
+// matches, WorldCupHero renders nothing and the homepage layout reverts to
+// normal. So when the tournament ends, the section just disappears on the
+// next snapshot regen + rebuild.
+const snapshot = await loadSnapshot();
+const worldCupAll = postsForCategory(snapshot, "world-cup", 500);
+const nowMs = Date.now();
+const worldCupUpcoming = worldCupAll.filter(
+  (p) => p.eventStart && new Date(p.eventStart).getTime() > nowMs,
 );
 
 // Local-preview fallback: when WPGraphQL is not configured, only the football section
@@ -80,6 +94,10 @@ function toTitleCase(value: string) {
     </form>
     <p class="hero-be">18+ &middot; Please gamble responsibly &middot; BeGambleAware.org</p>
   </section>
+
+  {/* World Cup hero: renders only while the world-cup category has upcoming
+      tips in the snapshot. Disappears automatically after the final. */}
+  <WorldCupHero posts={worldCupUpcoming} />
 
   {homeSportTiles.length > 0 && (
     <section class="section sports-band" aria-labelledby="sports-heading">

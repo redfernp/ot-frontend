@@ -1,0 +1,331 @@
+---
+import type { SnapshotPost } from "@/lib/snapshot";
+import { cleanOdds, summarizeTip } from "@/lib/tips";
+
+type Props = {
+  posts: SnapshotPost[]; // upcoming, sorted ascending by eventStart
+  categoryUri?: string;
+};
+
+const { posts, categoryUri = "/football/international/world-cup/" } = Astro.props;
+
+// If no upcoming tips, render nothing. The homepage caller already filters
+// for posts with eventStart in the future, but defend here too.
+const ordered = posts
+  .filter((p) => p.eventStart)
+  .sort((a, b) => new Date(a.eventStart!).getTime() - new Date(b.eventStart!).getTime());
+
+if (ordered.length === 0) {
+  // Astro convention: empty fragment renders nothing.
+}
+
+// Match strip: cap at 6 so the card stays a reasonable height on desktop.
+const stripMatches = ordered.slice(0, 6);
+
+// Days-to-kickoff for the first match. Computed at build time, so it can
+// drift up to the rebuild interval (~2 hours). Good enough for a day count.
+const firstKickoffMs = ordered.length ? new Date(ordered[0].eventStart!).getTime() : 0;
+const nowMs = Date.now();
+const msPerDay = 1000 * 60 * 60 * 24;
+const daysToKickoff = Math.max(0, Math.ceil((firstKickoffMs - nowMs) / msPerDay));
+
+function formatMatchTime(iso: string) {
+  const d = new Date(iso);
+  const day = d.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    timeZone: "Europe/London",
+  });
+  const time = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/London",
+  });
+  return { day, time };
+}
+
+function countdownLabel(days: number, totalMatches: number) {
+  if (totalMatches === 0) return null;
+  if (days === 0) return "First match today";
+  if (days === 1) return "First match tomorrow";
+  return `${days} days until the first match`;
+}
+
+const countdown = countdownLabel(daysToKickoff, ordered.length);
+---
+
+{ordered.length > 0 && (
+  <section class="wc-hero" aria-labelledby="wc-heading">
+    <div class="wc-pane">
+      <p class="wc-eyebrow">World Cup 2026</p>
+      <h2 id="wc-heading">Every Match. Every Pick. Build Your Acca.</h2>
+      <p class="wc-lede">
+        Forty-eight teams, six weeks, one trophy. We're posting a 1x2 prediction on every fixture
+        from the opening match to the final, so there's always a pick for the singles, a banker for
+        the accas, or an underdog if you fancy a swing. Sit back and enjoy the football.
+      </p>
+      {countdown && (
+        <p class="wc-countdown">
+          <span class="wc-countdown-dot" aria-hidden="true"></span>
+          {countdown}
+        </p>
+      )}
+      <a class="wc-cta" href={categoryUri}>
+        See all {ordered.length} World Cup tips &rarr;
+      </a>
+    </div>
+
+    <div class="wc-matches" role="list" aria-label="Upcoming World Cup matches">
+      <p class="wc-matches-head">Upcoming matches</p>
+      {stripMatches.map((post) => {
+        const summary = summarizeTip(post as any);
+        const { day, time } = formatMatchTime(post.eventStart!);
+        const odds = cleanOdds(summary.odds);
+        const fixture = summary.fixture || post.title;
+        return (
+          <a class="wc-match" role="listitem" href={post.uri}>
+            <span class="wc-match-time">
+              <span class="wc-match-day">{day}</span>
+              <span class="wc-match-kickoff">{time}</span>
+            </span>
+            <span class="wc-match-fixture">{fixture}</span>
+            {summary.tip && (
+              <span class="wc-match-pick">
+                <span class="wc-pick-value">{summary.tip}</span>
+                {odds && <span class="wc-pick-odds">{odds}</span>}
+              </span>
+            )}
+          </a>
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  /* Tournament hero. Sits at the top of the homepage during the tournament window.
+     If the world-cup category has no upcoming posts, the whole section renders
+     nothing (see the {ordered.length > 0 && ...} guard above), so the homepage
+     reverts to its normal layout automatically once the tournament is over. */
+  .wc-hero {
+    background: linear-gradient(135deg, #0d2a5b 0%, #0b1f3f 60%, #08183a 100%);
+    border-radius: var(--ot-radius);
+    box-shadow: 0 12px 30px rgba(11, 31, 63, 0.18);
+    color: #fff;
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    margin: 1.75rem 0 0;
+    overflow: hidden;
+    padding: 2.25rem 2rem;
+    position: relative;
+  }
+
+  /* Subtle gold glow top-right, evokes the trophy without using any
+     trademarked imagery. */
+  .wc-hero::before {
+    background:
+      radial-gradient(circle at 95% 0%, rgba(216, 173, 85, 0.22) 0%, transparent 55%),
+      radial-gradient(circle at 0% 100%, rgba(30, 115, 190, 0.18) 0%, transparent 50%);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .wc-pane {
+    position: relative;
+    z-index: 1;
+  }
+
+  .wc-eyebrow {
+    color: var(--ot-gold);
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    margin: 0 0 0.65rem;
+    text-transform: uppercase;
+  }
+
+  .wc-hero h2 {
+    color: #fff;
+    font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+    font-weight: 900;
+    line-height: 1.12;
+    margin: 0 0 1rem;
+    max-width: 18ch;
+  }
+
+  .wc-lede {
+    color: #d5e0f4;
+    font-size: 0.97rem;
+    line-height: 1.55;
+    margin: 0 0 1.1rem;
+    max-width: 46ch;
+  }
+
+  .wc-countdown {
+    align-items: center;
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.88rem;
+    font-weight: 700;
+    gap: 0.5rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .wc-countdown-dot {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    box-shadow: 0 0 0 4px rgba(216, 173, 85, 0.22);
+    display: inline-block;
+    height: 8px;
+    width: 8px;
+  }
+
+  .wc-cta {
+    align-items: center;
+    background: var(--ot-brand-orange);
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.92rem;
+    font-weight: 900;
+    gap: 0.4rem;
+    padding: 0.7rem 1.3rem;
+    text-decoration: none;
+    transition: background 120ms ease, transform 120ms ease;
+  }
+
+  .wc-cta:hover {
+    background: #d95800;
+    transform: translateY(-1px);
+  }
+
+  /* RIGHT COLUMN: MATCH STRIP */
+  .wc-matches {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .wc-matches-head {
+    color: var(--ot-gold);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    margin: 0 0 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .wc-match {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 62px minmax(0, 1fr) auto;
+    padding: 0.6rem 0.8rem;
+    text-decoration: none;
+    transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  }
+
+  .wc-match:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(216, 173, 85, 0.6);
+    transform: translateX(2px);
+  }
+
+  .wc-match-time {
+    display: grid;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .wc-match-day {
+    color: var(--ot-gold);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .wc-match-kickoff {
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 900;
+  }
+
+  .wc-match-fixture {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wc-match-pick {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.35rem;
+  }
+
+  .wc-pick-value {
+    background: var(--ot-gold);
+    border-radius: 6px;
+    color: var(--ot-ink);
+    font-size: 0.78rem;
+    font-weight: 900;
+    max-width: 9ch;
+    overflow: hidden;
+    padding: 0.18rem 0.5rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wc-pick-odds {
+    background: var(--ot-brand-orange);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 0.18rem 0.55rem;
+  }
+
+  /* MOBILE */
+  @media (max-width: 880px) {
+    .wc-hero {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      padding: 1.75rem 1.4rem;
+    }
+
+    .wc-hero h2 {
+      max-width: 22ch;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .wc-match {
+      grid-template-columns: 62px minmax(0, 1fr);
+    }
+
+    .wc-match-pick {
+      grid-column: 1 / -1;
+      justify-content: flex-end;
+      padding-top: 0.2rem;
+    }
+
+    .wc-match-fixture {
+      white-space: normal;
+    }
+  }
+</style>
