@@ -5,29 +5,44 @@ import { cleanOdds, summarizeTip } from "@/lib/tips";
 type Props = {
   posts: SnapshotPost[]; // upcoming, sorted ascending by eventStart
   categoryUri?: string;
+  // ISO date of the tournament's opening match. Used for the countdown so
+  // it's accurate even before paul365 has picked up the opening fixtures.
+  // Default: 2026-06-11 (2026 World Cup opener).
+  tournamentStartIso?: string;
 };
 
-const { posts, categoryUri = "/football/international/world-cup/" } = Astro.props;
+const {
+  posts,
+  categoryUri = "/football/international/world-cup/",
+  tournamentStartIso = "2026-06-11T00:00:00Z",
+} = Astro.props;
 
-// If no upcoming tips, render nothing. The homepage caller already filters
-// for posts with eventStart in the future, but defend here too.
 const ordered = posts
   .filter((p) => p.eventStart)
   .sort((a, b) => new Date(a.eventStart!).getTime() - new Date(b.eventStart!).getTime());
 
-if (ordered.length === 0) {
-  // Astro convention: empty fragment renders nothing.
-}
-
 // Match strip: cap at 6 so the card stays a reasonable height on desktop.
 const stripMatches = ordered.slice(0, 6);
 
-// Days-to-kickoff for the first match. Computed at build time, so it can
-// drift up to the rebuild interval (~2 hours). Good enough for a day count.
-const firstKickoffMs = ordered.length ? new Date(ordered[0].eventStart!).getTime() : 0;
+// Countdown reference: use the hardcoded tournament start date when set,
+// since paul365 may not have caught the opening matches yet at the time
+// we want the hero to start showing. Falls back to the first tagged
+// post's kickoff if no tournamentStartIso is provided.
+const referenceKickoffMs = tournamentStartIso
+  ? new Date(tournamentStartIso).getTime()
+  : ordered.length
+  ? new Date(ordered[0].eventStart!).getTime()
+  : 0;
 const nowMs = Date.now();
 const msPerDay = 1000 * 60 * 60 * 24;
-const daysToKickoff = Math.max(0, Math.ceil((firstKickoffMs - nowMs) / msPerDay));
+const daysToKickoff = Math.max(0, Math.ceil((referenceKickoffMs - nowMs) / msPerDay));
+const tournamentLive = referenceKickoffMs > 0 && referenceKickoffMs <= nowMs;
+
+// Render the hero whenever the tournament is upcoming OR live, OR when
+// there are any upcoming matches tagged in the world-cup category. Once
+// the tournament is over and there are no more upcoming posts, it
+// disappears from the homepage automatically.
+const showHero = referenceKickoffMs > nowMs || ordered.length > 0;
 
 function formatMatchTime(iso: string) {
   const d = new Date(iso);
@@ -46,17 +61,20 @@ function formatMatchTime(iso: string) {
   return { day, time };
 }
 
-function countdownLabel(days: number, totalMatches: number) {
-  if (totalMatches === 0) return null;
+function countdownLabel(days: number, live: boolean) {
+  if (live) return "Tournament underway";
   if (days === 0) return "First match today";
   if (days === 1) return "First match tomorrow";
   return `${days} days until the first match`;
 }
 
-const countdown = countdownLabel(daysToKickoff, ordered.length);
+const countdown = countdownLabel(daysToKickoff, tournamentLive);
+const ctaLabel = ordered.length > 0
+  ? `See all ${ordered.length} World Cup tips`
+  : "Visit the World Cup hub";
 ---
 
-{ordered.length > 0 && (
+{showHero && (
   <section class="wc-hero" aria-labelledby="wc-heading">
     <div class="wc-pane">
       <p class="wc-eyebrow">World Cup 2026</p>
@@ -73,33 +91,42 @@ const countdown = countdownLabel(daysToKickoff, ordered.length);
         </p>
       )}
       <a class="wc-cta" href={categoryUri}>
-        See all {ordered.length} World Cup tips &rarr;
+        {ctaLabel} &rarr;
       </a>
     </div>
 
     <div class="wc-matches" role="list" aria-label="Upcoming World Cup matches">
       <p class="wc-matches-head">Upcoming matches</p>
-      {stripMatches.map((post) => {
-        const summary = summarizeTip(post as any);
-        const { day, time } = formatMatchTime(post.eventStart!);
-        const odds = cleanOdds(summary.odds);
-        const fixture = summary.fixture || post.title;
-        return (
-          <a class="wc-match" role="listitem" href={post.uri}>
-            <span class="wc-match-time">
-              <span class="wc-match-day">{day}</span>
-              <span class="wc-match-kickoff">{time}</span>
-            </span>
-            <span class="wc-match-fixture">{fixture}</span>
-            {summary.tip && (
-              <span class="wc-match-pick">
-                <span class="wc-pick-value">{summary.tip}</span>
-                {odds && <span class="wc-pick-odds">{odds}</span>}
+      {stripMatches.length > 0 ? (
+        stripMatches.map((post) => {
+          const summary = summarizeTip(post as any);
+          const { day, time } = formatMatchTime(post.eventStart!);
+          const odds = cleanOdds(summary.odds);
+          const fixture = summary.fixture || post.title;
+          return (
+            <a class="wc-match" role="listitem" href={post.uri}>
+              <span class="wc-match-time">
+                <span class="wc-match-day">{day}</span>
+                <span class="wc-match-kickoff">{time}</span>
               </span>
-            )}
-          </a>
-        );
-      })}
+              <span class="wc-match-fixture">{fixture}</span>
+              {summary.tip && (
+                <span class="wc-match-pick">
+                  <span class="wc-pick-value">{summary.tip}</span>
+                  {odds && <span class="wc-pick-odds">{odds}</span>}
+                </span>
+              )}
+            </a>
+          );
+        })
+      ) : (
+        <div class="wc-matches-empty">
+          <p>
+            Match tips drop closer to kickoff. Check back in the next few days for the full opening-round
+            slate, or visit the World Cup hub for everything tagged so far.
+          </p>
+        </div>
+      )}
     </div>
   </section>
 )}
@@ -298,6 +325,24 @@ const countdown = countdownLabel(daysToKickoff, ordered.length);
     font-size: 0.78rem;
     font-weight: 900;
     padding: 0.18rem 0.55rem;
+  }
+
+  /* EMPTY STATE — shown when the tournament is upcoming but no matches
+     are tagged with the world-cup category yet. Keeps the hero on the
+     page (so the buzz copy still lands) while gracefully filling the
+     right column. */
+  .wc-matches-empty {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+  }
+
+  .wc-matches-empty p {
+    color: #c5d2ea;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0;
   }
 
   /* MOBILE */
