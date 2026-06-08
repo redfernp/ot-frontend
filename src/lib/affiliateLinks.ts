@@ -24,7 +24,10 @@ export type AffiliateLink = {
 
 export const affiliateLinks: Record<string, AffiliateLink> = {
   "bet365": {
-    destination: "https://www.bet365.com/hub/en-gb/open-account-offer?affiliate=365_371786",
+    // Affiliate ID 365_643257 confirmed by Paul as the live tracked link.
+    // Earlier this slug pointed at /hub/en-gb/open-account-offer with a
+    // different affiliate ID (365_371786); that has been retired.
+    destination: "https://www.bet365.com/hub/aff/open-account?affiliate=365_643257",
     brand: "Bet365",
   },
   "betfred": {

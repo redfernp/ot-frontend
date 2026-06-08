@@ -318,17 +318,57 @@ export function cleanTipContentHtml(html = "") {
     "Value",
   ];
 
-  return structuredLabels
-    .reduce((content, label) => {
-      const pattern = new RegExp(
-        `<h[2-6][^>]*>\\s*${escapeRegExp(label)}\\s*</h[2-6]>[\\s\\S]*?(?=<h[2-6][^>]*>|$)`,
-        "gi",
-      );
+  const stripped = structuredLabels.reduce((content, label) => {
+    const pattern = new RegExp(
+      `<h[2-6][^>]*>\\s*${escapeRegExp(label)}\\s*</h[2-6]>[\\s\\S]*?(?=<h[2-6][^>]*>|$)`,
+      "gi",
+    );
 
-      return content.replace(pattern, "");
-    }, html)
+    return content.replace(pattern, "");
+  }, html);
+
+  return rewriteAffiliateLinks(stripped)
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+// Sweep the post body HTML and route every bet365.com link through our
+// /go/bet365/ cloak. This is in addition to the explicit affiliate buttons
+// rendered in TipPostPage/CouponRow (which are already cloaked at template
+// level), and catches inline links that paul365 inserts into the body copy.
+//
+// Two passes:
+//   1. Replace any bet365.com href value with /go/bet365/.
+//   2. On any anchor now pointing at /go/bet365/, strip target=... so the
+//      link opens in the same tab. Paul wants visitors to stay on-site
+//      through the cloak rather than spawning a new tab.
+//
+// Anchors that aren't bet365 are left untouched.
+export function rewriteAffiliateLinks(html: string): string {
+  if (!html) return html;
+
+  // Pass 1: rewrite href values. Matches http(s)://bet365.com or
+  // http(s)://www.bet365.com followed by any path/query, in both quote styles.
+  let out = html.replace(
+    /href=(["'])https?:\/\/(?:www\.)?bet365\.com[^"']*\1/gi,
+    'href="/go/bet365/"',
+  );
+
+  // Pass 2: strip target attribute from any anchor that now points at the
+  // cloak. We only touch anchors whose href is exactly /go/bet365/ so we
+  // don't accidentally rewrite unrelated links elsewhere in the body.
+  out = out.replace(
+    /<a\b([^>]*?)href=(["'])\/go\/bet365\/\2([^>]*?)>/gi,
+    (_match, before: string, _quote: string, after: string) => {
+      const stripTarget = (s: string) =>
+        s.replace(/\s*target=(["'])[^"']*\1/gi, "");
+      const cleanBefore = stripTarget(before);
+      const cleanAfter = stripTarget(after);
+      return `<a${cleanBefore}href="/go/bet365/"${cleanAfter}>`;
+    },
+  );
+
+  return out;
 }
 
 function couponPick(tip: string | undefined, homeTeam?: string, awayTeam?: string): CouponPick {
