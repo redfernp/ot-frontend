@@ -69,9 +69,11 @@ function countdownLabel(days: number, live: boolean) {
 }
 
 const countdown = countdownLabel(daysToKickoff, tournamentLive);
-const ctaLabel = ordered.length > 0
-  ? `See all ${ordered.length} World Cup tips`
-  : "Visit the World Cup hub";
+// Single CTA copy regardless of how many tips are tagged yet. Earlier
+// versions interpolated the count ("See all 12 World Cup tips") but that
+// reads wrong while the rest of the tournament tips are still being
+// populated; "all" implies the full slate.
+const ctaLabel = "See all World Cup tips";
 ---
 
 {showHero && (
@@ -196,11 +198,16 @@ const ctaLabel = ordered.length > 0
   .wc-countdown {
     align-items: center;
     color: #fff;
-    display: inline-flex;
+    /* Was inline-flex, which kept it on the same line as the CTA below it
+       and the margin-bottom didn't push the CTA down. Now block-level
+       (display: flex) with fit-content width so the chip background still
+       hugs the text rather than stretching to the full pane width. */
+    display: flex;
     font-size: 0.88rem;
     font-weight: 700;
     gap: 0.5rem;
     margin: 0 0 1.25rem;
+    width: fit-content;
   }
 
   .wc-countdown-dot {
