@@ -1,6 +1,9 @@
 ---
 import Seo from "@/components/Seo.astro";
-import type { SeoFields } from "@/lib/graphql";
+import type { SeoFields, WpMenuItem } from "@/lib/graphql";
+import { getMenu } from "@/lib/graphql";
+import { cmsLinkToPath } from "@/lib/cmsContent";
+import { affiliateLinks } from "@/lib/affiliateLinks";
 
 type Props = {
   title?: string;
@@ -19,9 +22,27 @@ type NavItem = {
   children?: Array<{ label: string; href: string; external?: boolean }>;
 };
 
-// Mirrors the live oddstips.co.uk top nav. Free Bets stays first as the featured gold
-// pill. "More Sports" and "About" render as click-to-open dropdowns via <details>.
-const primaryNav: NavItem[] = [
+// -----------------------------------------------------------------------------
+// Primary nav: built from the WordPress "main-navigation" menu so Paul can
+// edit it in WP and have the change flow through on the next build.
+//
+// Mapping rules from WP menu item to NavItem:
+//   - URL is normalized via cmsLinkToPath (strips the cloudwaysapps host) and
+//     via the EveryTip /go/{slug}/ -> local /go/{slug}/ rewrite when the
+//     destination is a registered affiliate. Anything still absolute after
+//     that is treated as external (target="_blank", rel="nofollow noopener").
+//   - The "Free Bets" item (matched by path /free-bets/) renders as the gold
+//     pill at the start of the nav, regardless of its position in WP.
+//   - Items with children (parentDatabaseId points at their databaseId) render
+//     as <details> dropdowns. Parents with URL "#" stay non-clickable; parents
+//     with a real URL stay clickable but still open the dropdown via the chev.
+//
+// If WPGraphQL is unreachable at build time, getMenu returns null and we fall
+// back to a small hardcoded baseline so the header still renders something
+// usable rather than a blank space.
+// -----------------------------------------------------------------------------
+
+const FALLBACK_NAV: NavItem[] = [
   { href: "/free-bets/", label: "Free Bets", featured: true },
   { href: "/football/", label: "Football" },
   {
@@ -32,14 +53,13 @@ const primaryNav: NavItem[] = [
       { label: "Cricket", href: "/cricket/" },
       { label: "Basketball", href: "/basketball/" },
       { label: "Darts", href: "/darts/" },
+      { label: "Snooker", href: "/snooker/" },
     ],
   },
   {
     label: "About",
     href: "/about/",
-    children: [
-      { label: "Safer Gambling", href: "/safer-gambling/" },
-    ],
+    children: [{ label: "Safer Gambling", href: "/safer-gambling/" }],
   },
   {
     label: "Pro Football Tips",
@@ -47,6 +67,89 @@ const primaryNav: NavItem[] = [
     external: true,
   },
 ];
+
+function toTitleCase(value: string): string {
+  return value.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const EVERYTIP_GO = /https?:\/\/(?:www\.)?everytip\.co\.uk\/go\/([a-z0-9-]+)\/?/i;
+
+function normalizeMenuUrl(rawUrl: string | undefined | null): {
+  href: string;
+  external: boolean;
+} {
+  if (!rawUrl || rawUrl === "#") return { href: "#", external: false };
+
+  // Rewrite EveryTip cloak URLs to the local cloak when the slug is registered.
+  const everytipMatch = rawUrl.match(EVERYTIP_GO);
+  if (everytipMatch) {
+    const slug = everytipMatch[1];
+    if (Object.prototype.hasOwnProperty.call(affiliateLinks, slug)) {
+      return { href: `/go/${slug}/`, external: false };
+    }
+  }
+
+  // Try to convert the WP CMS host to a relative path. cmsLinkToPath returns
+  // the original URL if it doesn't recognize the origin.
+  const converted = cmsLinkToPath(rawUrl);
+  if (converted && converted.startsWith("/")) {
+    return { href: converted, external: false };
+  }
+
+  // Anything still absolute is genuinely external.
+  return { href: rawUrl, external: true };
+}
+
+function isFreeBetsPath(href: string): boolean {
+  return href === "/free-bets/" || href === "/free-bets";
+}
+
+function buildNavFromMenu(menuItems: WpMenuItem[]): NavItem[] {
+  // Two-pass: build a parent->children map keyed by databaseId, then assemble
+  // top-level NavItems in the order WP returns them.
+  const childrenByParent = new Map<number, WpMenuItem[]>();
+  for (const item of menuItems) {
+    if (item.parentDatabaseId) {
+      const bucket = childrenByParent.get(item.parentDatabaseId) ?? [];
+      bucket.push(item);
+      childrenByParent.set(item.parentDatabaseId, bucket);
+    }
+  }
+
+  const nav: NavItem[] = [];
+  for (const item of menuItems) {
+    if (item.parentDatabaseId) continue; // skip children; handled below their parent
+    const { href, external } = normalizeMenuUrl(item.url);
+    const label = toTitleCase(item.label || "");
+    const wpChildren = item.databaseId
+      ? childrenByParent.get(item.databaseId) ?? []
+      : [];
+    const children = wpChildren.map((child) => {
+      const childUrl = normalizeMenuUrl(child.url);
+      return {
+        label: toTitleCase(child.label || ""),
+        href: childUrl.href,
+        external: childUrl.external,
+      };
+    });
+
+    nav.push({
+      label,
+      href,
+      featured: isFreeBetsPath(href),
+      external,
+      children: children.length > 0 ? children : undefined,
+    });
+  }
+
+  return nav;
+}
+
+const wpMainNav = await getMenu("main-navigation");
+const primaryNav: NavItem[] =
+  wpMainNav && wpMainNav.menuItems.length > 0
+    ? buildNavFromMenu(wpMainNav.menuItems)
+    : FALLBACK_NAV;
 
 // GA4 measurement ID. Set PUBLIC_GA4_ID in Cloudflare Pages env (e.g. G-XXXXXXX).
 // When unset (e.g. in dev), the gtag snippet is omitted entirely and the
