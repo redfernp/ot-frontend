@@ -157,6 +157,19 @@ const faqs = [
     </section>
   )}
 
+  {/* Mobile-only inline Bet365 card. Sits between the summary strip and the
+      tipster's read section so visitors see the offer before scrolling into
+      analysis. Hidden on desktop (the same card lives in .tip-sidebar). */}
+  <aside class="bet365-card bet365-card--inline" aria-label="Bet365 offer">
+    <span class="card-tag">#Ad &middot; New customers</span>
+    <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
+    {bet365Url && <a class="card-cta" href={bet365Url} rel="nofollow">Claim with Bet365</a>}
+    <p class="card-terms">
+      #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
+    </p>
+    <p class="card-be">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
+  </aside>
+
   <div class="tip-layout">
     <section class="analysis">
       {lede && (
@@ -254,7 +267,7 @@ const faqs = [
     </section>
 
     <aside class="tip-sidebar" aria-label="Tip sidebar">
-      <div class="bet365-card">
+      <div class="bet365-card bet365-card--sidebar">
         <span class="card-tag">#Ad &middot; New customers</span>
         <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
         {bet365Url && <a class="card-cta" href={bet365Url} rel="nofollow">Claim with Bet365</a>}
@@ -733,6 +746,15 @@ const faqs = [
     color: #fff;
     padding: 1.25rem;
   }
+
+  /* The inline mobile copy of the card lives between summary-strip and the
+     analysis grid. Hidden on desktop because the sidebar copy is doing the
+     job there. Shown on mobile (the same media-query breakpoint that stacks
+     the sidebar below the analysis), and the sidebar copy is then hidden
+     so visitors don't see the same card twice. */
+  .bet365-card--inline {
+    display: none;
+  }
   .card-tag {
     background: rgba(255,255,255,0.18);
     border-radius: 999px;
@@ -834,6 +856,11 @@ const faqs = [
     .summary-strip > div:nth-last-child(-n+2) { border-bottom: 0; }
     .pick-row { grid-template-columns: 1fr; }
     .sticky-cta { display: flex; }
+
+    /* Mobile: show the inline Bet365 card (above tipster's read) and hide
+       the sidebar copy so it doesn't render twice. */
+    .bet365-card--inline { display: block; }
+    .bet365-card--sidebar { display: none; }
   }
 
   @media (max-width: 640px) {
