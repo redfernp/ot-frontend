@@ -112,12 +112,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       headline: "Bet \u00a310 Get \u00a350 in Free Bets",
       code: "No code",
       cta: "Claim Betfred offer",
-      terms: "New customers only. Register, deposit with Debit Card, and place first bet \u00a310+ at Evens (2.0)+ on Sports within 7 days to get 3 x \u00a310 Sports Free Bets and 2 x \u00a310 Acca Free Bets within 10 hours of settlement. 7-day expiry. Eligibility and payment exclusions apply. Full T&Cs apply. 18+.",
+      terms: "New customers only. Register, deposit with Debit Card, and place first bet \u00a310+ at Evens (2.0)+ on Sports within 7 days to get \u00a330 in Sports Free Bets and \u00a320 in Bet Builder Free Bets within 24 hours of settlement. 7-day expiry. Eligibility and payment exclusions apply. Full T&Cs apply. 18+.",
       wagering: "1x qualifying bet",
       expiry: "7 days",
     },
     pros: [
-      "Large headline welcome package split across sports and acca free bets",
+      "Large headline welcome package split across sports and Bet Builder free bets",
       "Long-established UK brand with strong horse racing coverage",
       "Good mobile app, Cash Out, Bet Builder and live-streaming options",
       "Broad payment support compared with many newer brands",
@@ -144,7 +144,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "offer-analysis",
         title: "Welcome offer analysis",
-        body: `<p>The Oddstips-listed Betfred deal gives 3 x &pound;10 Sports Free Bets and 2 x &pound;10 Acca Free Bets after a qualifying &pound;10+ sports bet at evens or bigger. That split is useful if you already place accumulators, but less flexible if you mainly bet singles.</p><p>The key terms are the debit card deposit requirement, the evens minimum odds and the 7-day expiry after the free bets are credited. Treat the offer as five short-life tokens rather than one &pound;50 pot.</p>`,
+        body: `<p>The Oddstips-listed Betfred deal gives &pound;30 in Sports Free Bets and &pound;20 in Bet Builder Free Bets after a qualifying &pound;10+ sports bet at evens or bigger. The Bet Builder slice is useful if you regularly build same-game multiples, but slightly less flexible if you mainly stake singles.</p><p>The key terms are the debit card deposit requirement, the evens minimum odds and the 7-day expiry after the free bets are credited. Credits land within 24 hours of qualifying bet settlement, so plan your stakes once they arrive rather than treating it as one &pound;50 pot.</p>`,
       },
       {
         id: "markets",
@@ -169,7 +169,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       },
       {
         q: "What is the Betfred welcome offer?",
-        a: "The Oddstips-listed offer is Bet \u00a310 Get \u00a350 in Free Bets, split into sports and acca free bet tokens.",
+        a: "The Oddstips-listed offer is Bet \u00a310 Get \u00a350 in Free Bets, split into \u00a330 in Sports Free Bets and \u00a320 in Bet Builder Free Bets.",
       },
       {
         q: "Does Betfred require a bonus code?",
@@ -177,10 +177,10 @@ export const bookmakers: Record<string, Bookmaker> = {
       },
       {
         q: "Who is Betfred best for?",
-        a: "Betfred suits racing bettors, football acca bettors and users who prefer an established UK brand over a new challenger site.",
+        a: "Betfred suits racing bettors, football Bet Builder and acca fans, and users who prefer an established UK brand over a new challenger site.",
       },
     ],
-    verdict: `Betfred earns a 4.5 because the offer is strong and the underlying sportsbook is reliable. It is especially good for racing and acca bettors, but the short token expiry means you should only claim it when you are ready to use the free bets. Compare alternatives on our <a href="/free-bets/">free bets page</a> before choosing solely by headline value.`,
+    verdict: `Betfred earns a 4.5 because the offer is strong and the underlying sportsbook is reliable. It is especially good for racing fans, Bet Builder players and acca bettors, but the short token expiry means you should only claim it when you are ready to use the free bets. Compare alternatives on our <a href="/free-bets/">free bets page</a> before choosing solely by headline value.`,
   },
 
   betway: {
