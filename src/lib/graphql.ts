@@ -159,7 +159,29 @@ export async function getCategory(slug: string, postLimit = 30) {
   const cat = findCategoryBySlug(snapshot, slug);
   if (!cat) return null;
 
-  const posts = postsForCategory(snapshot, slug, postLimit).map(postToWp);
+  let posts;
+  if (slug === "international") {
+    // Special case: /football/international/ in WP is paul365's catch-all
+    // for any league outside our main UK ones, so the hierarchy lookup picks
+    // up foreign domestic leagues (League of Ireland, Albania, Andorra...)
+    // alongside actual international fixtures. Restrict to the curated
+    // TRUE_INTERNATIONAL_SLUGS allowlist instead. Posts accessible at their
+    // own sub-category URLs (e.g. /football/international/league-of-ireland-
+    // premier-division/) still resolve via the regular slug match below.
+    const seen = new Set();
+    const pool = [];
+    for (const intlSlug of TRUE_INTERNATIONAL_SLUGS) {
+      const items = postsForCategory(snapshot, intlSlug, postLimit);
+      for (const p of items) {
+        if (seen.has(p.slug)) continue;
+        seen.add(p.slug);
+        pool.push(p);
+      }
+    }
+    posts = pool.map(postToWp);
+  } else {
+    posts = postsForCategory(snapshot, slug, postLimit).map(postToWp);
+  }
 
   return {
     ...categoryToWp(cat),
@@ -167,20 +189,81 @@ export async function getCategory(slug: string, postLimit = 30) {
   };
 }
 
+// Curated allowlist of category slugs that are genuinely international
+// competitions (national teams or continental club tournaments). The "international"
+// parent slug intentionally NOT used: paul365 dumps foreign domestic leagues
+// (Ireland Premier Division, Albania First Division, etc.) under
+// /football/international/*, which would pollute the featured section and the
+// /football/international/ category page with Irish league matches and similar.
+//
+// Add new international competitions here as they appear in the snapshot.
+const TRUE_INTERNATIONAL_SLUGS = [
+  "world-cup",
+  "fifa-club-world-cup",
+  "fifa-u20-world-cup",
+  "womens-world-cup",
+  "africa-world-cup-qualifying",
+  "asia-world-cup-qualifying",
+  "europe-world-cup-qualifying",
+  "central-america-world-cup-qualifying",
+  "south-america-world-cup-qualifying",
+  "oceania-world-cup-qualifying",
+  "africa-cup-of-nations",
+  "africa-cup-of-nations-qualifiers-women",
+  "african-nations-championship",
+  "african-nations-cship-qualifying",
+  "african-nations-cup-qualifiers",
+  "afc-asian-cup",
+  "afc-asian-cup-qualifiers",
+  "afc-asian-cup-women",
+  "concacaf-gold-cup",
+  "concacaf-gold-cup-qualifying",
+  "concacaf-nations-league",
+  "concacaf-nations-league-qualifying",
+  "copa-america",
+  "womens-copa-america",
+  "wafu-cup-of-nations",
+  "euro-2020",
+  "euro-2020-qualifying",
+  "euro-championships-women",
+  "uefa-nations-league",
+  "olympic-qualification",
+  "olympics-2020-soccer-men",
+  "olympics-2020-soccer-women",
+  "europe-friendlies",
+  "america-friendlies",
+  "uk-friendlies",
+  "friendlies",
+  "elite-club-friendlies",
+];
+
 export async function getInternationalTips(limit = 6): Promise<WpPost[]> {
   const snapshot = await loadSnapshot();
-  const candidateSlugs = [
-    "international-match",
-    "international",
-    "europe-friendlies",
-    "world-cup",
-  ];
+  const nowMs = Date.now();
 
-  for (const slug of candidateSlugs) {
-    const posts = postsForCategory(snapshot, slug, limit);
-    if (posts.length) return posts.map(postToWp);
+  // Union of upcoming matches across every curated slug, then sort by event
+  // date ascending so the soonest fixtures surface first.
+  const seen = new Set<string>();
+  const pool: WpPost[] = [];
+  for (const slug of TRUE_INTERNATIONAL_SLUGS) {
+    const posts = postsForCategory(snapshot, slug, 500);
+    for (const p of posts) {
+      if (seen.has(p.slug)) continue;
+      if (!p.eventStart) continue;
+      const t = new Date(p.eventStart).getTime();
+      if (!Number.isFinite(t) || t <= nowMs) continue;
+      seen.add(p.slug);
+      pool.push(postToWp(p));
+    }
   }
-  return [];
+
+  pool.sort((a, b) => {
+    const ta = new Date(a.eventStart!).getTime();
+    const tb = new Date(b.eventStart!).getTime();
+    return ta - tb;
+  });
+
+  return pool.slice(0, limit);
 }
 
 export async function getCategoryPostTitles(
