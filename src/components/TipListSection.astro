@@ -229,11 +229,17 @@ const placeholderVisible = groupByDate && count > 0 && !ssrTodayHasGroup;
   }
 
   /* Date-grouped variant. The date-group wrapper holds the date header plus
-     all rows for that date. JS in DateRail hides whole wrappers when
-     filtering, so wrapping in display: contents avoids any layout shift
-     between date-grouped and flat rendering. */
+     all rows for that date. JS in DateRail toggles the wrapper's hidden
+     attribute to filter by active date. We use display: contents so the
+     wrapper doesn't introduce a layout box of its own, and the
+     [hidden] override below restores the standard hide behaviour that
+     display: contents would otherwise mask (since .date-group ties with
+     [hidden] on specificity and author CSS wins on a tie). */
   .date-group {
     display: contents;
+  }
+  .date-group[hidden] {
+    display: none;
   }
   .date-group-head {
     align-items: baseline;
