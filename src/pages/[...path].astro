@@ -97,7 +97,13 @@ let categorySlug = "";
 
 if (looksLikeCategory) {
   categorySlug = lastSegment;
-  category = await getCategory(categorySlug, 15).catch(() => null);
+  // Pull every post in the category, not just the most recently published
+  // 15. The 15-limit was cutting off today/this-week fixtures whenever the
+  // paul365 cron published a batch for later dates more recently. Date
+  // grouping + DateRail filter happens client-side, so a high cap is fine.
+  // The snapshot only ever has ~1600 total posts so even the busiest
+  // category stays well under this ceiling.
+  category = await getCategory(categorySlug, 1000).catch(() => null);
 } else {
   const slug = firstSegment;
   const pageUri = `/${slug}/`;
