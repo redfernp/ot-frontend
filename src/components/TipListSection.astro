@@ -65,6 +65,21 @@ function formatDateHeader(isoDate: string): string {
   }).format(d);
 }
 
+// London "today" at build time. Used to seed the active-date placeholder.
+// Builds run hourly so this can be at most ~1h stale at request time; the
+// client-side script re-derives the real "today" and updates the placeholder
+// label on first paint anyway.
+function londonTodayIso(): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Europe/London",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 type Group = { date: string | null; posts: WpPost[] };
 
 let groups: Group[] = [];
@@ -88,6 +103,14 @@ if (groupByDate && count > 0) {
 } else {
   groups = [{ date: null, posts }];
 }
+
+// SSR seed for the active-date placeholder. If there's already a real group
+// for today, the placeholder ships hidden. Otherwise it ships visible with
+// today's date so Googlebot (and any visitor with JS disabled) sees a proper
+// header instead of straight into future-date content with no context.
+const ssrToday = groupByDate ? londonTodayIso() : null;
+const ssrTodayHasGroup = ssrToday ? groups.some((g) => g.date === ssrToday) : false;
+const placeholderVisible = groupByDate && count > 0 && !ssrTodayHasGroup;
 ---
 
 <section
@@ -107,6 +130,25 @@ if (groupByDate && count > 0) {
   </header>
   {count > 0 ? (
     <div class="post-list-rows" data-date-filter-list>
+      {groupByDate && (
+        // Active-date placeholder. JS in DateRail updates its label and
+        // visibility on date change. Ships visible from SSR when today has
+        // no real tips group, so Googlebot and JS-disabled visitors see a
+        // proper "No tips for this date" header before the future tips
+        // listed underneath.
+        <div
+          class="date-group date-group-placeholder"
+          data-date-group-placeholder
+          data-date-group={ssrToday}
+          hidden={!placeholderVisible}
+        >
+          <header class="date-group-head" data-date-group-head={ssrToday}>
+            <span class="date-group-label" data-placeholder-label>{ssrToday ? formatDateHeader(ssrToday) : ""}</span>
+            <span class="date-group-count">No tips</span>
+          </header>
+          <p class="placeholder-message">No tips for this date. Browse upcoming fixtures below.</p>
+        </div>
+      )}
       {groupByDate ? (
         groups.map((group) => (
           <div class="date-group" data-date-group={group.date ?? ""}>
@@ -221,5 +263,15 @@ if (groupByDate && count > 0) {
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+
+  /* Active-date placeholder. Same header chrome as a real date group so the
+     UI doesn't shift when a date has no tips; the body just carries an empty
+     message. */
+  .date-group-placeholder .placeholder-message {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    padding: 1.25rem 1.25rem 1.4rem;
   }
 </style>

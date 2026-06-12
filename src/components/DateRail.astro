@@ -100,7 +100,7 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
 <script is:inline>
   (() => {
-    const scriptVersion = "date-filter-v2";
+    const scriptVersion = "date-filter-v3";
 
     if (window.__otDateRailReady === scriptVersion) {
       return;
@@ -233,12 +233,6 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       });
     }
 
-    // Threshold for "today + future" stacking. When today's tip count is at
-    // or above this number, we filter strictly to the active date. Below it,
-    // future dates are revealed underneath so visitors see upcoming tips
-    // without having to click around the rail.
-    const TODAY_LOW_COUNT = 20;
-
     function setCountText(count, visible) {
       if (!count) return;
       const singular = count.dataset.singular || "tip";
@@ -246,6 +240,31 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       count.textContent = `${visible} ${visible === 1 ? singular : plural}`;
     }
 
+    function formatDateHeader(isoDate) {
+      try {
+        return new Intl.DateTimeFormat("en-GB", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          timeZone: "UTC",
+        }).format(new Date(`${isoDate}T00:00:00Z`));
+      } catch {
+        return isoDate;
+      }
+    }
+
+    // Filter rule for grouped sections:
+    //   - Active date has tips → show just that date's group. Past, future
+    //     and empty placeholder all hidden. Clicking around the rail is
+    //     stable: each click lands on exactly that date's tips.
+    //   - Active date is empty AND active date === today → show the
+    //     placeholder (with today's label) plus every future group. This is
+    //     the SEO patch: default page loads always land on today, so if
+    //     today is empty we surface upcoming tips instead of a blank page.
+    //   - Active date is empty AND active date !== today (i.e. user clicked
+    //     a past or future empty date) → show only the placeholder. No
+    //     stacking, because mixing the user's chosen date with unrelated
+    //     dates is more confusing than helpful.
     function updateSections(activeDate) {
       const today = londonTodayIso();
 
@@ -255,32 +274,29 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
         const count = section.querySelector("[data-date-count]");
 
         if (isGrouped) {
-          // Grouped mode: each [data-date-group="YYYY-MM-DD"] wraps a date
-          // header plus that day's CouponRows. Hide/show whole groups.
-          const groups = Array.from(section.querySelectorAll("[data-date-group]"));
+          // Real date groups only (exclude the placeholder, which is matched
+          // separately below).
+          const groups = Array.from(
+            section.querySelectorAll("[data-date-group]:not([data-date-group-placeholder])"),
+          );
+          const placeholder = section.querySelector("[data-date-group-placeholder]");
 
-          // Count today's tips up front so we can decide whether to stack
-          // future dates underneath.
-          let todayCount = 0;
-          for (const group of groups) {
-            if (group.dataset.dateGroup === today) {
-              todayCount = group.querySelectorAll("[data-tip-date]").length;
-              break;
-            }
-          }
-          const shouldStackFuture =
-            activeDate === today && todayCount < TODAY_LOW_COUNT;
+          // Does the active date have a real group with tips?
+          const activeGroup = groups.find((g) => g.dataset.dateGroup === activeDate);
+          const activeHasTips =
+            !!activeGroup && activeGroup.querySelectorAll("[data-tip-date]").length > 0;
+          const stackFutureForEmptyToday = !activeHasTips && activeDate === today;
 
           let totalVisible = 0;
           groups.forEach((group) => {
             const groupDate = group.dataset.dateGroup || "";
             let shouldShow;
-            if (shouldStackFuture) {
-              // Show today + every future date
-              shouldShow = groupDate >= today;
-            } else {
-              // Show only the explicitly active date
+            if (activeHasTips) {
               shouldShow = groupDate === activeDate;
+            } else if (stackFutureForEmptyToday) {
+              shouldShow = groupDate > today;
+            } else {
+              shouldShow = false;
             }
             group.hidden = !shouldShow;
             if (shouldShow) {
@@ -288,7 +304,24 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
             }
           });
 
-          if (empty) empty.hidden = totalVisible > 0;
+          if (placeholder) {
+            placeholder.hidden = activeHasTips;
+            if (!activeHasTips) {
+              placeholder.dataset.dateGroup = activeDate;
+              const head = placeholder.querySelector("[data-date-group-head]");
+              if (head) head.dataset.dateGroupHead = activeDate;
+              const label = placeholder.querySelector("[data-placeholder-label]");
+              if (label) label.textContent = formatDateHeader(activeDate);
+            }
+          }
+
+          // The "nothing at all" empty state. Only fires when there are no
+          // real tips visible AND no placeholder (e.g. a category with zero
+          // posts ever published).
+          if (empty) {
+            const fullyEmpty = totalVisible === 0 && !placeholder;
+            empty.hidden = !fullyEmpty;
+          }
           setCountText(count, totalVisible);
           return;
         }
