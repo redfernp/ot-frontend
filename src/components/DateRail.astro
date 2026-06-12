@@ -100,7 +100,7 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
 
 <script is:inline>
   (() => {
-    const scriptVersion = "date-filter-v3";
+    const scriptVersion = "date-filter-v4";
 
     if (window.__otDateRailReady === scriptVersion) {
       return;
@@ -253,18 +253,28 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       }
     }
 
-    // Filter rule for grouped sections:
-    //   - Active date has tips → show just that date's group. Past, future
-    //     and empty placeholder all hidden. Clicking around the rail is
-    //     stable: each click lands on exactly that date's tips.
-    //   - Active date is empty AND active date === today → show the
-    //     placeholder (with today's label) plus every future group. This is
-    //     the SEO patch: default page loads always land on today, so if
-    //     today is empty we surface upcoming tips instead of a blank page.
-    //   - Active date is empty AND active date !== today (i.e. user clicked
-    //     a past or future empty date) → show only the placeholder. No
-    //     stacking, because mixing the user's chosen date with unrelated
-    //     dates is more confusing than helpful.
+    // Filter rule for grouped sections, in priority order:
+    //   1. Active date has tips → show only that date's group. Hide placeholder.
+    //      Past, future and placeholder all hidden. Each rail click lands on
+    //      exactly that date's tips.
+    //   2. Active date empty AND active === today AND future groups exist →
+    //      placeholder visible + every future group. Message: "Browse
+    //      upcoming fixtures below."
+    //   3. Active date empty AND active === today AND no future groups but
+    //      past groups exist → placeholder visible + most recent past group
+    //      only. Message: "Showing the most recent past tips below." This is
+    //      the SEO fallback: Google would otherwise see a blank category and
+    //      treat it as a soft 404.
+    //   4. Active date empty AND active === today AND nothing in the
+    //      category → placeholder visible alone. Message: just "No tips
+    //      for this date."
+    //   5. Active date empty AND active !== today (user clicked an empty
+    //      past or future date) → placeholder alone with the date they
+    //      chose. No fallback content; the user's explicit pick wins.
+    const MSG_DEFAULT = "No tips for this date.";
+    const MSG_FUTURE = "No tips for this date. Browse upcoming fixtures below.";
+    const MSG_PAST = "No tips for this date. Showing the most recent past tips below.";
+
     function updateSections(activeDate) {
       const today = londonTodayIso();
 
@@ -285,7 +295,39 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
           const activeGroup = groups.find((g) => g.dataset.dateGroup === activeDate);
           const activeHasTips =
             !!activeGroup && activeGroup.querySelectorAll("[data-tip-date]").length > 0;
-          const stackFutureForEmptyToday = !activeHasTips && activeDate === today;
+          const isToday = activeDate === today;
+
+          // Decide which real groups (other than active) should be shown,
+          // and which placeholder message variant fits.
+          let revealFutureFromToday = false;
+          let revealMostRecentPast = false;
+          let placeholderMessage = MSG_DEFAULT;
+
+          if (!activeHasTips && isToday) {
+            const hasFuture = groups.some((g) => (g.dataset.dateGroup || "") > today);
+            if (hasFuture) {
+              revealFutureFromToday = true;
+              placeholderMessage = MSG_FUTURE;
+            } else {
+              const hasPast = groups.some((g) => (g.dataset.dateGroup || "") < today);
+              if (hasPast) {
+                revealMostRecentPast = true;
+                placeholderMessage = MSG_PAST;
+              }
+            }
+          }
+
+          // Identify the single most-recent past group when the past-fallback
+          // mode is active. Pick the largest groupDate strictly less than today.
+          let mostRecentPastDate = "";
+          if (revealMostRecentPast) {
+            for (const g of groups) {
+              const d = g.dataset.dateGroup || "";
+              if (d && d < today && d > mostRecentPastDate) {
+                mostRecentPastDate = d;
+              }
+            }
+          }
 
           let totalVisible = 0;
           groups.forEach((group) => {
@@ -293,8 +335,10 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
             let shouldShow;
             if (activeHasTips) {
               shouldShow = groupDate === activeDate;
-            } else if (stackFutureForEmptyToday) {
+            } else if (revealFutureFromToday) {
               shouldShow = groupDate > today;
+            } else if (revealMostRecentPast) {
+              shouldShow = groupDate === mostRecentPastDate;
             } else {
               shouldShow = false;
             }
@@ -312,6 +356,8 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
               if (head) head.dataset.dateGroupHead = activeDate;
               const label = placeholder.querySelector("[data-placeholder-label]");
               if (label) label.textContent = formatDateHeader(activeDate);
+              const message = placeholder.querySelector("[data-placeholder-message]");
+              if (message) message.textContent = placeholderMessage;
             }
           }
 

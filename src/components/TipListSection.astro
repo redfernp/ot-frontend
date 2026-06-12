@@ -146,7 +146,7 @@ const placeholderVisible = groupByDate && count > 0 && !ssrTodayHasGroup;
             <span class="date-group-label" data-placeholder-label>{ssrToday ? formatDateHeader(ssrToday) : ""}</span>
             <span class="date-group-count">No tips</span>
           </header>
-          <p class="placeholder-message">No tips for this date. Browse upcoming fixtures below.</p>
+          <p class="placeholder-message" data-placeholder-message>No tips for this date. Browse upcoming fixtures below.</p>
         </div>
       )}
       {groupByDate ? (
