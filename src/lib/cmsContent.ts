@@ -109,16 +109,39 @@ function rewriteAffiliateLinksInHtml(html: string): string {
   });
 }
 
+// Rewrite hrefs and any other absolute references in WP HTML that point at a
+// known CMS origin to use the public site origin instead. WordPress's home URL
+// is set to the Cloudways host and must stay that way (changing it breaks
+// internal WP redirects), so any internal link an editor inserts via the WP UI
+// gets the staging-style host baked into the href. Without this rewrite they
+// leak through to the live site as visible cloudwaysapps.com links.
+function rewriteCmsLinksInHtml(html: string) {
+  let out = html;
+  const target = publicSiteOrigin();
+  const sourceOrigins = [
+    wordpressOriginFromEndpoint(),
+    "https://wordpress-514209-5717601.cloudwaysapps.com",
+  ].filter((v): v is string => Boolean(v));
+
+  for (const origin of sourceOrigins) {
+    if (origin === target) continue;
+    out = out.split(origin).join(target);
+  }
+  return out;
+}
+
 // Single-call rewriter for WP-authored HTML content. Handles:
 //   - /wp-content/uploads/ asset URLs (swaps CMS origin for public origin)
+//   - CMS-origin hrefs anywhere in the HTML (swap to public origin so editor-
+//     inserted internal links don't leak the cloudwaysapps.com host)
 //   - EveryTip /go/{slug} affiliate URLs (swaps for the local /go/{slug}/ cloak)
 //
-// Apply this everywhere WP HTML is rendered via <... set:html={...} />. Today
-// that's only GenericPage. TipPostPage's lede/relatedReading and the category
-// SEO copy do not yet pass through here; extend as needed when content bleed
-// is observed.
+// Apply this everywhere WP HTML is rendered via <... set:html={...} />, i.e.
+// GenericPage, TipPostPage's lede/relatedReading, and category SEO copy.
 export function rewriteCmsHtml(html = "") {
-  return rewriteAffiliateLinksInHtml(rewriteCmsAssetUrls(html));
+  return rewriteAffiliateLinksInHtml(
+    rewriteCmsLinksInHtml(rewriteCmsAssetUrls(html)),
+  );
 }
 
 export function rewriteCmsAssetUrls(html = "") {

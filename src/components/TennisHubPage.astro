@@ -6,6 +6,7 @@ import TipListSection from "@/components/TipListSection.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderTennisTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
+import { rewriteCmsHtml } from "@/lib/cmsContent";
 
 // Simple sport hub mirrors the football hub layout without country or league blocks.
 // SEO text comes from ACF Pro category_top_seo_text + category_bottom_seo_text.
@@ -31,8 +32,14 @@ const fallbackPosts = category.slug === "tennis" ? placeholderTennisTips : [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : fallbackPosts;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
-const topSeo = category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "";
-const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
+// Pipe ACF SEO copy through rewriteCmsHtml so any editor-inserted internal
+// links pointing at the Cloudways host get swapped for the public origin.
+const topSeo = rewriteCmsHtml(
+  category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "",
+);
+const bottomSeo = rewriteCmsHtml(
+  category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "",
+);
 
 const categoryName = category.name || "Sport";
 const sportLabel = categoryName.toLowerCase();

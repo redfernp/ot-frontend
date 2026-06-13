@@ -2,6 +2,7 @@
 import type { WpPost } from "@/lib/graphql";
 import RelatedTips from "@/components/RelatedTips.astro";
 import { findFirstLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
+import { rewriteCmsHtml } from "@/lib/cmsContent";
 
 type Props = {
   post: WpPost;
@@ -15,7 +16,12 @@ const published = post.date
   ? new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })
   : null;
 const bet365Url = findFirstLink(post.content, /bet365/i);
-const { lede, relatedReading } = splitTipBody(post.content || "");
+// Lede + relatedReading come from WP post HTML. Run through rewriteCmsHtml so
+// any internal links the WP editor inserted with the Cloudways host get
+// swapped for the public origin before set:html.
+const { lede: rawLede, relatedReading: rawRelatedReading } = splitTipBody(post.content || "");
+const lede = rewriteCmsHtml(rawLede);
+const relatedReading = rewriteCmsHtml(rawRelatedReading);
 const returns = parseReturns(summary.returns);
 const primaryCategory = post.categories?.nodes?.find((category) => category.uri) || post.categories?.nodes?.[0];
 

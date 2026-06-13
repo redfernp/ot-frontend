@@ -6,6 +6,7 @@ import TipListSection from "@/components/TipListSection.astro";
 import { getInternationalTips, type WpCategory, type WpPost } from "@/lib/graphql";
 import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
+import { rewriteCmsHtml } from "@/lib/cmsContent";
 
 // Reads ACF Pro fields category_top_seo_text + category_bottom_seo_text from WP.
 // Falls back to src/lib/categorySeoCopy for dev preview / unpopulated categories.
@@ -30,8 +31,15 @@ const livePosts = category.posts?.nodes ?? [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
-const topSeo = category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "";
-const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
+// ACF-authored SEO HTML may contain editor-inserted links pointing at the
+// Cloudways host (WordPress's home URL); rewrite them to the public origin
+// before set:html so they don't leak the CMS host into the live page.
+const topSeo = rewriteCmsHtml(
+  category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "",
+);
+const bottomSeo = rewriteCmsHtml(
+  category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "",
+);
 
 const categoryName = category.name || "Football";
 

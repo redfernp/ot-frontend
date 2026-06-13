@@ -6,6 +6,7 @@ import TipListSection from "@/components/TipListSection.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
+import { rewriteCmsHtml } from "@/lib/cmsContent";
 
 type CategoryWithPosts = WpCategory & {
   posts?: {
@@ -31,8 +32,14 @@ const livePosts = category.posts?.nodes ?? [];
 const posts = livePosts.length ? livePosts : hasWpGraphQL ? [] : placeholderRelatedTips;
 
 const fallbackSeo = getCategorySeoCopy(category.slug);
-const topSeo = category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "";
-const bottomSeo = category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "";
+// Pipe ACF SEO copy through rewriteCmsHtml so any editor-inserted internal
+// links pointing at the Cloudways host get swapped for the public origin.
+const topSeo = rewriteCmsHtml(
+  category.categoryTopSeoText?.categoryTopSeoText || fallbackSeo.top || "",
+);
+const bottomSeo = rewriteCmsHtml(
+  category.categoryBottomSeoText?.categoryBottomSeoText || fallbackSeo.bottom || "",
+);
 
 function titleCaseSegment(segment: string) {
   return segment
