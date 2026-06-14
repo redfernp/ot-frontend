@@ -2,6 +2,21 @@
 /reviews/william-hill /free-bets/ 301
 /reviews/william-hill/ /free-bets/ 301
 
+# Legacy flat football URLs that Google still has indexed. paul365 moved to
+# /football/<country>/<league>/ but these old paths still receive crawler
+# hits; without a redirect CF Pages was serving the homepage HTML for them,
+# which made Google canonicalise the old URL to the homepage and treat it
+# as duplicate content. 301 to the real location.
+/football/italy-serie-a/ /football/italy/italy-serie-a/ 301
+/football/spain-la-liga/ /football/spain/spain-primera-liga/ 301
+/football/uefa-champions-league/ /football/uefa/uefa-champions-league/ 301
+
+# Legacy review URL structure. /recommends/<bookmaker>/ moved to /reviews/<bookmaker>/.
+/recommends/bet365/ /reviews/bet365/ 301
+
+# Page slug rename: "responsible-gambling" → "safer-gambling".
+/responsible-gambling/ /safer-gambling/ 301
+
 # WordPress lives on Cloudways. The frontend rewrites WP-authored image URLs
 # to start with /wp-content/uploads/... under www.oddstips.co.uk; this 200
 # (proxy/rewrite) rule fetches those assets transparently from the live WP

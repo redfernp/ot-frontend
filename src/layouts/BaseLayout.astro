@@ -10,9 +10,13 @@ type Props = {
   description?: string;
   canonical?: string;
   seo?: SeoFields;
+  // Set true for pages that must never be indexed (404, /go/{slug}/ cloak
+  // covers itself separately). Forwarded to <Seo> which emits the robots
+  // meta and suppresses the self-referencing canonical fallback.
+  noindex?: boolean;
 };
 
-const { title, description, canonical, seo } = Astro.props;
+const { title, description, canonical, seo, noindex = false } = Astro.props;
 
 type NavItem = {
   label: string;
@@ -166,7 +170,7 @@ const ga4Id = PUBLIC_GA4_ID;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="mask-icon" href="/favicon.svg" color="#0b1f3f" />
-    <Seo title={title} description={description} canonical={canonical} seo={seo} />
+    <Seo title={title} description={description} canonical={canonical} seo={seo} noindex={noindex} />
     {ga4Id && (
       <>
         <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>
