@@ -1,6 +1,7 @@
 ---
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import DateRail from "@/components/DateRail.astro";
+import FootballDirectory from "@/components/FootballDirectory.astro";
 import HubHero from "@/components/HubHero.astro";
 import TipListSection from "@/components/TipListSection.astro";
 import { getInternationalTips, type WpCategory, type WpPost } from "@/lib/graphql";
@@ -92,6 +93,8 @@ const heroLede =
       emptyText="No football tips found for this date. Try another date."
       groupByDate
     />
+
+    <FootballDirectory />
 
     {bottomSeo && (
       <section class="seo-content" aria-label="Category guide">

@@ -197,7 +197,7 @@ export async function getCategory(slug: string, postLimit = 30) {
 // /football/international/ category page with Irish league matches and similar.
 //
 // Add new international competitions here as they appear in the snapshot.
-const TRUE_INTERNATIONAL_SLUGS = [
+export const TRUE_INTERNATIONAL_SLUGS = [
   "world-cup",
   "fifa-club-world-cup",
   "fifa-u20-world-cup",

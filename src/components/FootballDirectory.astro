@@ -1,0 +1,284 @@
+---
+// Programmatic crawlable directory of football country hubs + true
+// international competitions. Renders below the tip list on /football/ so
+// today's matches still lead, but Googlebot (and users browsing for a
+// specific country/league) get a dense main-column link tree rather than
+// being forced to rely on the sidebar or sitemap alone.
+//
+// Country sections are grouped by region; the region map is hardcoded
+// because every reasonable auto-grouping (alphabetical, post count,
+// continent-by-TLD) breaks the way users actually think about football.
+// Only countries that exist as categories in the snapshot get rendered, so
+// adding/removing leagues in paul365 propagates automatically without
+// touching this file.
+import { loadSnapshot, type SnapshotCategory } from "@/lib/snapshot";
+import { TRUE_INTERNATIONAL_SLUGS } from "@/lib/graphql";
+
+const snapshot = await loadSnapshot();
+const allCategories: SnapshotCategory[] = snapshot?.categories ?? [];
+
+// Country-level football categories: URI shape /football/<slug>/. Exclude
+// /football/international/ itself; it has its own section below.
+const COUNTRY_URI_RE = /^\/football\/([^/]+)\/$/;
+const countryBySlug = new Map<string, SnapshotCategory>();
+for (const cat of allCategories) {
+  if (!cat.uri) continue;
+  const match = COUNTRY_URI_RE.exec(cat.uri);
+  if (!match) continue;
+  if (cat.slug === "international") continue;
+  countryBySlug.set(cat.slug, cat);
+}
+
+// Region groupings. Slugs that don't exist in the snapshot are silently
+// skipped, so this map can stay stable even if paul365 stops covering a
+// country temporarily.
+const REGIONS: Array<{ name: string; slugs: string[] }> = [
+  {
+    name: "UK & Ireland",
+    slugs: ["united-kingdom", "ireland", "gibraltar", "malta"],
+  },
+  {
+    name: "Top European Leagues",
+    slugs: ["spain", "italy", "germany", "france", "holland", "portugal"],
+  },
+  {
+    name: "Rest of Western Europe",
+    slugs: [
+      "belgium", "switzerland", "austria", "greece", "cyprus", "turkey",
+    ],
+  },
+  {
+    name: "Northern Europe",
+    slugs: ["norway", "sweden", "finland", "denmark", "iceland", "estonia", "latvia"],
+  },
+  {
+    name: "Eastern Europe",
+    slugs: [
+      "poland", "czech-republic", "slovakia", "hungary", "romania", "bulgaria",
+      "ukraine", "russia", "belarus", "armenia",
+    ],
+  },
+  {
+    name: "Balkans",
+    slugs: [
+      "croatia", "serbia", "slovenia", "montenegro", "bosnia-herzegovina", "macedonia",
+    ],
+  },
+  {
+    name: "South America",
+    slugs: [
+      "brazil", "argentina", "chile", "uruguay", "peru", "colombia", "ecuador",
+      "bolivia", "paraguay", "venezuela",
+    ],
+  },
+  {
+    name: "North & Central America",
+    slugs: ["usa", "mexico", "costa-rica", "el-salvador", "guatemala", "haiti"],
+  },
+  {
+    name: "Asia",
+    slugs: [
+      "japan", "china", "thailand", "malaysia", "indonesia", "singapore",
+      "cambodia", "qatar", "saudi-arabia", "bahrain", "jordan", "israel",
+      "kazakhstan",
+    ],
+  },
+  {
+    name: "Oceania",
+    slugs: ["australia", "new-zealand"],
+  },
+  {
+    name: "Africa",
+    slugs: [
+      "algeria", "egypt", "ghana", "mali", "morocco", "rwanda", "senegal",
+      "south-africa", "tanzania", "tunisia",
+    ],
+  },
+  {
+    name: "Continental Club Competitions",
+    slugs: ["uefa"],
+  },
+];
+
+type LinkItem = { label: string; uri: string };
+type Section = { name: string; links: LinkItem[] };
+
+function toLinks(slugs: string[]): LinkItem[] {
+  return slugs
+    .map((slug) => countryBySlug.get(slug))
+    .filter((c): c is SnapshotCategory => Boolean(c?.uri && c.name))
+    .map((c) => ({ label: c.name, uri: c.uri }));
+}
+
+const regionSections: Section[] = REGIONS
+  .map((r) => ({ name: r.name, links: toLinks(r.slugs) }))
+  .filter((s) => s.links.length > 0);
+
+// Sweep up any country categories that aren't covered by REGIONS so we don't
+// silently orphan them (e.g. paul365 mints a new country we forgot to add).
+const coveredSlugs = new Set(REGIONS.flatMap((r) => r.slugs));
+const otherCountries = Array.from(countryBySlug.values())
+  .filter((c) => !coveredSlugs.has(c.slug))
+  .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+if (otherCountries.length > 0) {
+  regionSections.push({
+    name: "Other Countries",
+    links: otherCountries.map((c) => ({ label: c.name, uri: c.uri })),
+  });
+}
+
+// International competitions: pull from the curated TRUE_INTERNATIONAL_SLUGS
+// allowlist so this stays in sync with the featured "Top International
+// Matches" section and the /football/international/ category page filter.
+const internationalLinks: LinkItem[] = [];
+for (const slug of TRUE_INTERNATIONAL_SLUGS) {
+  const cat = allCategories.find((c) => c.slug === slug);
+  if (cat?.uri && cat.name) {
+    internationalLinks.push({ label: cat.name, uri: cat.uri });
+  }
+}
+// Deterministic display order: by name.
+internationalLinks.sort((a, b) => a.label.localeCompare(b.label));
+
+const showInternationalSection = internationalLinks.length > 0;
+---
+
+<section class="football-directory" aria-labelledby="football-directory-heading">
+  <header class="directory-head">
+    <p class="eyebrow">Browse by country</p>
+    <h2 id="football-directory-heading">Football Tips by Country</h2>
+    <p class="dir-lede">Pick a country to see league-by-league tips, or jump straight to an international tournament below.</p>
+  </header>
+
+  <div class="region-grid">
+    {regionSections.map((section) => (
+      <div class="region">
+        <h3>{section.name}</h3>
+        <ul>
+          {section.links.map((link) => (
+            <li>
+              <a href={link.uri}>{link.label}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  {showInternationalSection && (
+    <div class="international">
+      <h3>International Competitions</h3>
+      <ul>
+        {internationalLinks.map((link) => (
+          <li>
+            <a href={link.uri}>{link.label}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</section>
+
+<style>
+  .football-directory {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    padding: 1.5rem 1.5rem 1.75rem;
+  }
+  .directory-head { margin-bottom: 1.25rem; }
+  .directory-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .directory-head h2 {
+    color: var(--ot-text);
+    font-size: 1.25rem;
+    margin: 0.25rem 0 0.4rem;
+  }
+  .directory-head .dir-lede {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .region-grid {
+    display: grid;
+    gap: 1.25rem 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .region h3 {
+    color: var(--ot-brand-blue-dark);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+  }
+  .region ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .region li {
+    margin: 0;
+    padding: 0;
+  }
+  .region a {
+    color: var(--ot-brand-blue);
+    display: block;
+    font-size: 0.95rem;
+    padding: 0.2rem 0;
+    text-decoration: none;
+  }
+  .region a:hover { text-decoration: underline; }
+
+  .international {
+    border-top: 1px solid var(--ot-border);
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+  }
+  .international h3 {
+    color: var(--ot-brand-orange);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.6rem;
+    text-transform: uppercase;
+  }
+  .international ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.7rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .international li {
+    margin: 0;
+    padding: 0;
+  }
+  .international a {
+    background: #f0f5fc;
+    border-radius: 999px;
+    color: var(--ot-brand-blue-dark);
+    display: inline-block;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    text-decoration: none;
+  }
+  .international a:hover {
+    background: var(--ot-brand-blue);
+    color: #fff;
+  }
+
+  @media (max-width: 600px) {
+    .football-directory { padding: 1.25rem 1.1rem; }
+    .region-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem 1rem; }
+  }
+</style>

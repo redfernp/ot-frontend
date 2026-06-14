@@ -1,0 +1,115 @@
+---
+// Crawlable list of immediate child categories for a given parent. Renders
+// on country hub pages (/football/<country>/) and any other deeper league
+// hub, so visitors and crawlers can dive one level deeper without relying
+// on the sidebar or sitemap alone. Sorted alphabetically by name for
+// predictability.
+//
+// "Immediate child" = a category whose URI is exactly parentUri + "<slug>/".
+// Grand-children are intentionally not surfaced; otherwise on a top-level
+// country page we'd dump every division depth at once and the page would
+// stop being a useful hub.
+import { loadSnapshot, type SnapshotCategory } from "@/lib/snapshot";
+
+type Props = {
+  // The parent category whose children to list. Must have a URI ending in
+  // "/". Renders nothing if no children exist.
+  parent: { uri?: string; name?: string } | null | undefined;
+  // Override the section heading. Defaults to "{parent.name} leagues".
+  heading?: string;
+  // Override the eyebrow label above the heading.
+  eyebrow?: string;
+};
+
+const { parent, heading, eyebrow = "Browse leagues" } = Astro.props;
+
+const snapshot = await loadSnapshot();
+const allCategories: SnapshotCategory[] = snapshot?.categories ?? [];
+
+function normalizeUri(uri: string): string {
+  return uri.endsWith("/") ? uri : uri + "/";
+}
+
+const parentUri = parent?.uri ? normalizeUri(parent.uri) : null;
+const parentDepth = parentUri ? parentUri.split("/").filter(Boolean).length : 0;
+const targetChildDepth = parentDepth + 1;
+
+const children = parentUri
+  ? allCategories.filter((c) => {
+      if (!c.uri || !c.name) return false;
+      if (!c.uri.startsWith(parentUri)) return false;
+      if (c.uri === parentUri) return false;
+      const depth = c.uri.split("/").filter(Boolean).length;
+      return depth === targetChildDepth;
+    })
+  : [];
+
+children.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+const headingText = heading
+  ? heading
+  : parent?.name
+  ? `${parent.name} leagues`
+  : "Browse leagues";
+---
+
+{children.length > 0 && (
+  <section class="children-list" aria-labelledby="children-heading">
+    <header class="children-head">
+      <p class="eyebrow">{eyebrow}</p>
+      <h2 id="children-heading">{headingText}</h2>
+    </header>
+    <ul>
+      {children.map((c) => (
+        <li>
+          <a href={c.uri}>{c.name}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<style>
+  .children-list {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    padding: 1.25rem 1.5rem 1.5rem;
+  }
+  .children-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .children-head h2 {
+    color: var(--ot-text);
+    font-size: 1.15rem;
+    margin: 0.25rem 0 1rem;
+  }
+  ul {
+    display: grid;
+    gap: 0.4rem 0.9rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  li { margin: 0; padding: 0; }
+  a {
+    color: var(--ot-brand-blue);
+    display: block;
+    font-size: 0.95rem;
+    padding: 0.2rem 0;
+    text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    .children-list { padding: 1rem 1.1rem 1.25rem; }
+    ul { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
+</style>

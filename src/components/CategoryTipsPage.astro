@@ -1,5 +1,6 @@
 ---
 import CategorySidebar from "@/components/CategorySidebar.astro";
+import CategoryChildrenList from "@/components/CategoryChildrenList.astro";
 import DateRail from "@/components/DateRail.astro";
 import HubHero from "@/components/HubHero.astro";
 import TipListSection from "@/components/TipListSection.astro";
@@ -114,6 +115,8 @@ const heroLede = topSeo || descriptionLede || "";
       emptyText="No tips found for this date. Try another date."
       groupByDate
     />
+
+    <CategoryChildrenList parent={category} />
 
     {bottomSeo && (
       <section class="cat-bottom-seo" aria-label="Category guide">
