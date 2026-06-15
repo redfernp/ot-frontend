@@ -1,5 +1,30 @@
 import { defineConfig, envField } from "astro/config";
 import sitemap from "@astrojs/sitemap";
+import fs from "node:fs";
+import path from "node:path";
+
+// astro.config.mjs runs before Astro's astro:env module reads the .env file,
+// so process.env.WPGRAPHQL_ENDPOINT is not set yet when our build:start hook
+// fires. Load .env manually here so the snapshot prefetch can fetch the
+// snapshot during the build. Has no effect in CI/CF Pages where env vars are
+// already injected before node starts.
+try {
+  const envPath = path.join(process.cwd(), ".env");
+  if (fs.existsSync(envPath)) {
+    const raw = fs.readFileSync(envPath, "utf8");
+    for (const line of raw.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq < 1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      const value = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+      if (!(key in process.env)) process.env[key] = value;
+    }
+  }
+} catch {
+  // Silent: the hook handles missing env gracefully.
+}
 
 // Mutable container populated by the snapshot-prefetch integration at
 // astro:build:start, then read by the sitemap integration's filter/serialize
@@ -12,6 +37,35 @@ const sitemapData = {
   // URI path -> ISO date string. Used as the <lastmod> for that URL.
   lastmodByUri: new Map(),
 };
+
+// (broken mojibake URI -> clean ASCII URI). paul365 stores some slugs with
+// the fingerprint `a%c2%XX` from a known UTF-8/Latin-1 encoding bug; the
+// snapshot prefetch detects them and we emit 301 redirects in
+// dist/_redirects at build:done so Google's existing index of mangled URLs
+// has a clean redirect target. Static pages get built at the cleaned URI
+// by the snapshot loader in src/lib/snapshot.ts; this map is purely for
+// the legacy-URL redirect side.
+const mojibakeRedirects = new Map();
+
+// Per-byte ASCII transliteration for the trailing %c2%XX of each mojibake
+// pair. Must stay in sync with src/lib/slugSanitize.ts -- if they diverge,
+// dist/_redirects will redirect to a URL that doesn't exist in the build.
+const MOJIBAKE_TRAILING_TO_ASCII = {
+  a0: "a", a1: "a", a2: "a", a3: "a", a4: "a", a5: "a",
+  a6: "ae", a7: "c", a8: "e", a9: "e", aa: "e", ab: "e",
+  ac: "i", ad: "i", ae: "i", af: "i",
+  b0: "d", b1: "n",
+  b2: "o", b3: "o", b4: "o", b5: "o", b6: "o", b8: "o",
+  b9: "u", ba: "u", bb: "u", bc: "u",
+  bd: "y", bf: "y",
+};
+const MOJIBAKE_PATTERN_GLOBAL = /a%c2%([a-f0-9]{2})/gi;
+function cleanMojibakeUri(uri) {
+  return uri.replace(MOJIBAKE_PATTERN_GLOBAL, (match, hex) => {
+    const ascii = MOJIBAKE_TRAILING_TO_ASCII[hex.toLowerCase()];
+    return ascii ?? match;
+  });
+}
 
 function normalizeUri(path) {
   if (!path) return "";
@@ -65,10 +119,26 @@ const snapshotPrefetchForSitemap = {
         }
         const snap = await res.json();
 
+        // Helper: record a mojibake (broken raw URI -> clean URI) pair and
+        // return the clean URI to use for downstream sitemap bookkeeping.
+        // src/lib/snapshot.ts does the same cleanup at runtime so static
+        // pages are built at the clean URI; the redirect lets Google's
+        // existing index of mangled URLs land at the right place.
+        function recordAndClean(rawUri) {
+          if (!rawUri) return rawUri;
+          if (!/a%c2%[a-f0-9]{2}/i.test(rawUri)) return rawUri;
+          const clean = cleanMojibakeUri(rawUri);
+          if (clean !== rawUri) {
+            mojibakeRedirects.set(normalizeUri(rawUri), normalizeUri(clean));
+          }
+          return clean;
+        }
+
         // Categories: collect noindex URIs. No lastmod (no publish date on a
         // taxonomy term, and build-time fallback is fine for archives).
         for (const cat of snap.categories ?? []) {
-          if (cat?.seo?.noindex) sitemapData.noindexUris.add(normalizeUri(cat.uri));
+          const cleanUri = recordAndClean(cat.uri);
+          if (cat?.seo?.noindex) sitemapData.noindexUris.add(normalizeUri(cleanUri));
         }
         // Posts: use post_modified_gmt as lastmod. Sitemaps.org defines
         // <lastmod> as "the date of last modification of the file", so this
@@ -78,7 +148,7 @@ const snapshotPrefetchForSitemap = {
         // Explicitly NOT eventStart (fixture kickoff would push lastmod into
         // the future for upcoming matches and is invalid per the spec).
         for (const post of snap.posts ?? []) {
-          const uri = normalizeUri(post.uri);
+          const uri = normalizeUri(recordAndClean(post.uri));
           if (post?.seo?.noindex) sitemapData.noindexUris.add(uri);
           if (post.modified) sitemapData.lastmodByUri.set(uri, post.modified);
         }
@@ -86,16 +156,56 @@ const snapshotPrefetchForSitemap = {
         // the best available proxy for evergreen pages that get edited but
         // not re-published.
         for (const page of snap.pages ?? []) {
-          const uri = normalizeUri(page.uri);
+          const uri = normalizeUri(recordAndClean(page.uri));
           if (page?.seo?.noindex) sitemapData.noindexUris.add(uri);
           if (page.modified) sitemapData.lastmodByUri.set(uri, page.modified);
         }
 
         console.log(
-          `[sitemap] Prefetched snapshot: ${sitemapData.noindexUris.size} noindex URIs to exclude, ${sitemapData.lastmodByUri.size} URIs with lastmod.`,
+          `[sitemap] Prefetched snapshot: ${sitemapData.noindexUris.size} noindex URIs to exclude, ${sitemapData.lastmodByUri.size} URIs with lastmod, ${mojibakeRedirects.size} mojibake redirects pending.`,
         );
       } catch (err) {
         console.warn("[sitemap] Snapshot prefetch failed; sitemap will not filter or set lastmod:", err);
+      }
+    },
+    // After the build completes, append the legacy-URL 301s to dist/_redirects
+    // so CF Pages picks them up on deploy. We append (don't rewrite) so the
+    // public/_redirects entries (hand-written: William Hill, /wp-content/*,
+    // legacy paths) survive.
+    "astro:build:done": async ({ dir, logger }) => {
+      if (mojibakeRedirects.size === 0) {
+        logger?.info?.("[redirects] No mojibake redirects to emit.");
+        return;
+      }
+      try {
+        const { default: fs } = await import("node:fs/promises");
+        const { fileURLToPath } = await import("node:url");
+        const { join } = await import("node:path");
+        const outDir = typeof dir === "string" ? dir : fileURLToPath(dir);
+        const redirectsPath = join(outDir, "_redirects");
+        let existing = "";
+        try {
+          existing = await fs.readFile(redirectsPath, "utf8");
+        } catch {
+          // No public/_redirects in the build output; we'll create one.
+        }
+        const lines = [];
+        lines.push("");
+        lines.push("# Auto-generated mojibake -> ASCII redirects.");
+        lines.push("# paul365 stored some slugs with the `a%c2%XX` encoding bug;");
+        lines.push("# src/lib/snapshot.ts cleans them on load so static pages are");
+        lines.push("# built at clean URIs, and these 301s point Google's existing");
+        lines.push("# index of mangled URLs at the clean equivalents.");
+        for (const [from, to] of mojibakeRedirects) {
+          lines.push(`${from} ${to} 301`);
+        }
+        const next = existing.endsWith("\n") || existing === ""
+          ? existing + lines.join("\n") + "\n"
+          : existing + "\n" + lines.join("\n") + "\n";
+        await fs.writeFile(redirectsPath, next, "utf8");
+        logger?.info?.(`[redirects] Wrote ${mojibakeRedirects.size} mojibake 301s to ${redirectsPath}.`);
+      } catch (err) {
+        console.warn("[redirects] Failed to write mojibake redirects:", err);
       }
     },
   },

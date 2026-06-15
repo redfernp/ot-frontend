@@ -9,6 +9,7 @@
 // minutes to <2 minutes and WP gets touched exactly once per build.
 
 import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
+import { cleanSlug, hasMojibake } from "@/lib/slugSanitize";
 
 // -----------------------------------------------------------------------------
 // Types — shaped to match the WpPost / WpCategory / WpMenu types in graphql.ts
@@ -199,8 +200,53 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
     );
   }
 
+  normaliseMojibakeInPlace(data);
+
   return data;
 }
+
+// Mutate the snapshot so every URI / slug runs through the mojibake cleaner.
+// Records every (broken -> clean) URI swap in `mojibakeRedirects` so the
+// build-time integration can emit 301s for the legacy mangled URLs (Google
+// likely still has them in its index from past crawls). Sub-category nodes
+// hung off post.categories are also normalised so internal links rendered
+// in the breadcrumb / related-tip components don't keep pointing at the
+// broken paths.
+function normaliseMojibakeInPlace(data: Snapshot) {
+  for (const c of data.categories) {
+    const before = c.uri;
+    if (c.slug && hasMojibake(c.slug)) c.slug = cleanSlug(c.slug);
+    if (c.uri && hasMojibake(c.uri)) c.uri = cleanSlug(c.uri);
+    if (before && before !== c.uri) mojibakeRedirects.set(before, c.uri);
+  }
+  for (const p of data.posts) {
+    const before = p.uri;
+    if (p.slug && hasMojibake(p.slug)) p.slug = cleanSlug(p.slug);
+    if (p.uri && hasMojibake(p.uri)) p.uri = cleanSlug(p.uri);
+    if (before && before !== p.uri) mojibakeRedirects.set(before, p.uri ?? "");
+    if (p.categories?.nodes) {
+      for (const node of p.categories.nodes) {
+        if (node.slug && hasMojibake(node.slug)) node.slug = cleanSlug(node.slug);
+        if (node.uri && hasMojibake(node.uri)) node.uri = cleanSlug(node.uri);
+      }
+    }
+  }
+  for (const p of data.pages) {
+    const before = p.uri;
+    if (p.slug && hasMojibake(p.slug)) p.slug = cleanSlug(p.slug);
+    if (p.uri && hasMojibake(p.uri)) p.uri = cleanSlug(p.uri);
+    if (before && before !== p.uri) mojibakeRedirects.set(before, p.uri ?? "");
+  }
+  if (mojibakeRedirects.size > 0) {
+    console.log(`[snapshot] Cleaned ${mojibakeRedirects.size} mojibake URIs to ASCII.`);
+  }
+}
+
+// (broken URI -> clean URI). Populated during snapshot load, consumed by
+// the redirects-emit integration in astro.config.mjs to generate 301
+// entries in dist/_redirects so legacy mangled URLs in Google's index
+// redirect to the clean equivalents instead of 404ing.
+export const mojibakeRedirects = new Map<string, string>();
 
 // Minimal local declaration for Node's process global so we don't need to
 // pull in @types/node just for this one usage. `process.exit` is available
