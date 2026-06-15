@@ -72,3 +72,107 @@ export function cleanSlug(input: string): string {
     return ascii ?? match;
   });
 }
+
+// -----------------------------------------------------------------------------
+// Double-encoded text repair.
+//
+// Different mojibake pattern from the slug case above: many of the post titles,
+// category names and bits of WP-authored HTML in the snapshot contain valid
+// UTF-8 that has been double-encoded (UTF-8 bytes were once misdecoded as
+// cp1252, then the result was re-encoded as UTF-8). Visible artefacts:
+//
+//   "Køge"          stored as "KÃ¸ge"          (Ã = U+00C3, ¸ = U+00B8)
+//   "götaland"     stored as "gÃ¶taland"
+//   "Östra"        stored as "Ã–stra"          (the trail char is the
+//                                                cp1252 0x96 = en-dash)
+//   "Women's"      stored as "Womenâ€™s"      (U+2019 mangled to 3 chars)
+//   "Italy – B"    stored as "Italy â€" B"   (the en-dash)
+//
+// Repair pattern-matches the exact mojibake shape and recomposes the original
+// UTF-8 codepoint. Avoids whole-string byte transcoding because that breaks
+// legitimate non-ASCII characters in the same string (e.g. an en-dash sitting
+// outside a mojibake sequence shouldn't get touched).
+// -----------------------------------------------------------------------------
+
+// Reverse of the cp1252 -> Unicode table for the 0x80-0x9F range (where
+// cp1252 differs from Latin-1). Used to map Unicode chars produced by
+// cp1252 misdecoding back to the byte they came from.
+const CP1252_PRINTABLE_TO_BYTE: Record<number, number> = {
+  0x20ac: 0x80, // €
+  0x201a: 0x82, // ‚
+  0x0192: 0x83, // ƒ
+  0x201e: 0x84, // „
+  0x2026: 0x85, // …
+  0x2020: 0x86, // †
+  0x2021: 0x87, // ‡
+  0x02c6: 0x88, // ˆ
+  0x2030: 0x89, // ‰
+  0x0160: 0x8a, // Š
+  0x2039: 0x8b, // ‹
+  0x0152: 0x8c, // Œ
+  0x017d: 0x8e, // Ž
+  0x2018: 0x91, // '
+  0x2019: 0x92, // '
+  0x201c: 0x93, // "
+  0x201d: 0x94, // "
+  0x2022: 0x95, // •
+  0x2013: 0x96, // –
+  0x2014: 0x97, // —
+  0x02dc: 0x98, // ˜
+  0x2122: 0x99, // ™
+  0x0161: 0x9a, // š
+  0x203a: 0x9b, // ›
+  0x0153: 0x9c, // œ
+  0x017e: 0x9e, // ž
+  0x0178: 0x9f, // Ÿ
+};
+
+// Trigger characters that hint the string might be double-encoded. Avoids
+// running the regex passes on every clean string.
+const POSSIBLE_MOJIBAKE_TEXT = /[ÂÃâ]/;
+
+// Map a single character back to the byte it likely came from. Returns
+// undefined for characters that aren't part of a known cp1252 / Latin-1
+// roundtrip.
+function charToByte(ch: string): number | undefined {
+  const cp = ch.codePointAt(0)!;
+  if (cp < 0x100) return cp;
+  return CP1252_PRINTABLE_TO_BYTE[cp];
+}
+
+export function fixDoubleEncoded(input: string | undefined | null): string {
+  if (!input) return input ?? "";
+  if (!POSSIBLE_MOJIBAKE_TEXT.test(input)) return input;
+
+  let out = input;
+
+  // 3-byte UTF-8 sequences with U+00E2 (`â`) as the misdecoded lead byte.
+  // Covers most punctuation like `'` (U+2019, mojibake `â€™`), the en-dash
+  // (U+2013, mojibake `â€"`), `…`, `"`, `"`, `•`. Both trailing chars must
+  // map back to a valid UTF-8 continuation byte for the replacement to fire.
+  out = out.replace(/â(.)(.)/g, (match, c1: string, c2: string) => {
+    const b1 = charToByte(c1);
+    const b2 = charToByte(c2);
+    if (b1 === undefined || b2 === undefined) return match;
+    if ((b1 & 0xc0) !== 0x80 || (b2 & 0xc0) !== 0x80) return match;
+    const codePoint = ((0xe2 & 0x0f) << 12) | ((b1 & 0x3f) << 6) | (b2 & 0x3f);
+    if (codePoint < 0x800) return match; // not a valid 3-byte UTF-8 result
+    return String.fromCodePoint(codePoint);
+  });
+
+  // 2-byte UTF-8 sequences with U+00C2 (`Â`) or U+00C3 (`Ã`) as the
+  // misdecoded lead byte. The trailing char can be either a Latin-1
+  // supplement char (U+0080-U+00BF) or a cp1252-printable char that maps
+  // back to a byte in that range (e.g. en-dash U+2013 = cp1252 0x96, so
+  // `Ã` followed by en-dash decodes to `Ö`). charToByte does both lookups.
+  out = out.replace(/([ÂÃ])(.)/g, (match, c1: string, c2: string) => {
+    const trail = charToByte(c2);
+    if (trail === undefined) return match;
+    if ((trail & 0xc0) !== 0x80) return match;
+    const lead = c1.charCodeAt(0);
+    const codePoint = ((lead & 0x1f) << 6) | (trail & 0x3f);
+    return String.fromCodePoint(codePoint);
+  });
+
+  return out;
+}

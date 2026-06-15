@@ -9,7 +9,7 @@
 // minutes to <2 minutes and WP gets touched exactly once per build.
 
 import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
-import { cleanSlug, hasMojibake } from "@/lib/slugSanitize";
+import { cleanSlug, fixDoubleEncoded, hasMojibake } from "@/lib/slugSanitize";
 
 // -----------------------------------------------------------------------------
 // Types — shaped to match the WpPost / WpCategory / WpMenu types in graphql.ts
@@ -212,13 +212,54 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
 // hung off post.categories are also normalised so internal links rendered
 // in the breadcrumb / related-tip components don't keep pointing at the
 // broken paths.
+//
+// Also runs fixDoubleEncoded() over every human-readable text field
+// (titles, names, content, ACF SEO copy, Yoast meta) to repair the
+// separate double-encoded UTF-8 pattern responsible for `KÃ¸ge` style
+// display mojibake. That bug shares a cause (cp1252 misdecoding in
+// paul365's pipeline) but a different surface (the visible text rather
+// than the URL-encoded slug bytes), so we run both fixes here in one
+// pass to keep the snapshot's downstream consumers simple.
 function normaliseMojibakeInPlace(data: Snapshot) {
+  // Helper: only assign if the repair actually changed something, to keep
+  // the snapshot identical-by-reference where there was no mojibake.
+  const repair = (s: string | undefined | null): string | undefined => {
+    if (!s) return s ?? undefined;
+    const out = fixDoubleEncoded(s);
+    return out === s ? s : out;
+  };
+  const repairSeo = (seo: SnapshotSeo | undefined) => {
+    if (!seo) return;
+    if (seo.title) seo.title = repair(seo.title)!;
+    if (seo.metaDesc) seo.metaDesc = repair(seo.metaDesc)!;
+    if (seo.opengraphTitle) seo.opengraphTitle = repair(seo.opengraphTitle)!;
+    if (seo.opengraphDescription) seo.opengraphDescription = repair(seo.opengraphDescription)!;
+    if (seo.twitterTitle) seo.twitterTitle = repair(seo.twitterTitle)!;
+    if (seo.twitterDescription) seo.twitterDescription = repair(seo.twitterDescription)!;
+  };
+
+  let textRepairs = 0;
+
   for (const c of data.categories) {
     const before = c.uri;
     if (c.slug && hasMojibake(c.slug)) c.slug = cleanSlug(c.slug);
     if (c.uri && hasMojibake(c.uri)) c.uri = cleanSlug(c.uri);
     if (before && before !== c.uri) mojibakeRedirects.set(before, c.uri);
+
+    if (c.name) {
+      const cleaned = fixDoubleEncoded(c.name);
+      if (cleaned !== c.name) { c.name = cleaned; textRepairs += 1; }
+    }
+    if (c.description) c.description = repair(c.description)!;
+    if (c.categoryTopSeoText?.categoryTopSeoText) {
+      c.categoryTopSeoText.categoryTopSeoText = repair(c.categoryTopSeoText.categoryTopSeoText)!;
+    }
+    if (c.categoryBottomSeoText?.categoryBottomSeoText) {
+      c.categoryBottomSeoText.categoryBottomSeoText = repair(c.categoryBottomSeoText.categoryBottomSeoText)!;
+    }
+    repairSeo(c.seo);
   }
+
   for (const p of data.posts) {
     const before = p.uri;
     if (p.slug && hasMojibake(p.slug)) p.slug = cleanSlug(p.slug);
@@ -228,17 +269,39 @@ function normaliseMojibakeInPlace(data: Snapshot) {
       for (const node of p.categories.nodes) {
         if (node.slug && hasMojibake(node.slug)) node.slug = cleanSlug(node.slug);
         if (node.uri && hasMojibake(node.uri)) node.uri = cleanSlug(node.uri);
+        if (node.name) {
+          const cleaned = fixDoubleEncoded(node.name);
+          if (cleaned !== node.name) { node.name = cleaned; textRepairs += 1; }
+        }
       }
     }
+    if (p.title) {
+      const cleaned = fixDoubleEncoded(p.title);
+      if (cleaned !== p.title) { p.title = cleaned; textRepairs += 1; }
+    }
+    if (p.excerpt) p.excerpt = repair(p.excerpt)!;
+    if (p.content) p.content = repair(p.content)!;
+    repairSeo(p.seo);
   }
+
   for (const p of data.pages) {
     const before = p.uri;
     if (p.slug && hasMojibake(p.slug)) p.slug = cleanSlug(p.slug);
     if (p.uri && hasMojibake(p.uri)) p.uri = cleanSlug(p.uri);
     if (before && before !== p.uri) mojibakeRedirects.set(before, p.uri ?? "");
+    if (p.title) {
+      const cleaned = fixDoubleEncoded(p.title);
+      if (cleaned !== p.title) { p.title = cleaned; textRepairs += 1; }
+    }
+    if (p.content) p.content = repair(p.content)!;
+    repairSeo(p.seo);
   }
+
   if (mojibakeRedirects.size > 0) {
     console.log(`[snapshot] Cleaned ${mojibakeRedirects.size} mojibake URIs to ASCII.`);
+  }
+  if (textRepairs > 0) {
+    console.log(`[snapshot] Repaired ${textRepairs} double-encoded text fields (titles/names).`);
   }
 }
 
