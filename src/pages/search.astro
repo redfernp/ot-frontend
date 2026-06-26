@@ -1,0 +1,444 @@
+---
+// Search results page.
+//
+// Pure static: the page shell is prerendered, and the actual searching runs in
+// the browser against /search-index.json (built by search-index.json.ts). The
+// homepage hero form GET-submits here as /search/?s=<query>; this page reads
+// that param on load, fetches the index once, and renders ranked matches.
+//
+// Indexed as noindex: a thin-content query page that shouldn't compete in
+// Google's index. The canonical tip/category pages it links to carry the SEO.
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Search | Oddstips"
+  description="Search Oddstips for free betting tips, predictions, leagues and fixtures across every major sport."
+  noindex
+>
+  <section class="search-page" aria-labelledby="search-heading">
+    <p class="eyebrow">Search</p>
+    <h1 id="search-heading">Search Oddstips</h1>
+
+    <form class="search-bar" role="search" action="/search/" method="get">
+      <label class="sr-only" for="search-input">Search free tips, leagues or fixtures</label>
+      <input
+        id="search-input"
+        type="search"
+        name="s"
+        placeholder="Search latest free tips, leagues or fixtures"
+        autocomplete="off"
+        autofocus
+      />
+      <button type="submit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <span>Search</span>
+      </button>
+    </form>
+
+    <p class="search-status" id="search-status" aria-live="polite">Enter a search term above to find tips and leagues.</p>
+
+    <ul class="search-results" id="search-results"></ul>
+
+    <noscript>
+      <p class="search-status">Search needs JavaScript enabled. Browse <a href="/football/">football tips</a> or <a href="/reviews/">bookmaker reviews</a> instead.</p>
+    </noscript>
+  </section>
+</BaseLayout>
+
+<script>
+  type IndexItem = { type: "t" | "c"; t: string; u: string; s?: string; d?: string };
+
+  const input = document.getElementById("search-input") as HTMLInputElement | null;
+  const statusEl = document.getElementById("search-status");
+  const resultsEl = document.getElementById("search-results");
+  const form = document.querySelector(".search-bar") as HTMLFormElement | null;
+
+  const MAX_RESULTS = 80;
+  let index: IndexItem[] | null = null;
+  let loadError = false;
+
+  // Letters that NFD does NOT decompose to ASCII + combining mark (they are
+  // standalone codepoints). Common across the Nordic / Polish / German leagues
+  // the site covers, so transliterate them so "koge" matches "Køge",
+  // "brondby" matches "Brøndby", "lodz" matches "Łódź", etc.
+  const TRANSLIT: Record<string, string> = {
+    ø: "o", æ: "ae", œ: "oe", å: "a", ß: "ss",
+    ð: "d", þ: "th", đ: "d", ł: "l", ı: "i",
+  };
+
+  // Lowercase, transliterate standalone letters, then strip combining marks so
+  // accented characters match their plain-ASCII equivalents.
+  function fold(value: string): string {
+    return value
+      .toLowerCase()
+      .replace(/[øæœåßðþđłı]/g, (ch) => TRANSLIT[ch] ?? ch)
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "");
+  }
+
+  function getQuery(): string {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get("s") || params.get("q") || "").trim();
+  }
+
+  async function ensureIndex(): Promise<IndexItem[]> {
+    if (index) return index;
+    const res = await fetch("/search-index.json");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = (await res.json()) as { items: IndexItem[] };
+    index = data.items || [];
+    return index;
+  }
+
+  type Scored = { item: IndexItem; score: number };
+
+  function search(query: string, items: IndexItem[]): Scored[] {
+    const foldedQuery = fold(query);
+    const tokens = foldedQuery.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return [];
+
+    const scored: Scored[] = [];
+    for (const item of items) {
+      const title = fold(item.t);
+      const sub = item.s ? fold(item.s) : "";
+      const haystack = `${title} ${sub}`;
+
+      // Every token must appear somewhere (title or subtitle).
+      let matchesAll = true;
+      let score = 0;
+      for (const token of tokens) {
+        const inTitle = title.includes(token);
+        const inSub = sub.includes(token);
+        if (!inTitle && !inSub) {
+          matchesAll = false;
+          break;
+        }
+        if (inTitle) score += 10;
+        else score += 3;
+      }
+      if (!matchesAll) continue;
+
+      // Phrase / prefix boosts so the most relevant land at the top.
+      if (title === foldedQuery) score += 120;
+      else if (title.startsWith(foldedQuery)) score += 50;
+      else if (title.includes(foldedQuery)) score += 25;
+      if (haystack.includes(foldedQuery)) score += 5;
+
+      // Slightly favour individual tip posts over category hubs, since that's
+      // what the box is primarily for; categories still surface when relevant.
+      if (item.type === "t") score += 2;
+
+      scored.push({ item, score });
+    }
+
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      // Tie-break: newer tips first; categories (no date) sink below tips.
+      const da = a.item.d ? Date.parse(a.item.d) : 0;
+      const db = b.item.d ? Date.parse(b.item.d) : 0;
+      return db - da;
+    });
+
+    return scored;
+  }
+
+  function formatDate(iso?: string): string | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+
+  // Build the title with matched tokens wrapped in <mark>. Uses textContent
+  // throughout so titles can never inject markup.
+  function renderTitle(title: string, tokens: string[]): DocumentFragment {
+    const frag = document.createDocumentFragment();
+    if (tokens.length === 0) {
+      frag.append(document.createTextNode(title));
+      return frag;
+    }
+    // Fold per original character so the folded string can change length
+    // (e.g. æ -> ae) without throwing off which ORIGINAL characters to mark.
+    // foldedToOrig[k] = index of the original character that produced folded
+    // position k, so a token match over folded positions maps cleanly back.
+    let folded = "";
+    const foldedToOrig: number[] = [];
+    for (let c = 0; c < title.length; c++) {
+      const f = fold(title[c]);
+      for (let k = 0; k < f.length; k++) foldedToOrig.push(c);
+      folded += f;
+    }
+    const flags = new Array(title.length).fill(false);
+    for (const token of tokens) {
+      let from = 0;
+      let idx = folded.indexOf(token, from);
+      while (idx !== -1) {
+        for (let i = idx; i < idx + token.length; i++) flags[foldedToOrig[i]] = true;
+        from = idx + token.length;
+        idx = folded.indexOf(token, from);
+      }
+    }
+    let i = 0;
+    while (i < title.length) {
+      const on = flags[i];
+      let j = i;
+      while (j < title.length && flags[j] === on) j++;
+      const chunk = title.slice(i, j);
+      if (on) {
+        const mark = document.createElement("mark");
+        mark.textContent = chunk;
+        frag.append(mark);
+      } else {
+        frag.append(document.createTextNode(chunk));
+      }
+      i = j;
+    }
+    return frag;
+  }
+
+  function renderResults(query: string, results: Scored[]): void {
+    if (!resultsEl || !statusEl) return;
+    resultsEl.innerHTML = "";
+
+    if (results.length === 0) {
+      statusEl.textContent = `No results for "${query}". Try a team, league or sport, e.g. "Arsenal" or "Premier League".`;
+      return;
+    }
+
+    const shown = results.slice(0, MAX_RESULTS);
+    const total = results.length;
+    statusEl.textContent =
+      total > shown.length
+        ? `Showing top ${shown.length} of ${total} results for "${query}".`
+        : `${total} result${total === 1 ? "" : "s"} for "${query}".`;
+
+    const tokens = fold(query).split(/\s+/).filter(Boolean);
+
+    for (const { item } of shown) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.className = "result";
+      a.href = item.u;
+
+      const label = document.createElement("span");
+      label.className = "result-kind " + (item.type === "c" ? "is-cat" : "is-tip");
+      label.textContent = item.type === "c" ? "League" : (formatDate(item.d) || "Tip");
+
+      const body = document.createElement("span");
+      body.className = "result-body";
+
+      const title = document.createElement("span");
+      title.className = "result-title";
+      title.append(renderTitle(item.t, tokens));
+      body.append(title);
+
+      if (item.s) {
+        const sub = document.createElement("span");
+        sub.className = "result-sub";
+        sub.textContent = item.s;
+        body.append(sub);
+      }
+
+      const arrow = document.createElement("span");
+      arrow.className = "result-arrow";
+      arrow.setAttribute("aria-hidden", "true");
+      arrow.textContent = "→";
+
+      a.append(label, body, arrow);
+      li.append(a);
+      resultsEl.append(li);
+    }
+  }
+
+  async function run(query: string): Promise<void> {
+    if (!statusEl || !resultsEl) return;
+    if (!query) {
+      resultsEl.innerHTML = "";
+      statusEl.textContent = "Enter a search term above to find tips and leagues.";
+      return;
+    }
+    statusEl.textContent = `Searching for "${query}"…`;
+    try {
+      const items = await ensureIndex();
+      renderResults(query, search(query, items));
+    } catch (err) {
+      loadError = true;
+      resultsEl.innerHTML = "";
+      statusEl.textContent = "Search is temporarily unavailable. Please try again in a moment.";
+      console.error("[search] index load failed", err);
+    }
+  }
+
+  // Initial run from the URL query.
+  const initial = getQuery();
+  if (input) input.value = initial;
+  run(initial);
+
+  // Live search as the user types, without a full page reload. Keep the URL in
+  // sync so results are shareable / bookmarkable and Back works.
+  let debounce: number | undefined;
+  if (input) {
+    input.addEventListener("input", () => {
+      const q = input.value.trim();
+      window.clearTimeout(debounce);
+      debounce = window.setTimeout(() => {
+        const url = new URL(window.location.href);
+        if (q) url.searchParams.set("s", q);
+        else url.searchParams.delete("s");
+        window.history.replaceState(null, "", url);
+        if (!loadError) run(q);
+      }, 160);
+    });
+  }
+
+  // Submit just re-runs in place (no navigation needed) but still works without
+  // JS via the GET action on a real page load.
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = (input?.value || "").trim();
+      const url = new URL(window.location.href);
+      if (q) url.searchParams.set("s", q);
+      else url.searchParams.delete("s");
+      window.history.replaceState(null, "", url);
+      run(q);
+    });
+  }
+</script>
+
+<style>
+  .search-page {
+    margin: 0 auto;
+    max-width: 760px;
+  }
+  .sr-only {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.5rem 0 1rem;
+  }
+  .search-bar input {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border-strong);
+    border-radius: 999px;
+    color: var(--ot-text);
+    flex: 1;
+    font-size: 1rem;
+    padding: 0.85rem 1.15rem;
+  }
+  .search-bar input:focus-visible {
+    border-color: var(--ot-brand-blue);
+    outline: 2px solid var(--ot-brand-blue-soft);
+    outline-offset: 1px;
+  }
+  .search-bar button {
+    align-items: center;
+    background: var(--ot-brand-orange);
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.95rem;
+    font-weight: 800;
+    gap: 0.45rem;
+    padding: 0.85rem 1.35rem;
+    transition: background 120ms ease;
+  }
+  .search-bar button:hover { background: #d95700; }
+
+  .search-status {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0 0 1rem;
+  }
+
+  .search-results {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    list-style: none;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+  .search-results:empty { display: none; }
+
+  .result {
+    align-items: center;
+    border-bottom: 1px solid var(--ot-border);
+    color: var(--ot-text);
+    display: grid;
+    gap: 0.65rem 0.85rem;
+    grid-template-columns: auto 1fr auto;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    transition: background 100ms ease;
+  }
+  .result:last-child { border-bottom: 0; }
+  .result:hover { background: #f3f8fd; }
+
+  .result-kind {
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .result-kind.is-tip { background: var(--ot-brand-blue); }
+  .result-kind.is-cat { background: var(--ot-green); }
+
+  .result-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .result-title {
+    color: var(--ot-brand-blue);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .result:hover .result-title { color: var(--ot-brand-blue-dark); }
+  .result-title mark {
+    background: var(--ot-brand-orange-soft);
+    color: inherit;
+    padding: 0 1px;
+  }
+  .result-sub {
+    color: var(--ot-muted);
+    font-size: 0.8rem;
+  }
+
+  .result-arrow {
+    color: var(--ot-brand-orange);
+    font-size: 0.95rem;
+    font-weight: 900;
+  }
+
+  @media (max-width: 560px) {
+    .result { grid-template-columns: auto 1fr; }
+    .result-arrow { display: none; }
+    .search-bar button span { display: none; }
+    .search-bar button { padding: 0.85rem 1rem; }
+  }
+</style>
