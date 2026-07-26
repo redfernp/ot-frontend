@@ -12,6 +12,7 @@
 //
 // The page is noindex,nofollow so search engines don't index the cloak.
 import { affiliateLinks } from "@/lib/affiliateLinks";
+import { PUBLIC_GA4_ID } from "astro:env/server";
 
 export function getStaticPaths() {
   return Object.entries(affiliateLinks).map(([slug, link]) => ({
@@ -21,6 +22,7 @@ export function getStaticPaths() {
 }
 
 const { brand, destination, slug } = Astro.props;
+const ga4Id = PUBLIC_GA4_ID;
 ---
 
 <!doctype html>
@@ -32,6 +34,18 @@ const { brand, destination, slug } = Astro.props;
     <meta http-equiv="refresh" content={`2;url=${destination}`} />
     <title>Redirecting to {brand} - Oddstips</title>
     <link rel="canonical" href={destination} />
+    {ga4Id && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>
+        <script is:inline define:vars={{ ga4Id }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() { dataLayer.push(arguments); }
+          gtag("js", new Date());
+          gtag("config", ga4Id, { send_page_view: false });
+          window.gtag = gtag;
+        </script>
+      </>
+    )}
     <style>
       body {
         align-items: center;
@@ -79,6 +93,10 @@ const { brand, destination, slug } = Astro.props;
               affiliate_slug: slug,
               affiliate_brand: brand,
               affiliate_destination: destination,
+              // Attribute the agreed flat affiliate click value in GA4.
+              // value and currency must be sent together or GA4 ignores it.
+              value: 0.75,
+              currency: "EUR",
               event_callback: go,
               event_timeout: 800,
             });
