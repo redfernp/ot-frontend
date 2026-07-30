@@ -71,7 +71,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
       <div class="hero-cta-block">
         <span class="bonus-tag">Welcome offer</span>
         <p class="bonus-headline">{bookmaker.bonus.headline}</p>
-        <a class="cta" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
+        <a class="cta" href={offerHref} rel={offerRel} target={offerTarget} data-affiliate-location="review_hero_cta">{bookmaker.bonus.cta}</a>
         <p class="bonus-terms">{bookmaker.bonus.terms}</p>
       </div>
     </aside>
@@ -118,7 +118,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
     <div class="bonus-cta-card">
       <span class="logo logo-lg">{bookmaker.brand}</span>
       <strong>{bookmaker.brand}</strong>
-      <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
+      <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget} data-affiliate-location="review_bonus_cta">{bookmaker.bonus.cta}</a>
       <p>18+. T&amp;Cs apply.</p>
     </div>
   </section>
@@ -162,7 +162,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
         <div>
           <h2 id="verdict-heading">Oddstips verdict</h2>
           <p set:html={verdictCopy} />
-          <a class="cta" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
+          <a class="cta" href={offerHref} rel={offerRel} target={offerTarget} data-affiliate-location="review_verdict_cta">{bookmaker.bonus.cta}</a>
         </div>
       </section>
 
@@ -190,7 +190,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
           <small>{bookmaker.rating.toFixed(1)} / 5</small>
         </div>
         <p class="sidebar-headline">{bookmaker.bonus.headline}</p>
-        <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget}>{bookmaker.bonus.cta}</a>
+        <a class="cta cta-block" href={offerHref} rel={offerRel} target={offerTarget} data-affiliate-location="review_sidebar_cta">{bookmaker.bonus.cta}</a>
         <p class="card-terms">18+. T&amp;Cs apply.</p>
       </div>
 
@@ -206,7 +206,7 @@ const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker
   </div>
 </article>
 
-<a class="sticky-cta" href={offerHref} rel={offerRel} target={offerTarget}>
+<a class="sticky-cta" href={offerHref} rel={offerRel} target={offerTarget} data-affiliate-location="review_sticky_cta">
   <strong>{bookmaker.brand}</strong>
   <span>Claim Welcome Offer</span>
 </a>

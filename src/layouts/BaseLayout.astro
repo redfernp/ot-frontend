@@ -183,6 +183,49 @@ const ga4Id = PUBLIC_GA4_ID;
         </script>
       </>
     )}
+    <script is:inline>
+      document.addEventListener("click", function (event) {
+        var target = event.target;
+        if (!(target instanceof Element)) return;
+
+        var anchor = target.closest("a[href]");
+        if (!anchor) return;
+
+        var url = new URL(anchor.href, window.location.origin);
+        if (url.origin !== window.location.origin || !url.pathname.startsWith("/go/")) return;
+
+        url.searchParams.set("affiliate_click_location", getAffiliateClickLocation(anchor));
+        anchor.href = url.toString();
+      });
+
+      function getAffiliateClickLocation(anchor) {
+        var explicit = anchor.getAttribute("data-affiliate-location");
+        if (explicit) return cleanAffiliateClickLocation(explicit);
+
+        if (anchor.closest(".primary-nav")) return "header_nav";
+        if (anchor.closest(".site-footer")) return "footer_nav";
+        if (anchor.closest(".coupon-row")) return "coupon_row_quick_bet";
+        if (anchor.closest(".cat-sidebar")) return "category_sidebar_offer";
+        if (anchor.closest(".offer-card")) return "free_bets_card";
+        if (anchor.closest(".sticky-cta")) return "sticky_cta";
+        if (anchor.closest(".tip-sidebar")) return "tip_sidebar_offer";
+        if (anchor.closest(".bet365-card--inline")) return "tip_inline_offer";
+        if (anchor.classList.contains("odds-link") || anchor.classList.contains("bet-odds")) return "tip_odds_link";
+        if (anchor.classList.contains("card-cta")) return "tip_offer_card";
+        if (anchor.classList.contains("bet-cta")) return "tip_main_cta";
+        if (anchor.closest(".lede") || anchor.closest(".related-content")) return "tip_content_link";
+
+        return "content_link";
+      }
+
+      function cleanAffiliateClickLocation(value) {
+        return value
+          .toLowerCase()
+          .replace(/[^a-z0-9_]+/g, "_")
+          .replace(/^_+|_+$/g, "")
+          .slice(0, 60) || "unknown";
+      }
+    </script>
     {/* ConvertBox embed. is:inline so Astro outputs the loader verbatim
         instead of bundling it as a module (which would break the IIFE). */}
     <script is:inline>
@@ -214,6 +257,7 @@ const ga4Id = PUBLIC_GA4_ID;
                   {item.children.map((child) => (
                     <a
                       href={child.href}
+                      {...(child.href.startsWith("/go/") ? { "data-affiliate-location": "header_nav" } : {})}
                       {...(child.external ? { rel: "nofollow noopener", target: "_blank" } : {})}
                     >
                       {child.label}
@@ -225,6 +269,7 @@ const ga4Id = PUBLIC_GA4_ID;
               <a
                 href={item.href}
                 class:list={{ "is-featured": item.featured }}
+                {...(item.href.startsWith("/go/") ? { "data-affiliate-location": "header_nav" } : {})}
                 {...(item.external ? { rel: "nofollow noopener", target: "_blank" } : {})}
               >
                 {item.featured && <span class="featured-dot" aria-hidden="true"></span>}

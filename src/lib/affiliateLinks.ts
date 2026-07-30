@@ -67,7 +67,7 @@ export const affiliateLinks: Record<string, AffiliateLink> = {
     brand: "mr.playSPORT",
   },
   "footballer-tips-tipstrr": {
-    destination: "https://tipstrr.com/tipster/footballer-tips?via=everytip",
+    destination: "https://tipstrr.com/football?via=everytip",
     brand: "Pro Football Tips",
   },
 };

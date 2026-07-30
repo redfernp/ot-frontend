@@ -83,6 +83,19 @@ const ga4Id = PUBLIC_GA4_ID;
           window.location.replace(destination);
         }
 
+        function cleanAffiliateClickLocation(value) {
+          return (value || "unknown")
+            .toLowerCase()
+            .replace(/[^a-z0-9_]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .slice(0, 60) || "unknown";
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        var affiliateClickLocation = cleanAffiliateClickLocation(
+          params.get("affiliate_click_location") || params.get("acl")
+        );
+
         // Fire the GA4 event if gtag is available (PUBLIC_GA4_ID env var is set).
         // event_callback redirects as soon as analytics confirms the beacon was
         // sent. event_timeout caps the wait at 800ms so a slow/blocked GA4 does
@@ -93,6 +106,7 @@ const ga4Id = PUBLIC_GA4_ID;
               affiliate_slug: slug,
               affiliate_brand: brand,
               affiliate_destination: destination,
+              affiliate_click_location: affiliateClickLocation,
               // Attribute the agreed flat affiliate click value in GA4.
               // value and currency must be sent together or GA4 ignores it.
               value: 0.75,

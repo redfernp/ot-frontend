@@ -111,7 +111,13 @@ const eventDateLabel = formatEventDate(eventDate);
   </a>
 
   {bet365Url && odds && (
-    <a class="quick-bet" href="/go/bet365/" rel="nofollow sponsored" aria-label={`Back ${pickLabel || "this tip"} on Bet365`}>
+    <a
+      class="quick-bet"
+      href="/go/bet365/"
+      rel="nofollow sponsored"
+      data-affiliate-location="coupon_row_quick_bet"
+      aria-label={`Back ${pickLabel || "this tip"} on Bet365`}
+    >
       <span>Bet</span>
     </a>
   )}

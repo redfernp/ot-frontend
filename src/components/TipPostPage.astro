@@ -150,7 +150,7 @@ const faqs = [
         <div>
           <span class="label">Bet365 odds</span>
           {bet365Url
-            ? <a class="odds-link" href="/go/bet365/" rel="nofollow sponsored">{summary.odds}</a>
+            ? <a class="odds-link" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_summary_odds">{summary.odds}</a>
             : <strong>{summary.odds}</strong>}
         </div>
       )}
@@ -169,7 +169,7 @@ const faqs = [
   <aside class="bet365-card bet365-card--inline" aria-label="Bet365 offer">
     <span class="card-tag">#Ad &middot; New customers</span>
     <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
-    {bet365Url && <a class="card-cta" href="/go/bet365/" rel="nofollow sponsored">Claim with Bet365</a>}
+    {bet365Url && <a class="card-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_inline_offer">Claim with Bet365</a>}
     <p class="card-terms">
       #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
     </p>
@@ -211,7 +211,7 @@ const faqs = [
             {summary.tip || "View the recommended bet"}
             {summary.odds && (
               bet365Url
-                ? <a class="bet-odds" href="/go/bet365/" rel="nofollow sponsored">{summary.odds} <small>Bet365</small></a>
+                ? <a class="bet-odds" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_value_odds">{summary.odds} <small>Bet365</small></a>
                 : <span class="bet-odds is-static">{summary.odds} <small>Bet365</small></span>
             )}
           </h2>
@@ -239,7 +239,7 @@ const faqs = [
           )}
 
           {bet365Url && (
-            <a class="bet-cta" href="/go/bet365/" rel="nofollow sponsored">
+            <a class="bet-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_main_cta">
               Back this tip on Bet365
               <span aria-hidden="true">&rarr;</span>
             </a>
@@ -276,7 +276,7 @@ const faqs = [
       <div class="bet365-card bet365-card--sidebar">
         <span class="card-tag">#Ad &middot; New customers</span>
         <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
-        {bet365Url && <a class="card-cta" href="/go/bet365/" rel="nofollow sponsored">Claim with Bet365</a>}
+        {bet365Url && <a class="card-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_sidebar_offer">Claim with Bet365</a>}
         <p class="card-terms">
           #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
         </p>
@@ -308,7 +308,7 @@ const faqs = [
   </div>
   <span class="sticky-odds">{summary.odds || "2.10"}</span>
   {bet365Url ? (
-    <a href="/go/bet365/" rel="nofollow sponsored">Bet on Bet365</a>
+    <a href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="sticky_cta">Bet on Bet365</a>
   ) : (
     <a href="/free-bets/">View offers</a>
   )}
