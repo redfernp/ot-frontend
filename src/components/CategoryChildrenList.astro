@@ -9,7 +9,7 @@
 // Grand-children are intentionally not surfaced; otherwise on a top-level
 // country page we'd dump every division depth at once and the page would
 // stop being a useful hub.
-import { loadSnapshot, type SnapshotCategory } from "@/lib/snapshot";
+import { loadSnapshot, postsForCategory, type SnapshotCategory } from "@/lib/snapshot";
 
 type Props = {
   // The parent category whose children to list. Must have a URI ending in
@@ -39,6 +39,7 @@ const children = parentUri
       if (!c.uri || !c.name) return false;
       if (!c.uri.startsWith(parentUri)) return false;
       if (c.uri === parentUri) return false;
+      if (postsForCategory(snapshot, c.slug, 1).length === 0) return false;
       const depth = c.uri.split("/").filter(Boolean).length;
       return depth === targetChildDepth;
     })

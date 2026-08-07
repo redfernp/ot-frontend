@@ -8,7 +8,11 @@
 // against the 2GB Cloudways WP backend. Result: build time drops from ~15
 // minutes to <2 minutes and WP gets touched exactly once per build.
 
-import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
+import {
+  WPGRAPHQL_ENDPOINT,
+  WP_BASIC_AUTH_USER,
+  WP_BASIC_AUTH_PASSWORD,
+} from "astro:env/server";
 import { cleanSlug, fixDoubleEncoded, hasMojibake } from "@/lib/slugSanitize";
 
 // -----------------------------------------------------------------------------
@@ -120,6 +124,13 @@ function snapshotUrl(): string | null {
   }
 }
 
+function snapshotAuthHeader(): Record<string, string> {
+  const user = WP_BASIC_AUTH_USER;
+  const password = WP_BASIC_AUTH_PASSWORD;
+  if (!user || !password) return {};
+  return { Authorization: `Basic ${btoa(`${user}:${password}`)}` };
+}
+
 async function fetchSnapshot(): Promise<Snapshot | null> {
   const url = snapshotUrl();
   if (!url) {
@@ -144,6 +155,7 @@ async function fetchSnapshot(): Promise<Snapshot | null> {
   const response = await fetch(urlWithBuster, {
     headers: {
       Accept: "application/json",
+      ...snapshotAuthHeader(),
       "User-Agent":
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     },
@@ -436,7 +448,10 @@ export function allPostSlugsFrom(snapshot: Snapshot | null, limit: number) {
 
 export function allCategorySlugsFrom(snapshot: Snapshot | null, limit: number) {
   if (!snapshot) return [];
-  return snapshot.categories.slice(0, limit).map((c) => ({ slug: c.slug, uri: c.uri }));
+  return snapshot.categories
+    .filter((c) => postsForCategory(snapshot, c.slug, 1).length > 0)
+    .slice(0, limit)
+    .map((c) => ({ slug: c.slug, uri: c.uri }));
 }
 
 export function allPagesFrom(snapshot: Snapshot | null) {
@@ -451,6 +466,9 @@ export function latestPostsFrom(snapshot: Snapshot | null, limit: number): Snaps
 
 export function categoriesFrom(snapshot: Snapshot | null, limit: number): SnapshotCategory[] {
   if (!snapshot) return [];
-  // Match the "hideEmpty: true" behaviour of WPGraphQL by default.
-  return snapshot.categories.filter((c) => c.count > 0).slice(0, limit);
+  // Match the rendered route set: only expose categories that can actually
+  // produce at least one tip row from the snapshot.
+  return snapshot.categories
+    .filter((c) => postsForCategory(snapshot, c.slug, 1).length > 0)
+    .slice(0, limit);
 }
