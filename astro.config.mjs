@@ -38,6 +38,15 @@ const sitemapData = {
   lastmodByUri: new Map(),
 };
 
+const emptyTombstonesJson = JSON.stringify({
+  generatedAt: null,
+  count: 0,
+  paths: [],
+  slugs: [],
+});
+
+let tombstonesJson = emptyTombstonesJson;
+
 // (broken mojibake URI -> clean ASCII URI). paul365 stores some slugs with
 // the fingerprint `a%c2%XX` from a known UTF-8/Latin-1 encoding bug; the
 // snapshot prefetch detects them and we emit 301 redirects in
@@ -70,6 +79,36 @@ function cleanMojibakeUri(uri) {
 function normalizeUri(path) {
   if (!path) return "";
   return path.endsWith("/") ? path : path + "/";
+}
+
+function userAgentHeader() {
+  return {
+    "User-Agent":
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+  };
+}
+
+function snapshotAuthHeader() {
+  const user = process.env.WP_BASIC_AUTH_USER;
+  const password = process.env.WP_BASIC_AUTH_PASSWORD;
+  if (!user || !password) return {};
+  return {
+    Authorization: `Basic ${Buffer.from(`${user}:${password}`).toString("base64")}`,
+  };
+}
+
+function uploadJsonUrl(filename) {
+  const wpEndpoint = process.env.WPGRAPHQL_ENDPOINT;
+  if (!wpEndpoint) return null;
+
+  try {
+    const url = new URL(wpEndpoint);
+    url.pathname = `/wp-content/uploads/${filename}`;
+    url.search = "";
+    return url;
+  } catch {
+    return null;
+  }
 }
 
 // Custom integration that fetches the snapshot once at build start and
@@ -108,9 +147,9 @@ const snapshotPrefetchForSitemap = {
         const res = await fetch(fetchUrl, {
           headers: {
             Accept: "application/json",
+            ...snapshotAuthHeader(),
             // Same UA as src/lib/snapshot.ts to dodge Imunify360 bot challenges.
-            "User-Agent":
-              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            ...userAgentHeader(),
           },
         });
         if (!res.ok) {
@@ -211,18 +250,79 @@ const snapshotPrefetchForSitemap = {
   },
 };
 
+const tombstonePrefetchForFunctions = {
+  name: "tombstone-prefetch-for-functions",
+  hooks: {
+    "astro:build:start": async () => {
+      const url = uploadJsonUrl("oddstips-tombstones.json");
+      if (!url) {
+        console.warn("[tombstones] No WPGRAPHQL_ENDPOINT; writing empty tombstone list.");
+        tombstonesJson = emptyTombstonesJson;
+        return;
+      }
+
+      const fetchUrl = `${url.toString()}?cb=${Date.now()}`;
+      try {
+        const res = await fetch(fetchUrl, {
+          headers: {
+            Accept: "application/json",
+            ...snapshotAuthHeader(),
+            ...userAgentHeader(),
+          },
+        });
+
+        if (!res.ok) {
+          console.warn(`[tombstones] Fetch returned HTTP ${res.status}; writing empty tombstone list.`);
+          tombstonesJson = emptyTombstonesJson;
+          return;
+        }
+
+        const text = await res.text();
+        const parsed = JSON.parse(text);
+        const paths = Array.isArray(parsed.paths) ? parsed.paths : [];
+        const slugs = Array.isArray(parsed.slugs) ? parsed.slugs : [];
+        tombstonesJson = JSON.stringify({
+          generatedAt: parsed.generatedAt ?? null,
+          count: Number.isFinite(Number(parsed.count)) ? Number(parsed.count) : paths.length,
+          paths,
+          slugs,
+        });
+        console.log(`[tombstones] Prefetched ${paths.length} tombstone paths.`);
+      } catch (err) {
+        console.warn("[tombstones] Fetch failed; writing empty tombstone list:", err);
+        tombstonesJson = emptyTombstonesJson;
+      }
+    },
+    "astro:build:done": async ({ dir, logger }) => {
+      try {
+        const { default: fs } = await import("node:fs/promises");
+        const { fileURLToPath } = await import("node:url");
+        const { join } = await import("node:path");
+        const outDir = typeof dir === "string" ? dir : fileURLToPath(dir);
+        const goneDir = join(outDir, "_gone");
+        const tombstonesPath = join(goneDir, "oddstips-tombstones.json");
+        await fs.mkdir(goneDir, { recursive: true });
+        await fs.writeFile(tombstonesPath, tombstonesJson, "utf8");
+        logger?.info?.(`[tombstones] Wrote tombstone JSON to ${tombstonesPath}.`);
+      } catch (err) {
+        console.warn("[tombstones] Failed to write tombstone JSON:", err);
+      }
+    },
+  },
+};
+
 // Fully static build: every WP-backed URL (category, tip post, page) is
 // prerendered at build time by [...path].astro's getStaticPaths. Output is
-// pure static HTML; no Worker, no SSR runtime, no on-demand WP queries from
-// visitor traffic. The 2GB Cloudways WP backend cannot reliably serve
-// worker queries on cache miss, so we front-load all WP work into the build
-// and serve pure static HTML to visitors.
+// static HTML; the only Pages Function is a lightweight 410 tombstone check
+// that reads build-packaged JSON, never live WordPress. The 2GB Cloudways WP
+// backend cannot reliably serve worker queries on cache miss, so we front-load
+// all WP work into the build and serve static HTML to visitors.
 //
 // Removed the @astrojs/cloudflare adapter: it was auto-generating a
 // _routes.json file that excluded individual static paths from the Worker,
 // and some tip-post slugs exceed CF's 100-char-per-route limit, breaking the
-// deploy. With no adapter and no SSR routes, CF Pages serves all files as
-// pure static without invoking any Worker logic.
+// deploy. With no adapter and no SSR routes, CF Pages serves files statically
+// except for the manual tombstone Function route.
 //
 // If we ever need SSR back (e.g. for a form endpoint), re-add the adapter
 // but configure routesStrategy: "include" with manual route patterns short
@@ -260,6 +360,7 @@ export default defineConfig({
   // sitemap's astro:build:done runs.
   integrations: [
     snapshotPrefetchForSitemap,
+    tombstonePrefetchForFunctions,
     sitemap({
       filter: (page) => {
         try {

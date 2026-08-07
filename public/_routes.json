@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_astro/*",
+    "/_gone/*",
+    "/wp-content/*",
+    "/favicon.svg",
+    "/robots.txt",
+    "/sitemap*",
+    "/search-index.json",
+    "/manifest*"
+  ]
+}

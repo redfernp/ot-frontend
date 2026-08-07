@@ -4,3 +4,7 @@
 # site is indexable.
 /go/*
   X-Robots-Tag: noindex, nofollow
+
+/_gone/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: public, max-age=300
