@@ -1,0 +1,44 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishTrustPage from "@/components/SpanishTrustPage.astro";
+import { absoluteOddstipsUrl, spanishPagesNoindex } from "@/lib/spanish";
+---
+
+<BaseLayout
+  title="Términos y condiciones | Oddstips España"
+  description="Condiciones de uso de los pronósticos, cuotas, contenido informativo y enlaces de afiliado de Oddstips España."
+  canonical={absoluteOddstipsUrl("/es/terminos-y-condiciones/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/terminos-y-condiciones/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/terms-and-conditions/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/terms-and-conditions/")}
+>
+  <SpanishTrustPage title="Términos y condiciones" intro="Estas condiciones explican la base sobre la que puedes utilizar la sección española de Oddstips.co.uk.">
+    <h2>Información y entretenimiento</h2>
+    <p>Oddstips publica pronósticos deportivos, cuotas, información sobre operadores y contenido educativo. No ofrecemos asesoramiento financiero o de inversión y no garantizamos beneficios.</p>
+
+    <h2>Restricción de edad</h2>
+    <p>Debes tener al menos 18 años para utilizar enlaces de operadores o actuar sobre información relacionada con apuestas. Las personas menores de edad no deben acceder a operadores ni apostar.</p>
+
+    <h2>Sin resultados garantizados</h2>
+    <p>Los resultados deportivos son inciertos. Incluso una selección basada en datos puede perder. Las lesiones, alineaciones, expulsiones, condiciones del partido y movimientos del mercado pueden afectar al resultado.</p>
+
+    <h2>Cuotas, ofertas y condiciones</h2>
+    <p>Las cuotas, promociones y condiciones pueden cambiar después de la publicación. Comprueba siempre el precio, el mercado, la elegibilidad y las condiciones directamente con Bet365 antes de realizar cualquier acción.</p>
+
+    <h2>Enlaces de afiliado</h2>
+    <p>Oddstips puede recibir una compensación por algunos enlaces. Consulta la <a href="/es/divulgacion-afiliados/">divulgación de afiliados</a>.</p>
+
+    <h2>Juego responsable</h2>
+    <p>Apuesta solo dinero que puedas permitirte perder. No persigas pérdidas, no pidas dinero prestado para apostar y no utilices las apuestas como solución económica. Consulta nuestra página de <a href="/es/juego-seguro/">juego seguro</a>.</p>
+
+    <h2>Responsabilidad y sitios externos</h2>
+    <p>En la medida permitida por la legislación aplicable, Oddstips no responde de pérdidas derivadas de decisiones de apuesta, cambios de cuotas, actuaciones del operador, errores técnicos o sitios externos. Bet365 es responsable de su plataforma, cuentas, mercados, promociones y servicio al cliente.</p>
+
+    <h2>Contacto</h2>
+    <p>Las preguntas sobre estas condiciones pueden enviarse a <a href="mailto:info@oddstips.co.uk">info@oddstips.co.uk</a>.</p>
+  </SpanishTrustPage>
+</BaseLayout>

@@ -1,0 +1,67 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishBet365Offer from "@/components/SpanishBet365Offer.astro";
+import SpanishTipList from "@/components/SpanishTipList.astro";
+import { getCategory } from "@/lib/graphql";
+import {
+  absoluteOddstipsUrl,
+  LA_LIGA_SOURCE_SLUG,
+  spanishPagesNoindex,
+  SPANISH_LA_LIGA_PATH,
+} from "@/lib/spanish";
+
+const category = await getCategory(LA_LIGA_SOURCE_SLUG, 1000).catch(() => null);
+const posts = category?.posts?.nodes ?? [];
+---
+
+<BaseLayout
+  title="Pronósticos de fútbol de hoy en español | Oddstips"
+  description="Pronósticos de fútbol gratuitos en español. Empieza con los próximos partidos de La Liga, análisis basado en datos y cuotas publicadas."
+  canonical={absoluteOddstipsUrl("/es/futbol/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/futbol/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/football/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/football/")}
+>
+  <nav class="breadcrumbs"><a href="/es/">Inicio</a><span>/</span><span>Fútbol</span></nav>
+  <section class="es-football-hero">
+    <p class="eyebrow">Pronósticos de fútbol</p>
+    <h1>Pronósticos de fútbol gratuitos</h1>
+    <p>La primera fase de Oddstips España se centra en La Liga. Cada página adapta al español la selección, el horario, las señales del modelo, las cuotas y la información de juego responsable.</p>
+    <a href={SPANISH_LA_LIGA_PATH}>Ir a La Liga <span aria-hidden="true">&rarr;</span></a>
+  </section>
+
+  <div class="es-football-layout">
+    <div>
+      <SpanishTipList posts={posts} heading="Últimos pronósticos de La Liga" />
+      <section class="es-guide">
+        <h2>Cómo utilizar nuestros pronósticos</h2>
+        <ol>
+          <li>Lee la selección y las señales estadísticas del partido.</li>
+          <li>Comprueba que la cuota y el mercado siguen disponibles.</li>
+          <li>Decide de forma independiente y utiliza un presupuesto responsable.</li>
+        </ol>
+        <p>Una selección basada en datos puede perder. No aumentes la cantidad apostada para recuperar pérdidas.</p>
+      </section>
+    </div>
+    <SpanishBet365Offer compact location="es_football" />
+  </div>
+</BaseLayout>
+
+<style>
+  .breadcrumbs { color: var(--ot-muted); font-size: .82rem; margin-bottom: 1rem; }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs span { margin-left: .4rem; }
+  .es-football-hero { background: #fff; border: 1px solid var(--ot-border); border-left: 5px solid var(--ot-brand-blue); border-radius: var(--ot-radius); padding: clamp(1.5rem,4vw,2.5rem); }
+  .es-football-hero h1 { margin-bottom: .6rem; }
+  .es-football-hero p:not(.eyebrow) { color: var(--ot-text-2); line-height: 1.7; max-width: 70ch; }
+  .es-football-hero a { color: var(--ot-brand-orange); font-weight: 900; text-decoration: none; }
+  .es-football-layout { align-items: start; display: grid; gap: 1.25rem; grid-template-columns: minmax(0,1fr) 330px; margin-top: 1.5rem; }
+  .es-football-layout > div { display: grid; gap: 1.25rem; }
+  .es-guide { background: #fff; border: 1px solid var(--ot-border); border-radius: var(--ot-radius); padding: 1.5rem; }
+  .es-guide li, .es-guide p { color: var(--ot-text-2); line-height: 1.7; }
+  @media (max-width: 880px) { .es-football-layout { grid-template-columns: 1fr; } }
+</style>

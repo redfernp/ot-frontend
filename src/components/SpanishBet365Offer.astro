@@ -1,0 +1,93 @@
+---
+import { spanishBet365Offer } from "@/lib/spanish";
+
+type Props = {
+  compact?: boolean;
+  location?: string;
+};
+
+const { compact = false, location = "spanish_offer" } = Astro.props;
+---
+
+<aside class:list={["es-offer", { "es-offer--compact": compact }]} aria-label="Oferta publicitaria de Bet365">
+  <span class="es-offer__label">{spanishBet365Offer.label}</span>
+  <h2>{spanishBet365Offer.title}</h2>
+  <p class="es-offer__copy">{spanishBet365Offer.description}</p>
+  <a
+    class="es-offer__cta"
+    href={spanishBet365Offer.href}
+    rel="sponsored nofollow"
+    data-affiliate-location={location}
+  >
+    {spanishBet365Offer.cta}
+    <span aria-hidden="true">&rarr;</span>
+  </a>
+  <p class="es-offer__terms">
+    Las cuotas, la disponibilidad y las condiciones pueden cambiar. Consulta las
+    <a href="https://www.bet365.es/promos/es-es/home/open-account-global-offer" rel="nofollow noopener" target="_blank">condiciones completas y vigentes en bet365</a>
+    antes de registrarte.
+  </p>
+  <p class="es-offer__safe">
+    <strong>{spanishBet365Offer.safety}</strong>
+    Jugar sin control puede tener consecuencias perjudiciales a nivel psicosocial.
+  </p>
+</aside>
+
+<style>
+  .es-offer {
+    background: linear-gradient(135deg, #08783f 0%, #005e32 100%);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-md);
+    color: #fff;
+    padding: 1.5rem;
+  }
+  .es-offer__label {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.7rem;
+    padding: 0.25rem 0.65rem;
+    text-transform: uppercase;
+  }
+  .es-offer h2 {
+    color: #fff;
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+    margin: 0 0 0.65rem;
+  }
+  .es-offer__copy {
+    color: #e7f5ed;
+    line-height: 1.6;
+    margin: 0 0 1rem;
+  }
+  .es-offer__cta {
+    align-items: center;
+    background: #fff;
+    border-radius: 999px;
+    color: #005e32;
+    display: inline-flex;
+    font-weight: 900;
+    gap: 0.4rem;
+    padding: 0.75rem 1.25rem;
+    text-decoration: none;
+  }
+  .es-offer__cta:hover { background: #f1fff7; }
+  .es-offer__terms,
+  .es-offer__safe {
+    color: #d5eee1;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    margin: 0.85rem 0 0;
+  }
+  .es-offer__terms a { color: #fff; text-decoration: underline; }
+  .es-offer__safe {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 0.7rem;
+  }
+  .es-offer__safe strong { color: #fff; display: block; }
+  .es-offer--compact { padding: 1.25rem; }
+  .es-offer--compact h2 { font-size: 1.15rem; }
+  .es-offer--compact .es-offer__copy { font-size: 0.86rem; }
+</style>

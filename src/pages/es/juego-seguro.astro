@@ -1,0 +1,57 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishTrustPage from "@/components/SpanishTrustPage.astro";
+import { absoluteOddstipsUrl, spanishPagesNoindex } from "@/lib/spanish";
+---
+
+<BaseLayout
+  title="Juego seguro y ayuda con las apuestas | Oddstips España"
+  description="Consejos de juego seguro, señales de alerta, herramientas de control, autoprohibición RGIAJ y recursos de ayuda para personas en España."
+  canonical={absoluteOddstipsUrl("/es/juego-seguro/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/juego-seguro/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/safer-gambling/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/safer-gambling/")}
+>
+  <SpanishTrustPage
+    eyebrow="+18 · Protección del jugador"
+    title="Juego seguro"
+    intro="Las apuestas deben ser una forma de entretenimiento, nunca una solución económica ni una causa de presión emocional. Todo pronóstico puede fallar."
+  >
+    <p class="notice"><strong>Si juegas, juega con responsabilidad.</strong> Jugar sin control puede tener consecuencias perjudiciales a nivel psicosocial. Las personas menores de 18 años no pueden participar en actividades de juego.</p>
+
+    <h2>Principios básicos</h2>
+    <ul>
+      <li>Apuesta únicamente dinero que puedas permitirte perder.</li>
+      <li>Fija un presupuesto y un límite de tiempo antes de empezar.</li>
+      <li>No persigas pérdidas ni aumentes las cantidades apostadas para recuperarlas.</li>
+      <li>No pidas dinero prestado ni utilices crédito para apostar.</li>
+      <li>No apuestes si estás enfadado, estresado, bajo presión o bajo los efectos del alcohol.</li>
+      <li>No consideres las apuestas una inversión, un empleo o una fuente de ingresos.</li>
+    </ul>
+
+    <h2>Señales de alerta</h2>
+    <p>Plantéate parar y buscar apoyo si ocultas tu actividad, gastas más de lo previsto, las apuestas afectan al sueño, al trabajo, a las relaciones o a las finanzas, intentas recuperar pérdidas o sientes ansiedad cuando no puedes jugar.</p>
+
+    <h2>Herramientas de control</h2>
+    <p>Los operadores autorizados ofrecen límites de depósito, pausas temporales, recordatorios de actividad y autoexclusión. Utiliza estas herramientas antes de que aparezca un problema. Bet365 también mantiene un portal de <a href="https://juegoresponsable.bet365.es/es" rel="nofollow noopener" target="_blank">juego más seguro</a>.</p>
+
+    <h2>Autoprohibición mediante el RGIAJ</h2>
+    <p>El Registro General de Interdicciones de Acceso al Juego de la DGOJ permite solicitar que se impida el acceso al juego online regulado en España. La inscripción puede realizarse por internet con identificación electrónica o mediante los canales presenciales indicados por la Administración.</p>
+    <p><a href="https://www.ordenacionjuego.es/participantes-juego/juego-seguro/rgiaj" rel="nofollow noopener" target="_blank">Información oficial e inscripción en el RGIAJ</a>.</p>
+
+    <h2>Ayuda y apoyo</h2>
+    <ul>
+      <li><a href="https://www.ordenacionjuego.es/participantes-juego/juego-seguro" rel="nofollow noopener" target="_blank">Juego Seguro de la Dirección General de Ordenación del Juego</a>.</li>
+      <li><a href="https://www.jugadoresanonimos.org/" rel="nofollow noopener" target="_blank">Jugadores Anónimos</a>: apoyo confidencial; teléfono publicado por Bet365 España: 670 691 513.</li>
+      <li><a href="https://www.gamblingtherapy.org/es/" rel="nofollow noopener" target="_blank">Gambling Therapy</a>: apoyo online en varios idiomas.</li>
+      <li>También puedes acudir a los servicios de salud de tu comunidad autónoma o consultar a un profesional sanitario.</li>
+    </ul>
+
+    <h2>Posición de Oddstips</h2>
+    <p>Oddstips publica pronósticos para información y entretenimiento. No garantizamos resultados, no recomendamos perseguir pérdidas y no afirmamos que la experiencia o la habilidad eliminen el azar. Si apostar deja de ser divertido, para y busca ayuda.</p>
+  </SpanishTrustPage>
+</BaseLayout>

@@ -1,0 +1,38 @@
+---
+type Props = {
+  eyebrow?: string;
+  title: string;
+  intro: string;
+  updated?: string;
+};
+
+const { eyebrow = "Información de Oddstips", title, intro, updated = "11 de agosto de 2026" } = Astro.props;
+---
+
+<article class="es-trust-page">
+  <header>
+    <p class="eyebrow">{eyebrow}</p>
+    <h1>{title}</h1>
+    <p class="es-trust-page__intro">{intro}</p>
+    <p class="es-trust-page__updated"><strong>Última actualización:</strong> {updated}</p>
+  </header>
+  <div class="es-trust-page__body">
+    <slot />
+  </div>
+</article>
+
+<style>
+  .es-trust-page { margin: 0 auto; max-width: 850px; }
+  .es-trust-page > header { background: linear-gradient(135deg,#173965,#1e73be); border-radius: var(--ot-radius); color:#fff; padding:clamp(1.5rem,4vw,2.5rem); }
+  .es-trust-page > header .eyebrow { color:#d9ecff; }
+  .es-trust-page > header h1 { color:#fff; margin-bottom:.65rem; }
+  .es-trust-page__intro { color:#e0effc; font-size:1.03rem; line-height:1.65; max-width:70ch; }
+  .es-trust-page__updated { color:#c8def1; font-size:.78rem; margin-bottom:0; }
+  .es-trust-page__body { background:#fff; border:1px solid var(--ot-border); border-radius:var(--ot-radius); box-shadow:var(--ot-shadow-sm); margin-top:1.25rem; padding:clamp(1.4rem,4vw,2.25rem); }
+  .es-trust-page__body :global(h2) { border-bottom:2px solid var(--ot-brand-blue-soft); color:var(--ot-brand-blue-dark); font-size:1.25rem; margin:2rem 0 .8rem; padding-bottom:.4rem; }
+  .es-trust-page__body :global(h2:first-child) { margin-top:0; }
+  .es-trust-page__body :global(h3) { font-size:1.05rem; margin:1.4rem 0 .5rem; }
+  .es-trust-page__body :global(p), .es-trust-page__body :global(li) { color:var(--ot-text-2); line-height:1.75; }
+  .es-trust-page__body :global(a) { color:var(--ot-brand-blue); font-weight:700; }
+  .es-trust-page__body :global(.notice) { background:#fff7ed; border:1px solid #fbd9a8; border-radius:8px; color:#75420b; padding:1rem; }
+</style>

@@ -99,9 +99,29 @@ async function fetchGoneSet(env, origin) {
       if (typeof slug === "string" && slug) {
         gone.add(slug);
         gone.add(normalizePath(`/${slug}/`));
+        gone.add(normalizePath(`/es/pronosticos/${sourceTipSlugToSpanishSlug(slug)}/`));
       }
     }
   }
 
   return gone;
+}
+
+// Spanish tip URLs use a translated but deterministic form of the original
+// paul365 slug. Deriving it again here means a tombstoned English source tip
+// also returns 410 at its Spanish URL even after the source post has vanished
+// from the build snapshot.
+function sourceTipSlugToSpanishSlug(sourceSlug) {
+  const suffix = "-free-fixed-odds-tip-football-betting-prediction";
+  const pattern = new RegExp(
+    `^(.+?)-v-(.+?)-(\\d{2}-\\d{2}-\\d{4})${suffix}$`,
+    "i",
+  );
+  const match = String(sourceSlug).match(pattern);
+
+  if (!match) {
+    return `${sourceSlug}-pronostico`;
+  }
+
+  return `${match[1]}-contra-${match[2]}-pronostico-${match[3]}`;
 }

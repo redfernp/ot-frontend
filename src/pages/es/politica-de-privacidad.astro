@@ -1,0 +1,42 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishTrustPage from "@/components/SpanishTrustPage.astro";
+import { absoluteOddstipsUrl, spanishPagesNoindex } from "@/lib/spanish";
+---
+
+<BaseLayout
+  title="Política de privacidad | Oddstips España"
+  description="Información sobre los datos de contacto, analítica, enlaces de afiliado, proveedores y derechos de privacidad en Oddstips España."
+  canonical={absoluteOddstipsUrl("/es/politica-de-privacidad/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/politica-de-privacidad/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/privacy-policy/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/privacy-policy/")}
+>
+  <SpanishTrustPage title="Política de privacidad" intro="Esta política resume cómo Oddstips trata información cuando visitas la sección española, nos contactas o utilizas un enlace de afiliado.">
+    <h2>Quiénes somos</h2>
+    <p>«Oddstips», «nosotros» y «nuestro» se refieren al sitio web <a href="https://www.oddstips.co.uk/">www.oddstips.co.uk</a>. Puedes escribir a <a href="mailto:info@oddstips.co.uk">info@oddstips.co.uk</a>.</p>
+
+    <h2>Información que podemos tratar</h2>
+    <ul>
+      <li>Datos de contacto, como el nombre, el correo y el contenido del mensaje si nos escribes.</li>
+      <li>Datos técnicos necesarios para servir el sitio y protegerlo, como registros de seguridad y solicitudes web.</li>
+      <li>Clics en enlaces de afiliado, que el operador puede asociar a identificadores de referencia.</li>
+    </ul>
+
+    <h2>Analítica y cookies en la versión española</h2>
+    <p>Durante esta fase de vista previa, las páginas españolas no cargan Google Analytics ni ConvertBox. Antes de activar herramientas no esenciales se implantará un mecanismo de consentimiento con opciones equivalentes para aceptar, rechazar o configurar.</p>
+
+    <h2>Enlaces a Bet365 y otros sitios</h2>
+    <p>Al seguir un enlace externo abandonas Oddstips. El sitio de destino aplica su propia política de privacidad y cookies. El identificador incluido en el enlace permite atribuir la visita al programa de afiliación.</p>
+
+    <h2>Uso y conservación</h2>
+    <p>Utilizamos la información para operar y proteger el sitio, responder a mensajes, medir la actividad comercial autorizada y cumplir obligaciones legales. Conservamos los datos únicamente durante el tiempo necesario para cada finalidad.</p>
+
+    <h2>Tus derechos</h2>
+    <p>Según la normativa aplicable, puedes solicitar acceso, rectificación, supresión, limitación u oposición al tratamiento. Envía la solicitud a <a href="mailto:info@oddstips.co.uk">info@oddstips.co.uk</a>. Las personas en España también pueden consultar a la <a href="https://www.aepd.es/" rel="nofollow noopener" target="_blank">Agencia Española de Protección de Datos</a>.</p>
+  </SpanishTrustPage>
+</BaseLayout>

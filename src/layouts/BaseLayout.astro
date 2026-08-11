@@ -14,9 +14,22 @@ type Props = {
   // covers itself separately). Forwarded to <Seo> which emits the robots
   // meta and suppresses the self-referencing canonical fallback.
   noindex?: boolean;
+  locale?: "en-GB" | "es-ES";
+  alternates?: Array<{ hreflang: string; href: string }>;
+  xDefault?: string;
 };
 
-const { title, description, canonical, seo, noindex = false } = Astro.props;
+const {
+  title,
+  description,
+  canonical,
+  seo,
+  noindex = false,
+  locale = "en-GB",
+  alternates = [],
+  xDefault,
+} = Astro.props;
+const isSpanish = locale === "es-ES";
 
 type NavItem = {
   label: string;
@@ -69,6 +82,22 @@ const FALLBACK_NAV: NavItem[] = [
     label: "Pro Football Tips",
     href: "/go/footballer-tips-tipstrr/",
     external: true,
+  },
+];
+
+const SPANISH_NAV: NavItem[] = [
+  { href: "/es/", label: "Inicio" },
+  { href: "/es/futbol/", label: "Fútbol" },
+  { href: "/es/futbol/espana/la-liga/", label: "La Liga" },
+  { href: "/es/casas-de-apuestas/bet365/", label: "Bet365", featured: true },
+  {
+    label: "Información",
+    href: "#",
+    children: [
+      { label: "Juego seguro", href: "/es/juego-seguro/" },
+      { label: "Metodología", href: "/es/metodologia-pronosticos/" },
+      { label: "Divulgación de afiliados", href: "/es/divulgacion-afiliados/" },
+    ],
   },
 ];
 
@@ -151,7 +180,9 @@ function buildNavFromMenu(menuItems: WpMenuItem[]): NavItem[] {
 
 const wpMainNav = await getMenu("main-navigation");
 const primaryNav: NavItem[] =
-  wpMainNav && wpMainNav.menuItems.length > 0
+  isSpanish
+    ? SPANISH_NAV
+    : wpMainNav && wpMainNav.menuItems.length > 0
     ? buildNavFromMenu(wpMainNav.menuItems)
     : FALLBACK_NAV;
 
@@ -164,14 +195,23 @@ const ga4Id = PUBLIC_GA4_ID;
 ---
 
 <!doctype html>
-<html lang="en-GB">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="mask-icon" href="/favicon.svg" color="#0b1f3f" />
-    <Seo title={title} description={description} canonical={canonical} seo={seo} noindex={noindex} />
-    {ga4Id && (
+    <Seo
+      title={title}
+      description={description}
+      canonical={canonical}
+      seo={seo}
+      noindex={noindex}
+      locale={locale}
+      alternates={alternates}
+      xDefault={xDefault}
+    />
+    {ga4Id && !isSpanish && (
       <>
         <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>
         <script is:inline define:vars={{ ga4Id }}>
@@ -228,15 +268,17 @@ const ga4Id = PUBLIC_GA4_ID;
     </script>
     {/* ConvertBox embed. is:inline so Astro outputs the loader verbatim
         instead of bundling it as a module (which would break the IIFE). */}
-    <script is:inline>
-      !function(e,t){(e=t.createElement("script")).src="https://cdn.convertbox.com/convertbox/js/embed.js",e.id="app-convertbox-script",e.async=true,e.dataset.uuid="2a73ff40-2915-4f7e-b3e4-cd0a91ab8ff4",document.getElementsByTagName("head")[0].appendChild(e)}(window,document);
-    </script>
+    {!isSpanish && (
+      <script is:inline>
+        !function(e,t){(e=t.createElement("script")).src="https://cdn.convertbox.com/convertbox/js/embed.js",e.id="app-convertbox-script",e.async=true,e.dataset.uuid="2a73ff40-2915-4f7e-b3e4-cd0a91ab8ff4",document.getElementsByTagName("head")[0].appendChild(e)}(window,document);
+      </script>
+    )}
   </head>
   <body>
     <header class="site-header">
       <input class="nav-toggle" type="checkbox" id="ot-nav-toggle" aria-hidden="true" />
       <div class="header-inner">
-        <a class="brand" href="/">
+        <a class="brand" href={isSpanish ? "/es/" : "/"}>
           <span class="brand-mark" aria-hidden="true">OT</span>
           <span class="brand-text">
             <strong>Oddstips</strong>
@@ -279,7 +321,7 @@ const ga4Id = PUBLIC_GA4_ID;
           ))}
         </nav>
 
-        <label class="nav-burger" for="ot-nav-toggle" aria-label="Open menu" tabindex="0" role="button">
+        <label class="nav-burger" for="ot-nav-toggle" aria-label={isSpanish ? "Abrir menú" : "Open menu"} tabindex="0" role="button">
           <span class="burger-bars" aria-hidden="true">
             <span></span>
             <span></span>
@@ -295,49 +337,94 @@ const ga4Id = PUBLIC_GA4_ID;
     </main>
 
     <footer class="site-footer">
-      <div class="footer-grid">
-        <div>
-          <p class="footer-title">Oddstips</p>
-          <p class="footer-blurb">
-            Free betting tips, bookmaker reviews and value picks across football, tennis, cricket and more.
-          </p>
-        </div>
-        <div>
-          <p class="footer-title">Sports</p>
-          <ul>
-            <li><a href="/football/">Football</a></li>
-            <li><a href="/tennis/">Tennis</a></li>
-            <li><a href="/cricket/">Cricket</a></li>
-            <li><a href="/snooker/">Snooker</a></li>
-            <li><a href="/darts/">Darts</a></li>
-            <li><a href="/basketball/">Basketball</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer-title">Leagues</p>
-          <ul>
-            <li><a href="/football/united-kingdom/england-premier-league/">Premier League</a></li>
-            <li><a href="/football/spain-la-liga/">La Liga</a></li>
-            <li><a href="/football/italy-serie-a/">Serie A</a></li>
-            <li><a href="/football/uefa-champions-league/">Champions League</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer-title">Help</p>
-          <ul>
-            <li><a href="/free-bets/">Free bets</a></li>
-            <li><a href="/reviews/">Bookmaker reviews</a></li>
-            <li><a href="/about/">About</a></li>
-            <li><a href="/responsible-gambling/">Responsible gambling</a></li>
-          </ul>
-        </div>
-      </div>
+      {isSpanish ? (
+        <>
+          <div class="footer-grid">
+            <div>
+              <p class="footer-title">Oddstips España</p>
+              <p class="footer-blurb">
+                Pronósticos deportivos gratuitos e información sobre apuestas para mayores de 18 años.
+              </p>
+            </div>
+            <div>
+              <p class="footer-title">Pronósticos</p>
+              <ul>
+                <li><a href="/es/futbol/">Fútbol</a></li>
+                <li><a href="/es/futbol/espana/la-liga/">La Liga</a></li>
+                <li><a href="/es/metodologia-pronosticos/">Metodología</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="footer-title">Ayuda</p>
+              <ul>
+                <li><a href="/es/juego-seguro/">Juego seguro</a></li>
+                <li><a href="/es/terminos-y-condiciones/">Términos y condiciones</a></li>
+                <li><a href="/es/politica-de-privacidad/">Política de privacidad</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="footer-title">Información comercial</p>
+              <ul>
+                <li><a href="/es/casas-de-apuestas/bet365/">Bet365</a></li>
+                <li><a href="/es/divulgacion-afiliados/">Divulgación de afiliados</a></li>
+                <li><a href="mailto:info@oddstips.co.uk">Contacto</a></li>
+              </ul>
+            </div>
+          </div>
 
-      <div class="footer-band">
-        <p>Here at oddstips.co.uk, we understand that gambling can become an addiction that can cause great harm if not controlled. We respectfully remind you that you should only ever bet with an amount of money that you can afford to lose. The information provided on site at oddstips.co.uk, is for information and entertainment purposes only, and Oddstips will not be held liable for any inaccuracy, or for any loss which may be incurred. For help regarding a gambling addiction, or more information on the subject, please visit: <a href="https://www.gambleaware.org/" rel="nofollow noopener" target="_blank">www.gambleaware.org</a>. 18+ only. You can also read our <a href="/safer-gambling/">safer gambling guide</a> for more information.</p>
-        <p>Advertising disclosure: Every online gambler deserves a trusted, and fair place to play. At oddstips.co.uk, we offer free, impartial and independent reviews of the UK's best online betting operators so that you can play with confidence and security. All ratings and reviews are made independently of the operator by our team of gaming experts with years of gaming experience. We only review companies that are fully UK licensed. meaning have passed the most stringent of player safety tests as laid out by the UK Gambling Commission, therefore can be trusted to offer fair play, and have independent betting adjudication services to also assist player complaints when customers and operators fail to meet satisfactory conclusion to a players complaint. We accept compensation from the companies advertised on this website via their affiliate program and this may affect the brand positioning.</p>
-        <p>Copyright 2024 - OddsTips.co.uk | <a href="/terms-of-service/">Terms Of Service</a> | <a href="/privacy/">Privacy</a> | <a href="/contact/">Contact Us</a> | <a href="https://www.gambleaware.org/" rel="nofollow noopener" target="_blank">GambleAware</a> | <a href="/safer-gambling/">Safer Gambling</a> | 18+</p>
-      </div>
+          <div class="footer-band">
+            <p><strong>+18. Si juegas, juega con responsabilidad.</strong> Jugar sin control puede tener consecuencias perjudiciales a nivel psicosocial. Apuesta solo dinero que puedas permitirte perder, no persigas pérdidas y no consideres las apuestas una forma de obtener ingresos. Consulta nuestra <a href="/es/juego-seguro/">guía de juego seguro</a> y los recursos oficiales de la <a href="https://www.ordenacionjuego.es/participantes-juego/juego-seguro" rel="nofollow noopener" target="_blank">Dirección General de Ordenación del Juego</a>.</p>
+            <p><strong>Publicidad:</strong> Oddstips puede recibir una comisión si visitas Bet365 desde determinados enlaces y abres una cuenta o utilizas una oferta. Esto no cambia el precio para el usuario. Las cuotas, promociones y condiciones pueden cambiar; comprueba siempre la información vigente directamente con el operador. Bet365 opera en España a través de entidades autorizadas por la DGOJ.</p>
+            <p>Oddstips ofrece información y entretenimiento, no asesoramiento financiero ni garantías de beneficio. Todo pronóstico puede fallar. | <a href="/es/terminos-y-condiciones/">Términos</a> | <a href="/es/politica-de-privacidad/">Privacidad</a> | <a href="/es/divulgacion-afiliados/">Afiliados</a> | <a href="/es/juego-seguro/">Juego seguro</a> | +18</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="footer-grid">
+            <div>
+              <p class="footer-title">Oddstips</p>
+              <p class="footer-blurb">
+                Free betting tips, bookmaker reviews and value picks across football, tennis, cricket and more.
+              </p>
+            </div>
+            <div>
+              <p class="footer-title">Sports</p>
+              <ul>
+                <li><a href="/football/">Football</a></li>
+                <li><a href="/tennis/">Tennis</a></li>
+                <li><a href="/cricket/">Cricket</a></li>
+                <li><a href="/snooker/">Snooker</a></li>
+                <li><a href="/darts/">Darts</a></li>
+                <li><a href="/basketball/">Basketball</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="footer-title">Leagues</p>
+              <ul>
+                <li><a href="/football/united-kingdom/england-premier-league/">Premier League</a></li>
+                <li><a href="/football/spain-la-liga/">La Liga</a></li>
+                <li><a href="/football/italy-serie-a/">Serie A</a></li>
+                <li><a href="/football/uefa-champions-league/">Champions League</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="footer-title">Help</p>
+              <ul>
+                <li><a href="/free-bets/">Free bets</a></li>
+                <li><a href="/reviews/">Bookmaker reviews</a></li>
+                <li><a href="/about/">About</a></li>
+                <li><a href="/responsible-gambling/">Responsible gambling</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="footer-band">
+            <p>Here at oddstips.co.uk, we understand that gambling can become an addiction that can cause great harm if not controlled. We respectfully remind you that you should only ever bet with an amount of money that you can afford to lose. The information provided on site at oddstips.co.uk, is for information and entertainment purposes only, and Oddstips will not be held liable for any inaccuracy, or for any loss which may be incurred. For help regarding a gambling addiction, or more information on the subject, please visit: <a href="https://www.gambleaware.org/" rel="nofollow noopener" target="_blank">www.gambleaware.org</a>. 18+ only. You can also read our <a href="/safer-gambling/">safer gambling guide</a> for more information.</p>
+            <p>Advertising disclosure: Every online gambler deserves a trusted, and fair place to play. At oddstips.co.uk, we offer free, impartial and independent reviews of the UK's best online betting operators so that you can play with confidence and security. All ratings and reviews are made independently of the operator by our team of gaming experts with years of gaming experience. We only review companies that are fully UK licensed. meaning have passed the most stringent of player safety tests as laid out by the UK Gambling Commission, therefore can be trusted to offer fair play, and have independent betting adjudication services to also assist player complaints when customers and operators fail to meet satisfactory conclusion to a players complaint. We accept compensation from the companies advertised on this website via their affiliate program and this may affect the brand positioning.</p>
+            <p>Copyright 2024 - OddsTips.co.uk | <a href="/terms-of-service/">Terms Of Service</a> | <a href="/privacy/">Privacy</a> | <a href="/contact/">Contact Us</a> | <a href="https://www.gambleaware.org/" rel="nofollow noopener" target="_blank">GambleAware</a> | <a href="/safer-gambling/">Safer Gambling</a> | 18+</p>
+          </div>
+        </>
+      )}
     </footer>
   </body>
 </html>

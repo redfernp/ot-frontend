@@ -1,0 +1,90 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishBet365Offer from "@/components/SpanishBet365Offer.astro";
+import SpanishTipList from "@/components/SpanishTipList.astro";
+import { getCategory } from "@/lib/graphql";
+import {
+  absoluteOddstipsUrl,
+  LA_LIGA_SOURCE_SLUG,
+  spanishPagesNoindex,
+  SPANISH_LA_LIGA_PATH,
+} from "@/lib/spanish";
+
+const category = await getCategory(LA_LIGA_SOURCE_SLUG, 1000).catch(() => null);
+const posts = category?.posts?.nodes ?? [];
+---
+
+<BaseLayout
+  title="Pronósticos de fútbol y apuestas deportivas en España | Oddstips"
+  description="Pronósticos de fútbol gratuitos en español, análisis de La Liga y cuotas publicadas. Información para mayores de 18 años y juego responsable."
+  canonical={absoluteOddstipsUrl("/es/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/")}
+>
+  <section class="es-home-hero">
+    <p class="eyebrow">Oddstips España</p>
+    <h1>Pronósticos de fútbol gratuitos para La Liga</h1>
+    <p>Consulta análisis de los próximos partidos, selecciones basadas en datos y las cuotas disponibles en el momento de publicación. Todo pronóstico puede fallar.</p>
+    <div class="es-home-hero__actions">
+      <a href={SPANISH_LA_LIGA_PATH}>Ver pronósticos de La Liga</a>
+      <a class="secondary" href="/es/metodologia-pronosticos/">Cómo elaboramos los pronósticos</a>
+    </div>
+    <small>+18 · Si juegas, juega con responsabilidad.</small>
+  </section>
+
+  <section class="es-intro-grid" aria-label="Secciones principales">
+    <a href="/es/futbol/">
+      <span>Fútbol</span>
+      <strong>Pronósticos de fútbol</strong>
+      <p>Consulta la primera cobertura en español y accede a La Liga.</p>
+    </a>
+    <a href={SPANISH_LA_LIGA_PATH}>
+      <span>España</span>
+      <strong>La Liga</strong>
+      <p>Partidos próximos, selecciones y cuotas publicadas.</p>
+    </a>
+    <a href="/es/juego-seguro/">
+      <span>Ayuda</span>
+      <strong>Juego seguro</strong>
+      <p>Límites, señales de alerta, autoprohibición y recursos oficiales.</p>
+    </a>
+  </section>
+
+  <div class="es-home-layout">
+    <SpanishTipList posts={posts} limit={10} />
+    <SpanishBet365Offer compact location="es_home" />
+  </div>
+
+  <section class="es-editorial">
+    <p class="eyebrow">Información antes de apostar</p>
+    <h2>Pronósticos para informar, nunca para prometer resultados</h2>
+    <p>Oddstips publica estos pronósticos con fines informativos y de entretenimiento. Combinamos señales estadísticas, cuotas y revisión editorial para presentar una selección, pero no realizamos las apuestas publicadas ni afirmamos que produzcan beneficios. El fútbol sigue siendo imprevisible: una lesión, una expulsión, una rotación o un cambio de mercado puede alterar cualquier pronóstico.</p>
+    <p>Apuesta solo si eres mayor de 18 años, comprueba siempre la cuota actual y utiliza una cantidad que puedas permitirte perder. No persigas pérdidas ni trates las apuestas como una fuente de ingresos.</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .es-home-hero { background: linear-gradient(135deg, var(--ot-brand-blue), #114b7c); border-radius: var(--ot-radius); color: #fff; padding: clamp(2rem,5vw,3.5rem); text-align: center; }
+  .es-home-hero .eyebrow { color: #d9edff; }
+  .es-home-hero h1 { color: #fff; margin-left: auto; margin-right: auto; max-width: 18ch; }
+  .es-home-hero > p:not(.eyebrow) { color: #d9edff; margin: 0 auto 1.25rem; max-width: 60ch; }
+  .es-home-hero__actions { display: flex; flex-wrap: wrap; gap: .65rem; justify-content: center; }
+  .es-home-hero__actions a { background: var(--ot-brand-orange); border-radius: 999px; color: #fff; font-weight: 900; padding: .75rem 1.2rem; text-decoration: none; }
+  .es-home-hero__actions a.secondary { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3); }
+  .es-home-hero small { color: #d9edff; display: block; margin-top: 1rem; }
+  .es-intro-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3,1fr); margin: 1.5rem 0; }
+  .es-intro-grid a { background: #fff; border: 1px solid var(--ot-border); border-top: 4px solid var(--ot-brand-blue); border-radius: var(--ot-radius); color: inherit; padding: 1.25rem; text-decoration: none; }
+  .es-intro-grid span { color: var(--ot-brand-blue); display: block; font-size: .7rem; font-weight: 900; text-transform: uppercase; }
+  .es-intro-grid strong { display: block; font-size: 1.05rem; margin: .25rem 0; }
+  .es-intro-grid p { color: var(--ot-muted); font-size: .86rem; margin: 0; }
+  .es-home-layout { align-items: start; display: grid; gap: 1.25rem; grid-template-columns: minmax(0,1fr) 330px; }
+  .es-editorial { background: #fff; border: 1px solid var(--ot-border); border-radius: var(--ot-radius); margin-top: 1.5rem; padding: 1.5rem; }
+  .es-editorial p { color: var(--ot-text-2); line-height: 1.7; }
+  @media (max-width: 880px) { .es-home-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 680px) { .es-intro-grid { grid-template-columns: 1fr; } }
+</style>
