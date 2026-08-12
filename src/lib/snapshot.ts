@@ -406,9 +406,20 @@ export function categoryHasRenderableContent(
   snapshot: Snapshot | null,
   category: SnapshotCategory,
 ): boolean {
-  return (
+  const hasOwnContent =
     categoryHasSeoContent(category) ||
-    postsForCategory(snapshot, category.slug, 1).length > 0
+    postsForCategory(snapshot, category.slug, 1).length > 0;
+
+  if (hasOwnContent || !snapshot) return hasOwnContent;
+
+  // Keep structural country/competition indexes live when at least one direct
+  // child has tips or evergreen copy. Newly created parents such as India and
+  // UAE otherwise disappear until editorial copy is added to the parent term.
+  return snapshot.categories.some(
+    (child) =>
+      child.parentId === category.databaseId &&
+      (categoryHasSeoContent(child) ||
+        postsForCategory(snapshot, child.slug, 1).length > 0),
   );
 }
 
