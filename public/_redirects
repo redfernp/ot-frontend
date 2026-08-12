@@ -11,6 +11,38 @@
 /football/spain-la-liga/ /football/spain/spain-primera-liga/ 301
 /football/uefa-champions-league/ /football/uefa/uefa-champions-league/ 301
 
+# India and UAE competitions were previously filed below International.
+# Their WordPress terms now have dedicated country parents; preserve every
+# established URL with a permanent redirect to the same term's new path.
+/football/international/india-delhi-league/ /football/india/india-delhi-league/ 301
+/football/international/india-delhi-premier-league/ /football/india/india-delhi-premier-league/ 301
+/football/international/india-delhi-senior-division/ /football/india/india-delhi-senior-division/ 301
+/football/international/india-federation-cup/ /football/india/india-federation-cup/ 301
+/football/international/india-goa-first-division/ /football/india/india-goa-first-division/ 301
+/football/international/india-goa-pro-league/ /football/india/india-goa-pro-league/ 301
+/football/international/india-ifa-shield/ /football/india/india-ifa-shield/ 301
+/football/international/india-i-league/ /football/india/india-i-league/ 301
+/football/international/india-i-league-2nd-division/ /football/india/india-i-league-2nd-division/ 301
+/football/international/india-i-league-2nd-division-qualifying/ /football/india/india-i-league-2nd-division-qualifying/ 301
+/football/international/india-kerala-premier-league/ /football/india/india-kerala-premier-league/ 301
+/football/international/india-mizoram-premier-league/ /football/india/india-mizoram-premier-league/ 301
+/football/international/india-mumbai-super-division/ /football/india/india-mumbai-super-division/ 301
+/football/international/india-pune-super-division/ /football/india/india-pune-super-division/ 301
+/football/international/india-r-league-a-division/ /football/india/india-r-league-a-division/ 301
+/football/international/india-regional-cup/ /football/india/india-regional-cup/ 301
+/football/international/india-regional-cup-80-mins-play/ /football/india/india-regional-cup-80-mins-play/ 301
+/football/international/india-santosh-trophy/ /football/india/india-santosh-trophy/ 301
+/football/international/india-shillong-premier-league/ /football/india/india-shillong-premier-league/ 301
+/football/international/india-super-cup/ /football/india/india-super-cup/ 301
+/football/international/india-super-league/ /football/india/india-super-league/ 301
+/football/international/uae-cup/ /football/uae/uae-cup/ 301
+/football/international/uae-division-1/ /football/uae/uae-division-1/ 301
+/football/international/uae-premier-league/ /football/uae/uae-premier-league/ 301
+/football/international/uae-reserve-league/ /football/uae/uae-reserve-league/ 301
+/football/international/uae-second-division/ /football/uae/uae-second-division/ 301
+/football/international/uae-super-cup/ /football/uae/uae-super-cup/ 301
+/football/international/uae-youth-league/ /football/uae/uae-youth-league/ 301
+
 # Legacy review URL structure. /recommends/<bookmaker>/ moved to /reviews/<bookmaker>/.
 /recommends/bet365/ /reviews/bet365/ 301
 
