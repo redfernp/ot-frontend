@@ -105,14 +105,14 @@ const heroLede = topSeo || descriptionLede || "";
 
 <div class="cat-layout">
   <main class="cat-main">
-    <DateRail />
+    {posts.length > 0 && <DateRail />}
 
     <TipListSection
       posts={posts}
       eyebrow="Latest predictions"
       heading={`${category.name || "Latest"} tips`}
       headingId="latest-heading"
-      emptyText="No tips found for this date. Try another date."
+      emptyText="No current tips are available for this competition. Check back when new fixtures are published."
       groupByDate
     />
 
