@@ -43,6 +43,71 @@
 /football/international/uae-super-cup/ /football/uae/uae-super-cup/ 301
 /football/international/uae-youth-league/ /football/uae/uae-youth-league/ 301
 
+# Additional domestic competitions moved from International to their correct
+# country hierarchy. Keep every previously indexed path working.
+/football/international/bangladesh-championship-league/ /football/bangladesh/bangladesh-championship-league/ 301
+/football/international/bangladesh-federation-cup/ /football/bangladesh/bangladesh-federation-cup/ 301
+/football/international/bangladesh-independence-cup/ /football/bangladesh/bangladesh-independence-cup/ 301
+/football/international/bangladesh-premier-league/ /football/bangladesh/bangladesh-premier-league/ 301
+/football/international/bangladesh-womens-league/ /football/bangladesh/bangladesh-womens-league/ 301
+/football/international/league-of-ireland-first-division/ /football/ireland/league-of-ireland-first-division/ 301
+/football/international/league-of-ireland-premier-division/ /football/ireland/league-of-ireland-premier-division/ 301
+/football/international/kenya-cup/ /football/kenya/kenya-cup/ 301
+/football/international/kenya-league-women/ /football/kenya/kenya-league-women/ 301
+/football/international/kenya-premier-league/ /football/kenya/kenya-premier-league/ 301
+/football/international/kenya-super-cup/ /football/kenya/kenya-super-cup/ 301
+/football/international/kenya-super-league/ /football/kenya/kenya-super-league/ 301
+/football/international/kuwait-crown-prince-cup/ /football/kuwait/kuwait-crown-prince-cup/ 301
+/football/international/kuwait-cup/ /football/kuwait/kuwait-cup/ 301
+/football/international/kuwait-division-1/ /football/kuwait/kuwait-division-1/ 301
+/football/international/kuwait-league/ /football/kuwait/kuwait-league/ 301
+/football/international/kuwait-super-cup/ /football/kuwait/kuwait-super-cup/ 301
+/football/international/kuwait-youth-league/ /football/kuwait/kuwait-youth-league/ 301
+/football/international/lithuania-1-lyga/ /football/lithuania/lithuania-1-lyga/ 301
+/football/international/lithuania-a-lyga/ /football/lithuania/lithuania-a-lyga/ 301
+/football/international/lithuania-a-lyga-play-offs/ /football/lithuania/lithuania-a-lyga-play-offs/ 301
+/football/international/lithuania-cup/ /football/lithuania/lithuania-cup/ 301
+/football/international/lithuania-ii-lyga/ /football/lithuania/lithuania-ii-lyga/ 301
+/football/international/nigeria-cup/ /football/nigeria/nigeria-cup/ 301
+/football/international/nigeria-national-league/ /football/nigeria/nigeria-national-league/ 301
+/football/international/nigeria-premier-league/ /football/nigeria/nigeria-premier-league/ 301
+/football/international/south-korea-cup/ /football/south-korea/south-korea-cup/ 301
+/football/international/south-korea-k3-league/ /football/south-korea/south-korea-k3-league/ 301
+/football/international/south-korea-k-league-1/ /football/south-korea/south-korea-k-league-1/ 301
+/football/international/south-korea-k-league-2/ /football/south-korea/south-korea-k-league-2/ 301
+/football/international/south-korea-k-league-challenge/ /football/south-korea/south-korea-k-league-challenge/ 301
+/football/international/south-korea-k-league-classic/ /football/south-korea/south-korea-k-league-classic/ 301
+/football/international/south-korea-k-league-play-offs/ /football/south-korea/south-korea-k-league-play-offs/ 301
+/football/international/south-korea-k-league-women/ /football/south-korea/south-korea-k-league-women/ 301
+/football/international/south-korea-league-cup/ /football/south-korea/south-korea-league-cup/ 301
+/football/international/south-korea-national-league/ /football/south-korea/south-korea-national-league/ 301
+/football/international/uganda-cup/ /football/uganda/uganda-cup/ 301
+/football/international/uganda-premier-league/ /football/uganda/uganda-premier-league/ 301
+/football/international/uganda-super-8/ /football/uganda/uganda-super-8/ 301
+/football/international/northern-ireland-championship/ /football/united-kingdom/northern-ireland-championship/ 301
+/football/international/northern-ireland-championship-women/ /football/united-kingdom/northern-ireland-championship-women/ 301
+/football/international/northern-ireland-charity-shield/ /football/united-kingdom/northern-ireland-charity-shield/ 301
+/football/international/northern-ireland-county-antrim-shield/ /football/united-kingdom/northern-ireland-county-antrim-shield/ 301
+/football/international/northern-ireland-cup/ /football/united-kingdom/northern-ireland-cup/ 301
+/football/international/northern-ireland-cup-women/ /football/united-kingdom/northern-ireland-cup-women/ 301
+/football/international/northern-ireland-intermediate-cup/ /football/united-kingdom/northern-ireland-intermediate-cup/ 301
+/football/international/northern-ireland-league-cup/ /football/united-kingdom/northern-ireland-league-cup/ 301
+/football/international/northern-ireland-league-cup-women/ /football/united-kingdom/northern-ireland-league-cup-women/ 301
+/football/international/northern-ireland-mid-ulster-cup/ /football/united-kingdom/northern-ireland-mid-ulster-cup/ 301
+/football/international/northern-ireland-play-offs/ /football/united-kingdom/northern-ireland-play-offs/ 301
+/football/international/northern-ireland-premier/ /football/united-kingdom/northern-ireland-premier/ 301
+/football/international/northern-ireland-premier-intermediate-league/ /football/united-kingdom/northern-ireland-premier-intermediate-league/ 301
+/football/international/northern-ireland-premier-league-women/ /football/united-kingdom/northern-ireland-premier-league-women/ 301
+/football/international/northern-ireland-reserve-cup/ /football/united-kingdom/northern-ireland-reserve-cup/ 301
+/football/international/northern-ireland-reserve-league/ /football/united-kingdom/northern-ireland-reserve-league/ 301
+/football/international/vietnam-cup/ /football/vietnam/vietnam-cup/ 301
+/football/international/vietnam-cup-women/ /football/vietnam/vietnam-cup-women/ 301
+/football/international/vietnam-division-2/ /football/vietnam/vietnam-division-2/ 301
+/football/international/vietnam-play-offs/ /football/vietnam/vietnam-play-offs/ 301
+/football/international/vietnam-super-cup/ /football/vietnam/vietnam-super-cup/ 301
+/football/international/vietnam-v-league/ /football/vietnam/vietnam-v-league/ 301
+/football/international/vietnam-v-league-2/ /football/vietnam/vietnam-v-league-2/ 301
+
 # Legacy review URL structure. /recommends/<bookmaker>/ moved to /reviews/<bookmaker>/.
 /recommends/bet365/ /reviews/bet365/ 301
 
