@@ -3,7 +3,7 @@
 // The site is a pure static build (no SSR), so search has to run in the
 // visitor's browser. This endpoint is prerendered once at build time into
 // dist/search-index.json: a lightweight list of every tip post and every
-// non-empty category (sport / country / league) pulled from the snapshot.
+// renderable category (current tips or evergreen SEO copy) from the snapshot.
 // /search/ fetches this file once and filters it client-side.
 //
 // We keep each entry tiny (short keys, only the fields the results page
@@ -11,7 +11,11 @@
 // ~1650 posts + ~2200 categories gzips to well under 100KB.
 
 import type { APIRoute } from "astro";
-import { loadSnapshot } from "@/lib/snapshot";
+import {
+  categoryHasSeoContent,
+  loadSnapshot,
+  postsForCategory,
+} from "@/lib/snapshot";
 
 export const prerender = true;
 
@@ -54,12 +58,14 @@ export const GET: APIRoute = async () => {
     }
 
     for (const cat of snapshot.categories) {
-      if (!cat.name || !cat.uri || cat.count <= 0) continue;
+      if (!cat.name || !cat.uri) continue;
+      const hasCurrentTips = postsForCategory(snapshot, cat.slug, 1).length > 0;
+      if (!hasCurrentTips && !categoryHasSeoContent(cat)) continue;
       items.push({
         type: "c",
         t: cat.name,
         u: cat.uri,
-        s: `${cat.count} tip${cat.count === 1 ? "" : "s"}`,
+        s: hasCurrentTips ? "Betting tips" : "League guide",
       });
     }
   }

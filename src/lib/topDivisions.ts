@@ -181,7 +181,7 @@ export const topDivisions: TopDivision[] = [
     country: "India",
     countryPath: "/football/india/",
     league: "Indian Super League",
-    leaguePath: "/football/india/",
+    leaguePath: "/football/india/india-super-league/",
     blurb: "Indian Super League tips and I-League promotion races.",
   },
   {
@@ -201,8 +201,8 @@ export const topDivisions: TopDivision[] = [
   {
     country: "UAE",
     countryPath: "/football/uae/",
-    league: "Pro League",
-    leaguePath: "/football/uae/",
+    league: "Premier League",
+    leaguePath: "/football/uae/uae-premier-league/",
     blurb: "UAE Pro League (Arabian Gulf League) picks every matchweek.",
   },
 ];

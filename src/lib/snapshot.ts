@@ -376,6 +376,53 @@ function normalizeUri(uri: string): string {
   return "/" + uri.replace(/^\/+|\/+$/g, "") + "/";
 }
 
+// WordPress WYSIWYG fields can look non-empty while containing only editor
+// scaffolding such as `<p><br></p>` or `&nbsp;`. Treat a category as having
+// editorial content only when some visible text remains after removing that
+// markup. This lets substantial evergreen league/category guides stay live
+// between seasons without bringing back thin 200 pages for truly empty terms.
+function htmlHasMeaningfulText(value: string | undefined | null): boolean {
+  if (!value) return false;
+  const visibleText = value
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(?:nbsp|#160|#x0*a0);/gi, " ")
+    .trim();
+  return visibleText.length > 0;
+}
+
+export function categoryHasSeoContent(category: SnapshotCategory): boolean {
+  return (
+    htmlHasMeaningfulText(category.categoryTopSeoText?.categoryTopSeoText) ||
+    htmlHasMeaningfulText(category.categoryBottomSeoText?.categoryBottomSeoText)
+  );
+}
+
+// A category deserves a static route when it has current tips OR meaningful
+// evergreen editorial copy. Previously only the first condition was used,
+// causing high-value league pages to disappear as soon as retention removed
+// their final out-of-season tip.
+export function categoryHasRenderableContent(
+  snapshot: Snapshot | null,
+  category: SnapshotCategory,
+): boolean {
+  const hasOwnContent =
+    categoryHasSeoContent(category) ||
+    postsForCategory(snapshot, category.slug, 1).length > 0;
+
+  if (hasOwnContent || !snapshot) return hasOwnContent;
+
+  // Keep structural country/competition indexes live when at least one direct
+  // child has tips or evergreen copy. Newly created parents such as India and
+  // UAE otherwise disappear until editorial copy is added to the parent term.
+  return snapshot.categories.some(
+    (child) =>
+      child.parentId === category.databaseId &&
+      (categoryHasSeoContent(child) ||
+        postsForCategory(snapshot, child.slug, 1).length > 0),
+  );
+}
+
 // Filter posts that include a given category (by slug). Posts can belong to
 // multiple categories, and parent-sport category pages (e.g. /football/) need
 // to surface posts from any child sub-category, so this also checks if the
@@ -449,7 +496,7 @@ export function allPostSlugsFrom(snapshot: Snapshot | null, limit: number) {
 export function allCategorySlugsFrom(snapshot: Snapshot | null, limit: number) {
   if (!snapshot) return [];
   return snapshot.categories
-    .filter((c) => postsForCategory(snapshot, c.slug, 1).length > 0)
+    .filter((c) => categoryHasRenderableContent(snapshot, c))
     .slice(0, limit)
     .map((c) => ({ slug: c.slug, uri: c.uri }));
 }
@@ -466,9 +513,9 @@ export function latestPostsFrom(snapshot: Snapshot | null, limit: number): Snaps
 
 export function categoriesFrom(snapshot: Snapshot | null, limit: number): SnapshotCategory[] {
   if (!snapshot) return [];
-  // Match the rendered route set: only expose categories that can actually
-  // produce at least one tip row from the snapshot.
+  // Match the rendered route set: current-tip categories plus evergreen
+  // categories with meaningful top or bottom SEO copy.
   return snapshot.categories
-    .filter((c) => postsForCategory(snapshot, c.slug, 1).length > 0)
+    .filter((c) => categoryHasRenderableContent(snapshot, c))
     .slice(0, limit);
 }

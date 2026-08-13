@@ -68,9 +68,9 @@ export async function getStaticPaths() {
   }
 
   // Top-level sport hubs are always built, even if the WP category has no
-  // direct posts. Category paths below are filtered to entries that can render
-  // at least one tip row, so hardcoding these hubs guarantees the critical
-  // sport landing URLs are always built.
+  // direct posts. Other category paths are built when they have current tips
+  // or meaningful evergreen SEO copy; hardcoding these hubs additionally
+  // guarantees the critical sport landing URLs are always built.
   ["football", "tennis", "cricket", "basketball", "darts", "snooker"].forEach((slug) => {
     add(slug, { kind: "category", slug });
   });
