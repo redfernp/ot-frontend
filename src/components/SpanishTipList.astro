@@ -1,0 +1,147 @@
+---
+import type { WpPost } from "@/lib/graphql";
+import { summarizeTip } from "@/lib/tips";
+import {
+  formatSpanishKickoff,
+  spanishFixture,
+  spanishTeamName,
+  spanishTipPath,
+  translatePick,
+  upcomingPosts,
+} from "@/lib/spanish";
+
+type Props = {
+  posts: WpPost[];
+  heading?: string;
+  headingId?: string;
+  limit?: number;
+};
+
+const {
+  posts,
+  heading = "Próximos pronósticos de La Liga",
+  headingId = "proximos-pronosticos",
+  limit,
+} = Astro.props;
+const upcoming = upcomingPosts(posts);
+const shown = typeof limit === "number" ? upcoming.slice(0, limit) : upcoming;
+---
+
+<section class="es-tip-list" aria-labelledby={headingId}>
+  <header>
+    <div>
+      <p class="eyebrow">Próximos partidos</p>
+      <h2 id={headingId}>{heading}</h2>
+    </div>
+    <span class="es-tip-list__count">{shown.length} {shown.length === 1 ? "pronóstico" : "pronósticos"}</span>
+  </header>
+
+  {shown.length > 0 ? (
+    <div class="es-tip-list__items">
+      {shown.map((post) => {
+        const summary = summarizeTip(post);
+        const kickoff = formatSpanishKickoff(post.eventStart);
+        const pick = translatePick(summary.tip);
+        const homeTeam = spanishTeamName(summary.homeTeam) || "Local";
+        const awayTeam = spanishTeamName(summary.awayTeam) || "Visitante";
+        const fixture = spanishFixture(post);
+        return (
+          <article class="es-tip-card">
+            <div class="es-tip-card__main">
+              <span class="es-tip-card__league">La Liga</span>
+              <h3>
+                <a href={spanishTipPath(post)}>{homeTeam} contra {awayTeam}</a>
+              </h3>
+              {kickoff && <time datetime={post.eventStart || undefined}>{kickoff}</time>}
+            </div>
+            <div class="es-tip-card__pick">
+              <span>Pronóstico</span>
+              <strong>{pick || "Ver análisis"}</strong>
+              {summary.odds && <small>Cuota publicada: {summary.odds}</small>}
+            </div>
+            <a class="es-tip-card__link" href={spanishTipPath(post)} aria-label={`Ver el pronóstico de ${fixture}`}>
+              Ver pronóstico <span aria-hidden="true">&rarr;</span>
+            </a>
+          </article>
+        );
+      })}
+    </div>
+  ) : (
+    <p class="es-tip-list__empty">No hay pronósticos próximos de La Liga en la instantánea actual. Vuelve a comprobarlo después de la próxima actualización.</p>
+  )}
+
+  <p class="es-tip-list__notice">Todo pronóstico puede fallar. Las cuotas cambian y deben comprobarse directamente con el operador antes de apostar.</p>
+</section>
+
+<style>
+  .es-tip-list {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .es-tip-list > header {
+    align-items: end;
+    background: linear-gradient(180deg, #f3f8fd 0%, #fff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1.25rem;
+  }
+  .es-tip-list h2 { font-size: 1.35rem; margin: 0; }
+  .es-tip-list .eyebrow { color: var(--ot-brand-blue); margin-bottom: 0.25rem; }
+  .es-tip-list__count {
+    background: var(--ot-brand-blue);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.74rem;
+    font-weight: 900;
+    padding: 0.35rem 0.7rem;
+    white-space: nowrap;
+  }
+  .es-tip-list__items { display: grid; }
+  .es-tip-card {
+    align-items: center;
+    border-bottom: 1px solid var(--ot-border);
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, auto) auto;
+    padding: 1rem 1.25rem;
+  }
+  .es-tip-card:last-child { border-bottom: 0; }
+  .es-tip-card__league {
+    color: var(--ot-brand-blue);
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .es-tip-card h3 { font-size: 1rem; margin: 0.2rem 0; }
+  .es-tip-card h3 a { color: var(--ot-text); text-decoration: none; }
+  .es-tip-card h3 a:hover { color: var(--ot-brand-blue); }
+  .es-tip-card time { color: var(--ot-muted); font-size: 0.8rem; }
+  .es-tip-card__pick { display: flex; flex-direction: column; }
+  .es-tip-card__pick span,
+  .es-tip-card__pick small { color: var(--ot-muted); font-size: 0.7rem; }
+  .es-tip-card__pick strong { color: var(--ot-text); font-size: 0.9rem; }
+  .es-tip-card__link {
+    background: var(--ot-brand-orange);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 900;
+    padding: 0.6rem 0.9rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .es-tip-list__empty,
+  .es-tip-list__notice { color: var(--ot-muted); font-size: 0.82rem; margin: 0; padding: 1rem 1.25rem; }
+  .es-tip-list__notice { background: var(--ot-surface-2); border-top: 1px solid var(--ot-border); }
+  @media (max-width: 720px) {
+    .es-tip-card { grid-template-columns: 1fr auto; }
+    .es-tip-card__main { grid-column: 1 / -1; }
+    .es-tip-list > header { align-items: start; }
+  }
+</style>

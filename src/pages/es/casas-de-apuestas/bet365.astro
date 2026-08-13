@@ -1,0 +1,85 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishBet365Offer from "@/components/SpanishBet365Offer.astro";
+import {
+  absoluteOddstipsUrl,
+  spanishPagesNoindex,
+} from "@/lib/spanish";
+---
+
+<BaseLayout
+  title="Bet365 España: oferta para nuevos clientes y análisis | Oddstips"
+  description="Información sobre Bet365 España, su oferta de hasta 200€ en créditos de apuesta, condiciones, licencia y herramientas de juego seguro."
+  canonical={absoluteOddstipsUrl("/es/casas-de-apuestas/bet365/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/casas-de-apuestas/bet365/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/reviews/bet365/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/reviews/bet365/")}
+>
+  <nav class="breadcrumbs"><a href="/es/">Inicio</a><span>/</span><span>Casas de apuestas</span><span>/</span><span>Bet365</span></nav>
+  <section class="bookie-hero">
+    <div>
+      <p class="eyebrow">Publicidad · Socio comercial</p>
+      <h1>Bet365 España</h1>
+      <p>Resumen factual de la oferta facilitada para nuevos clientes, el acceso mediante nuestro enlace de afiliado y los aspectos que deben comprobarse antes de registrarse.</p>
+    </div>
+    <span class="bookie-hero__mark">bet365</span>
+  </section>
+
+  <div class="bookie-layout">
+    <div class="bookie-main">
+      <SpanishBet365Offer location="es_bet365_review" />
+
+      <section class="bookie-panel">
+        <h2>Resumen</h2>
+        <p>Bet365 ofrece apuestas deportivas y otros productos de juego a clientes elegibles en España. La DGOJ publica dominios españoles de Bet365 dentro de su relación de operadores autorizados y señala que el operador cuenta con autorización para desarrollar actividades publicitarias.</p>
+        <p>La disponibilidad de una promoción depende de la residencia, la elegibilidad, la fecha de alta y las condiciones vigentes. Lee la información completa en Bet365 antes de ingresar dinero.</p>
+      </section>
+
+      <section class="bookie-panel">
+        <h2>Puntos que debes comprobar</h2>
+        <ul>
+          <li>Que la oferta siga disponible para nuevos clientes residentes en España.</li>
+          <li>El ingreso mínimo y el importe máximo que puede convertirse en créditos.</li>
+          <li>Las apuestas válidas necesarias para liberar los créditos y sus plazos.</li>
+          <li>Las cuotas mínimas, exclusiones de mercados y métodos de pago admitidos.</li>
+          <li>La caducidad de los créditos y que su importe no se incluye en las ganancias.</li>
+        </ul>
+      </section>
+
+      <section class="bookie-panel">
+        <h2>Juego seguro</h2>
+        <p>Bet365 ofrece límites, pausas y herramientas de autoexclusión. Si necesitas dejar de jugar en operadores regulados en España, consulta el RGIAJ de la DGOJ. Más información en nuestra página de <a href="/es/juego-seguro/">juego seguro</a>.</p>
+      </section>
+    </div>
+    <aside class="bookie-aside">
+      <div><strong>+18</strong><span>Solo para personas adultas</span></div>
+      <div><strong>DGOJ</strong><span>Comprueba la autorización vigente</span></div>
+      <div><strong>Afiliado</strong><span>Oddstips puede recibir comisión</span></div>
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .breadcrumbs { color:var(--ot-muted); font-size:.82rem; margin-bottom:1rem; }
+  .breadcrumbs a { color:var(--ot-brand-blue); text-decoration:none; }
+  .breadcrumbs span { margin-left:.4rem; }
+  .bookie-hero { align-items:center; background:linear-gradient(135deg,#076f3c,#034e2c); border-radius:var(--ot-radius); color:#fff; display:flex; justify-content:space-between; padding:clamp(1.5rem,4vw,2.5rem); }
+  .bookie-hero .eyebrow { color:#dff7e9; }
+  .bookie-hero h1 { color:#fff; }
+  .bookie-hero p:not(.eyebrow) { color:#dff7e9; line-height:1.7; max-width:65ch; }
+  .bookie-hero__mark { background:#fff; border-radius:10px; color:#08783f; font-size:1.5rem; font-weight:900; padding:1rem 1.3rem; }
+  .bookie-layout { align-items:start; display:grid; gap:1.25rem; grid-template-columns:minmax(0,1fr) 280px; margin-top:1.25rem; }
+  .bookie-main { display:grid; gap:1.25rem; }
+  .bookie-panel, .bookie-aside { background:#fff; border:1px solid var(--ot-border); border-radius:var(--ot-radius); padding:1.5rem; }
+  .bookie-panel p, .bookie-panel li { color:var(--ot-text-2); line-height:1.7; }
+  .bookie-aside { display:grid; gap:1rem; position:sticky; top:5rem; }
+  .bookie-aside div { border-bottom:1px solid var(--ot-border); display:flex; flex-direction:column; padding-bottom:1rem; }
+  .bookie-aside div:last-child { border:0; padding:0; }
+  .bookie-aside strong { color:var(--ot-brand-blue); }
+  .bookie-aside span { color:var(--ot-muted); font-size:.82rem; }
+  @media (max-width:780px) { .bookie-layout { grid-template-columns:1fr; } .bookie-aside { position:static; } .bookie-hero__mark { display:none; } }
+</style>

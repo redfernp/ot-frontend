@@ -1,0 +1,36 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishTrustPage from "@/components/SpanishTrustPage.astro";
+import { absoluteOddstipsUrl, spanishPagesNoindex } from "@/lib/spanish";
+---
+
+<BaseLayout
+  title="Divulgación de afiliados y publicidad | Oddstips España"
+  description="Información sobre la relación comercial de Oddstips con Bet365, los enlaces de afiliado y el modo en que se identifica la publicidad."
+  canonical={absoluteOddstipsUrl("/es/divulgacion-afiliados/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/divulgacion-afiliados/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/affiliate-disclosure/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/affiliate-disclosure/")}
+>
+  <SpanishTrustPage title="Divulgación de afiliados y publicidad" intro="Oddstips es gratuito para el usuario y puede recibir una compensación de Bet365 por determinados enlaces o altas.">
+    <h2>Cómo identificamos la publicidad</h2>
+    <p>Los bloques comerciales se identifican de forma visible con la palabra <strong>«Publicidad»</strong>. Los enlaces comerciales incluyen los atributos técnicos <code>rel="sponsored nofollow"</code>.</p>
+
+    <h2>Qué significa un enlace de afiliado</h2>
+    <p>Si visitas Bet365 mediante uno de nuestros enlaces y abres una cuenta, utilizas una oferta o realizas otra acción admitida por el programa, Oddstips puede recibir una comisión. Esta relación no debería aumentar el precio para el usuario.</p>
+    <p>Oddstips no realiza las apuestas incluidas en sus pronósticos y no presenta sus selecciones como un historial de rentabilidad. La relación comercial con Bet365 no garantiza ni influye en el resultado de ningún pronóstico.</p>
+
+    <h2>Nuestro socio inicial en España</h2>
+    <p>La primera versión española muestra únicamente Bet365. La DGOJ incluye los dominios españoles de Bet365 entre los correspondientes a operadores autorizados para desarrollar actividad publicitaria en España. Comprueba siempre que el destino final pertenece a Bet365 y que la oferta está disponible para residentes en España.</p>
+
+    <h2>Independencia y límites</h2>
+    <p>La relación comercial puede influir en qué operador aparece y en la posición de una oferta, pero no convierte un pronóstico en una garantía. Las cuotas y condiciones pueden cambiar. Verifica toda la información directamente con el operador antes de registrarte o apostar.</p>
+
+    <h2>Juego responsable</h2>
+    <p>Los ingresos por afiliación no cambian nuestro mensaje: solo mayores de 18 años, todo pronóstico puede fallar y nunca se debe apostar dinero que no se pueda perder. Consulta nuestra página de <a href="/es/juego-seguro/">juego seguro</a>.</p>
+  </SpanishTrustPage>
+</BaseLayout>

@@ -1,0 +1,43 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishTipPage from "@/components/SpanishTipPage.astro";
+import { getCategory, type WpPost } from "@/lib/graphql";
+import {
+  absoluteOddstipsUrl,
+  englishTipPath,
+  LA_LIGA_SOURCE_SLUG,
+  spanishPagesNoindex,
+  spanishTipDescription,
+  spanishTipPath,
+  spanishTipTitle,
+  sourceTipSlugToSpanishSlug,
+  tipAlternates,
+} from "@/lib/spanish";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const category = await getCategory(LA_LIGA_SOURCE_SLUG, 1000).catch(() => null);
+  const posts = category?.posts?.nodes ?? [];
+  return posts.map((post) => ({
+    params: { slug: sourceTipSlugToSpanishSlug(post.slug) },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props as { post: WpPost };
+const title = `${spanishTipTitle(post)} | Oddstips`;
+const description = spanishTipDescription(post);
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonical={absoluteOddstipsUrl(spanishTipPath(post))}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={tipAlternates(post)}
+  xDefault={absoluteOddstipsUrl(englishTipPath(post))}
+>
+  <SpanishTipPage post={post} />
+</BaseLayout>

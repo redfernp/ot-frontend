@@ -47,6 +47,13 @@ const emptyTombstonesJson = JSON.stringify({
 
 let tombstonesJson = emptyTombstonesJson;
 
+// Spanish routes stay out of search until the operator offer, production
+// compliance review, and SEO launch are signed off. Set the variable to true
+// only for the production launch; branch previews should leave it unset.
+const spanishIndexingEnabled = /^(1|true|yes)$/i.test(
+  process.env.PUBLIC_SPANISH_INDEXING ?? "",
+);
+
 // (broken mojibake URI -> clean ASCII URI). paul365 stores some slugs with
 // the fingerprint `a%c2%XX` from a known UTF-8/Latin-1 encoding bug; the
 // snapshot prefetch detects them and we emit 301 redirects in
@@ -366,6 +373,8 @@ export default defineConfig({
         try {
           const url = new URL(page);
           if (url.pathname.startsWith("/go/")) return false;
+          if (url.pathname.startsWith("/es/go/")) return false;
+          if (!spanishIndexingEnabled && url.pathname.startsWith("/es/")) return false;
           if (sitemapData.noindexUris.has(normalizeUri(url.pathname))) return false;
           return true;
         } catch {
@@ -417,6 +426,12 @@ export default defineConfig({
         access: "public",
         optional: true,
         default: "",
+      }),
+      PUBLIC_SPANISH_INDEXING: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "false",
       }),
     },
   },

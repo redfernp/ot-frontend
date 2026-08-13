@@ -1,0 +1,49 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishTrustPage from "@/components/SpanishTrustPage.astro";
+import { absoluteOddstipsUrl, spanishPagesNoindex } from "@/lib/spanish";
+---
+
+<BaseLayout
+  title="Metodología de los pronósticos | Oddstips España"
+  description="Cómo combina Oddstips señales estadísticas, cuotas y revisión editorial para elaborar sus pronósticos de fútbol."
+  canonical={absoluteOddstipsUrl("/es/metodologia-pronosticos/")}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl("/es/metodologia-pronosticos/") },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl("/betting-tips-methodology/") },
+  ]}
+  xDefault={absoluteOddstipsUrl("/betting-tips-methodology/")}
+>
+  <SpanishTrustPage title="Metodología de los pronósticos" intro="Nuestro objetivo es identificar partidos en los que los datos disponibles, el contexto y la cuota publicada apuntan en la misma dirección. Ningún pronóstico está garantizado.">
+    <h2>Cómo se crea un pronóstico</h2>
+    <p>El proceso combina un filtrado algorítmico con revisión editorial. El modelo ordena los próximos partidos mediante señales estadísticas, mercados de cuotas y patrones de rendimiento. Después se revisa que la selección sea coherente con la información disponible.</p>
+
+    <h2>Grupos de datos</h2>
+    <ul>
+      <li>Contexto: competición, fecha, local, visitante y calendario.</li>
+      <li>Forma: rendimiento reciente y diferencias entre casa y fuera.</li>
+      <li>Goles: medias, mercados de más/menos y ambos equipos marcan.</li>
+      <li>xG: goles esperados a favor y en contra cuando están disponibles.</li>
+      <li>Actividad: córners, tarjetas, disparos, fueras de juego y posesión.</li>
+      <li>Mercados: local, empate, visitante y cuota publicada.</li>
+    </ul>
+    <p>No todos los partidos contienen datos completos. Una ausencia o una señal desactualizada se trata como una limitación, no como una razón para forzar una selección.</p>
+
+    <h2>Cuotas y precio</h2>
+    <p>Las cuotas pueden proceder del feed de Bet365 o de una comprobación del mercado en el momento de publicación. Pueden cambiar con rapidez. Comprueba siempre la cuota, las reglas y las condiciones directamente con el operador.</p>
+
+    <h2>Lo que no son nuestros pronósticos</h2>
+    <ul>
+      <li>No son asesoramiento financiero.</li>
+      <li>No son una promesa de beneficio.</li>
+      <li>No eliminan el azar ni la incertidumbre deportiva.</li>
+      <li>No sustituyen la comprobación de alineaciones, horarios, precios y condiciones.</li>
+    </ul>
+
+    <h2>Finalidad editorial</h2>
+    <p>Oddstips publica estos pronósticos con fines informativos y de entretenimiento. No realiza las apuestas publicadas ni presenta los pronósticos como un historial de apuestas, una rentabilidad comprobada o una fuente de ingresos.</p>
+    <p>Cuando describimos una selección como una apuesta de buen valor, expresamos una valoración editorial sobre la relación entre la probabilidad estimada y la cuota disponible en el momento de publicación. No significa que la selección vaya a ganar ni que vaya a generar beneficios.</p>
+  </SpanishTrustPage>
+</BaseLayout>

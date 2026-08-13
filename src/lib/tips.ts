@@ -57,7 +57,10 @@ function htmlToLines(html = "") {
 
 function cleanTitle(title = "") {
   const text = decodeHtml(title.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
-  const fixtureMatch = text.match(/^(.+?)\s+[\u2013-]\s+\d{2}-\d{2}-\d{4}/);
+  // Some legacy paul365 titles contain a literal "?" where the separator
+  // dash was lost during character conversion. Treat it as the separator
+  // only when it sits immediately before the dd-mm-yyyy fixture date.
+  const fixtureMatch = text.match(/^(.+?)\s+(?:[\u2013-]|\?)\s+\d{2}-\d{2}-\d{4}/);
 
   return fixtureMatch?.[1]?.trim() || text.replace(/\s+[\u2013-]\s+Free Fixed Odds Tip.*$/i, "").trim();
 }

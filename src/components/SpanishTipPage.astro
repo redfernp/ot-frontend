@@ -1,0 +1,203 @@
+---
+import type { WpPost } from "@/lib/graphql";
+import SpanishBet365Offer from "@/components/SpanishBet365Offer.astro";
+import { intensityOf, summarizeTip } from "@/lib/tips";
+import {
+  formatSpanishDate,
+  formatSpanishKickoff,
+  SPANISH_LA_LIGA_PATH,
+  spanishTeamName,
+  translatePick,
+  translateStructuredValue,
+} from "@/lib/spanish";
+
+type Props = { post: WpPost };
+const { post } = Astro.props;
+const summary = summarizeTip(post);
+const homeTeam = spanishTeamName(summary.homeTeam) || "Equipo local";
+const awayTeam = spanishTeamName(summary.awayTeam) || "Equipo visitante";
+const fixture = `${homeTeam} contra ${awayTeam}`;
+const published = formatSpanishDate(post.date);
+const kickoff = formatSpanishKickoff(post.eventStart);
+const pick = translatePick(summary.tip);
+const activePick = summary.couponPick;
+
+const signals = [
+  { label: "Ritmo previsto", value: translateStructuredValue(summary.gameFlow) },
+  { label: "Primer gol", value: translateStructuredValue(summary.firstGoal) },
+  { label: "Origen del primer gol", value: translateStructuredValue(summary.sourceOfFirstGoal) },
+  { label: "Riesgo de lesiones", value: translateStructuredValue(summary.riskOfInjuries) },
+  { label: "Número de córners", value: translateStructuredValue(summary.cornerCount) },
+  { label: "Tarjetas", value: translateStructuredValue(summary.bookings) },
+  { label: "Penaltis", value: translateStructuredValue(summary.penaltiesAwarded) },
+  { label: "Zona clave", value: translateStructuredValue(summary.keyArea) },
+].filter((signal): signal is { label: string; value: string } => Boolean(signal.value));
+
+---
+
+<nav class="breadcrumbs" aria-label="Migas de pan">
+  <a href="/es/">Inicio</a><span>/</span>
+  <a href="/es/futbol/">Fútbol</a><span>/</span>
+  <a href={SPANISH_LA_LIGA_PATH}>La Liga</a><span>/</span>
+  <span aria-current="page">{fixture}</span>
+</nav>
+
+<article class="es-tip-page">
+  <header class="es-tip-hero">
+    <div class="es-tip-hero__meta">
+      <span>La Liga</span>
+      {published && <span>Publicado el {published}</span>}
+    </div>
+    <div class="es-tip-hero__fixture">
+      <strong>{homeTeam}</strong>
+      <span>CONTRA</span>
+      <strong>{awayTeam}</strong>
+    </div>
+    <h1>{fixture}: pronóstico y cuotas</h1>
+    {kickoff && <p class="es-tip-hero__kickoff">Inicio: {kickoff} (hora peninsular española)</p>}
+
+    <div class="es-market" aria-label="Mercado de resultado final">
+      <div class:list={{ active: activePick === "H" }}><span>1</span><small>{homeTeam}</small></div>
+      <div class:list={{ active: activePick === "D" }}><span>X</span><small>Empate</small></div>
+      <div class:list={{ active: activePick === "A" }}><span>2</span><small>{awayTeam}</small></div>
+    </div>
+  </header>
+
+  <section class="es-pick" aria-labelledby="seleccion-heading">
+    <div>
+      <p class="eyebrow">Selección de Oddstips</p>
+      <h2 id="seleccion-heading">{pick || "Consulta el análisis del partido"}</h2>
+      <p>Este pronóstico editorial se publica con fines informativos y de entretenimiento. Oddstips no realiza esta apuesta y no garantiza ningún resultado.</p>
+    </div>
+    {summary.odds && (
+      <div class="es-pick__odds">
+        <span>Cuota Bet365 publicada</span>
+        <strong>{summary.odds}</strong>
+      </div>
+    )}
+  </section>
+
+  <div class="es-tip-layout">
+    <div class="es-tip-main">
+      <section class="es-panel" aria-labelledby="analisis-heading">
+        <p class="eyebrow">Análisis del partido</p>
+        <h2 id="analisis-heading">Por qué valoramos esta selección</h2>
+        <p>Oddstips ha revisado el contexto disponible para {fixture}, incluyendo señales estadísticas del encuentro, el perfil previsto del partido y el precio ofrecido en el momento de publicar el pronóstico.</p>
+        {summary.value ? (
+          <p>Oddstips considera que esta selección ofrece buen valor a la cuota publicada. Es una valoración editorial de la relación entre la probabilidad estimada y el precio disponible: no significa que la apuesta vaya a ganar ni que vaya a producir beneficios.</p>
+        ) : (
+          <p>Las cuotas pueden cambiar hasta el inicio. Comprueba siempre el mercado, la selección y las condiciones directamente con el operador.</p>
+        )}
+      </section>
+
+      {signals.length > 0 && (
+        <section class="es-panel" aria-labelledby="senales-heading">
+          <p class="eyebrow">Señales del modelo</p>
+          <h2 id="senales-heading">Cómo puede desarrollarse el partido</h2>
+          <ul class="signal-grid">
+            {signals.map((signal) => (
+              <li class={`is-${intensityOf(signal.value)}`}>
+                <span>{signal.label}</span>
+                <strong>{signal.value}</strong>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {summary.odds && (
+        <section class="es-panel es-value" aria-labelledby="valor-heading">
+          <p class="eyebrow">Cuota y valor editorial</p>
+          <h2 id="valor-heading">{pick || "Selección publicada"} a cuota {summary.odds}</h2>
+          <p>La valoración corresponde únicamente a la cuota disponible al publicar el pronóstico. Las cuotas cambian y una selección considerada de buen valor puede perder. Oddstips no apuesta estas selecciones ni publica este contenido como prueba de rentabilidad.</p>
+          <a href="/es/go/bet365/" rel="sponsored nofollow" data-affiliate-location="es_tip_main">Visitar Bet365 <span aria-hidden="true">&rarr;</span></a>
+        </section>
+      )}
+
+      <section class="es-panel" aria-labelledby="faq-heading">
+        <h2 id="faq-heading">Preguntas frecuentes</h2>
+        <details open>
+          <summary>¿Cuál es el pronóstico para {fixture}?</summary>
+          <p>{pick ? `La selección publicada por Oddstips es ${pick}${summary.odds ? ` a cuota ${summary.odds}` : ""}.` : "Consulta la selección y las señales del modelo que aparecen en esta página."} Las cuotas pueden cambiar.</p>
+        </details>
+        <details>
+          <summary>¿A qué hora empieza el partido?</summary>
+          <p>{kickoff ? `El horario previsto es ${kickoff}, hora peninsular española.` : "Comprueba el horario definitivo con la competición antes del inicio."}</p>
+        </details>
+        <details>
+          <summary>¿Está garantizado este pronóstico?</summary>
+          <p>No. Todo pronóstico puede fallar. El fútbol incluye incertidumbre, lesiones, rotaciones, expulsiones y otros acontecimientos que pueden cambiar el resultado.</p>
+        </details>
+      </section>
+
+      <div class="es-responsible">
+        <strong>+18. Si juegas, juega con responsabilidad.</strong>
+        <p>No persigas pérdidas, no pidas dinero prestado para apostar y no consideres las apuestas una fuente de ingresos. Consulta la <a href="/es/juego-seguro/">guía de juego seguro</a>.</p>
+      </div>
+    </div>
+
+    <aside class="es-tip-sidebar">
+      <SpanishBet365Offer compact location="es_tip_sidebar" />
+      <div class="es-quick-links">
+        <h2>Más información</h2>
+        <a href={SPANISH_LA_LIGA_PATH}>Todos los pronósticos de La Liga</a>
+        <a href="/es/metodologia-pronosticos/">Cómo elaboramos los pronósticos</a>
+        <a href="/es/divulgacion-afiliados/">Relación comercial con Bet365</a>
+      </div>
+    </aside>
+  </div>
+</article>
+
+<style>
+  .breadcrumbs { color: var(--ot-muted); font-size: 0.82rem; margin-bottom: 1rem; }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs span { margin: 0 0.35rem; }
+  .es-tip-page { display: grid; gap: 1.25rem; }
+  .es-tip-hero {
+    background: linear-gradient(135deg, #172f59, #174e83);
+    border-radius: var(--ot-radius);
+    color: #fff;
+    padding: clamp(1.4rem, 4vw, 2.2rem);
+  }
+  .es-tip-hero__meta { color: #d4e4f5; display: flex; font-size: 0.75rem; gap: 1rem; justify-content: space-between; }
+  .es-tip-hero__fixture { align-items: center; display: grid; gap: 0.75rem; grid-template-columns: 1fr auto 1fr; margin: 1.5rem 0; text-align: center; }
+  .es-tip-hero__fixture strong { color: #fff; font-size: clamp(1.1rem, 3vw, 1.5rem); }
+  .es-tip-hero__fixture span { color: var(--ot-gold); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.12em; }
+  .es-tip-hero h1 { color: #fff; font-size: clamp(1.55rem, 4vw, 2.3rem); margin-bottom: 0.45rem; text-align: center; }
+  .es-tip-hero__kickoff { color: #d4e4f5; margin: 0 0 1.25rem; text-align: center; }
+  .es-market { border: 1px solid rgba(255,255,255,.2); border-radius: 8px; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 auto; max-width: 650px; overflow: hidden; }
+  .es-market > div { align-items: center; display: flex; flex-direction: column; padding: 0.75rem; }
+  .es-market > div + div { border-left: 1px solid rgba(255,255,255,.2); }
+  .es-market span { font-size: 1.15rem; font-weight: 900; }
+  .es-market small { color: #d4e4f5; }
+  .es-market .active { background: var(--ot-gold); color: var(--ot-ink); }
+  .es-market .active small { color: var(--ot-ink); }
+  .es-pick { align-items: center; background: #fff; border: 1px solid var(--ot-border); border-left: 5px solid var(--ot-brand-orange); border-radius: var(--ot-radius); display: grid; gap: 1rem; grid-template-columns: 1fr auto; padding: 1.25rem; }
+  .es-pick h2 { margin: 0 0 .4rem; }
+  .es-pick p { color: var(--ot-text-2); margin: 0; }
+  .es-pick__odds { background: #fff5ed; border-radius: 8px; display: flex; flex-direction: column; min-width: 145px; padding: .75rem 1rem; text-align: center; }
+  .es-pick__odds span { color: var(--ot-muted); font-size: .7rem; }
+  .es-pick__odds strong { color: var(--ot-brand-orange); font-size: 1.4rem; }
+  .es-tip-layout { align-items: start; display: grid; gap: 1.25rem; grid-template-columns: minmax(0,1fr) 320px; }
+  .es-tip-main { display: grid; gap: 1.25rem; }
+  .es-panel, .es-quick-links { background: #fff; border: 1px solid var(--ot-border); border-radius: var(--ot-radius); box-shadow: var(--ot-shadow-sm); padding: 1.5rem; }
+  .es-panel h2 { font-size: 1.25rem; }
+  .es-panel p { color: var(--ot-text-2); line-height: 1.7; }
+  .signal-grid { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); list-style: none; margin: 0; padding: 0; }
+  .signal-grid li { background: var(--ot-surface-2); border-left: 4px solid var(--ot-brand-blue-soft); border-radius: 6px; display: flex; flex-direction: column; padding: .7rem .8rem; }
+  .signal-grid li.is-high { border-left-color: var(--ot-brand-orange); }
+  .signal-grid span { color: var(--ot-muted); font-size: .68rem; text-transform: uppercase; }
+  .signal-grid strong { font-size: .92rem; }
+  .es-value { border-top: 4px solid var(--ot-brand-orange); }
+  .es-value a { background: var(--ot-brand-orange); border-radius: 999px; color: #fff; display: inline-flex; font-weight: 900; gap: .4rem; padding: .75rem 1.2rem; text-decoration: none; }
+  details { background: var(--ot-surface-2); border: 1px solid var(--ot-border); border-radius: 6px; margin-top: .6rem; padding: .85rem 1rem; }
+  summary { cursor: pointer; font-weight: 800; }
+  details p { margin-bottom: 0; }
+  .es-responsible { background: #fff7ed; border: 1px solid #fbd9a8; border-radius: 8px; color: #75420b; padding: 1rem; }
+  .es-responsible p { margin: .35rem 0 0; }
+  .es-tip-sidebar { display: grid; gap: 1rem; position: sticky; top: 5rem; }
+  .es-quick-links h2 { font-size: 1rem; }
+  .es-quick-links a { border-top: 1px solid var(--ot-border); color: var(--ot-brand-blue); display: block; font-weight: 700; padding: .55rem 0; text-decoration: none; }
+  @media (max-width: 880px) { .es-tip-layout { grid-template-columns: 1fr; } .es-tip-sidebar { position: static; } }
+  @media (max-width: 560px) { .es-pick { grid-template-columns: 1fr; } .es-tip-hero__meta { align-items: start; flex-direction: column; gap: .25rem; } }
+</style>

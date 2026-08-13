@@ -8,6 +8,12 @@ type Props = {
   canonical?: string;
   seo?: SeoFields;
   noindex?: boolean;
+  locale?: "en-GB" | "es-ES";
+  alternates?: Array<{
+    hreflang: string;
+    href: string;
+  }>;
+  xDefault?: string;
 };
 
 // Default to indexable for go-live. Pages can opt into noindex either by:
@@ -15,7 +21,16 @@ type Props = {
 //     which also set their own robots meta directly), or
 //   - Yoast marking the underlying post/page/category as noindex (resolved by
 //     the snapshot plugin into seo.noindex).
-const { title, description, canonical, seo, noindex = false } = Astro.props;
+const {
+  title,
+  description,
+  canonical,
+  seo,
+  noindex = false,
+  locale = "en-GB",
+  alternates = [],
+  xDefault,
+} = Astro.props;
 const pageTitle = seo?.title || title || "Oddstips";
 const pageDescription = seo?.metaDesc || description;
 
@@ -41,7 +56,12 @@ const ogImage = rewriteCmsLink(seo?.opengraphImage?.sourceUrl);
 <title>{pageTitle}</title>
 {pageDescription && <meta name="description" content={pageDescription} />}
 {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+{alternates.map((alternate) => (
+  <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+))}
+{xDefault && <link rel="alternate" hreflang="x-default" href={xDefault} />}
 {isNoindex && <meta name="robots" content="noindex, follow" />}
+<meta property="og:locale" content={locale.replace("-", "_")} />
 <meta property="og:title" content={seo?.opengraphTitle || pageTitle} />
 {(seo?.opengraphDescription || pageDescription) && (
   <meta property="og:description" content={seo?.opengraphDescription || pageDescription} />

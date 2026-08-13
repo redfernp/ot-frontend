@@ -1,0 +1,70 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SpanishBet365Offer from "@/components/SpanishBet365Offer.astro";
+import SpanishTipList from "@/components/SpanishTipList.astro";
+import { getCategory } from "@/lib/graphql";
+import {
+  absoluteOddstipsUrl,
+  ENGLISH_LA_LIGA_PATH,
+  LA_LIGA_SOURCE_SLUG,
+  spanishPagesNoindex,
+  SPANISH_LA_LIGA_PATH,
+} from "@/lib/spanish";
+
+const category = await getCategory(LA_LIGA_SOURCE_SLUG, 1000).catch(() => null);
+const posts = category?.posts?.nodes ?? [];
+---
+
+<BaseLayout
+  title="Pronósticos de La Liga: partidos, análisis y cuotas | Oddstips"
+  description="Consulta los próximos pronósticos de La Liga en español, con selección, horario peninsular, análisis de datos y cuotas Bet365 publicadas."
+  canonical={absoluteOddstipsUrl(SPANISH_LA_LIGA_PATH)}
+  locale="es-ES"
+  noindex={spanishPagesNoindex}
+  alternates={[
+    { hreflang: "es-ES", href: absoluteOddstipsUrl(SPANISH_LA_LIGA_PATH) },
+    { hreflang: "en-GB", href: absoluteOddstipsUrl(ENGLISH_LA_LIGA_PATH) },
+  ]}
+  xDefault={absoluteOddstipsUrl(ENGLISH_LA_LIGA_PATH)}
+>
+  <nav class="breadcrumbs"><a href="/es/">Inicio</a><span>/</span><a href="/es/futbol/">Fútbol</a><span>/</span><span>La Liga</span></nav>
+  <section class="es-liga-hero">
+    <p class="eyebrow">Fútbol español</p>
+    <h1>Pronósticos de La Liga</h1>
+    <p>Analizamos los próximos partidos de la máxima categoría española mediante señales de forma, contexto del encuentro y cuotas disponibles. Las selecciones son informativas y no garantizan beneficios.</p>
+  </section>
+
+  <div class="es-liga-layout">
+    <div>
+      <SpanishTipList posts={posts} heading="Próximos partidos de La Liga" />
+      <section class="es-liga-copy">
+        <h2>Cómo analizamos La Liga</h2>
+        <p>La Liga reúne equipos con estilos muy distintos: posesión prolongada, presión alta, bloque bajo y transiciones rápidas. Por eso revisamos el contexto de cada partido en lugar de basarnos únicamente en la clasificación.</p>
+        <ul>
+          <li>Rendimiento como local y visitante.</li>
+          <li>Tendencias de goles esperados y ocasiones.</li>
+          <li>Patrones de córners, tarjetas y ritmo del partido.</li>
+          <li>Diferencia entre el contexto estadístico y la cuota publicada.</li>
+        </ul>
+        <h2>Antes de utilizar un pronóstico</h2>
+        <p>Comprueba el horario, las noticias de los equipos, la selección exacta y la cuota vigente. Apuesta solo una cantidad asumible y nunca persigas pérdidas. Todo pronóstico puede fallar.</p>
+      </section>
+    </div>
+    <SpanishBet365Offer compact location="es_laliga" />
+  </div>
+</BaseLayout>
+
+<style>
+  .breadcrumbs { color: var(--ot-muted); font-size: .82rem; margin-bottom: 1rem; }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs span { margin-left: .4rem; }
+  .es-liga-hero { background: linear-gradient(135deg,#162f59,#1e73be); border-radius: var(--ot-radius); color:#fff; padding: clamp(1.7rem,4vw,2.7rem); }
+  .es-liga-hero .eyebrow { color:#d8ecff; }
+  .es-liga-hero h1 { color:#fff; }
+  .es-liga-hero p:not(.eyebrow) { color:#d8ecff; line-height:1.7; max-width:70ch; }
+  .es-liga-layout { align-items:start; display:grid; gap:1.25rem; grid-template-columns:minmax(0,1fr) 330px; margin-top:1.5rem; }
+  .es-liga-layout > div { display:grid; gap:1.25rem; }
+  .es-liga-copy { background:#fff; border:1px solid var(--ot-border); border-radius:var(--ot-radius); padding:1.5rem; }
+  .es-liga-copy p, .es-liga-copy li { color:var(--ot-text-2); line-height:1.7; }
+  @media (max-width:880px) { .es-liga-layout { grid-template-columns:1fr; } }
+</style>

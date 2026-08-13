@@ -1,0 +1,36 @@
+---
+import { spanishBet365Offer } from "@/lib/spanish";
+
+export const prerender = true;
+const destination = spanishBet365Offer.destination;
+---
+
+<!doctype html>
+<html lang="es-ES">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta http-equiv="refresh" content={`1;url=${destination}`} />
+    <link rel="canonical" href={destination} />
+    <title>Redirigiendo a Bet365 | Oddstips</title>
+    <style>
+      body { align-items:center; background:#f5f7fb; color:#101828; display:flex; font-family:Inter,system-ui,sans-serif; justify-content:center; margin:0; min-height:100vh; padding:2rem; text-align:center; }
+      main { max-width:34rem; }
+      h1 { color:#1e73be; font-size:1.3rem; }
+      p { color:#5d697a; }
+      a { color:#f56300; font-weight:800; }
+      small { display:block; margin-top:1rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Redirigiendo a Bet365…</h1>
+      <p>Si no sales automáticamente de Oddstips, <a href={destination} rel="sponsored nofollow noopener">visita Bet365</a>.</p>
+      <small>+18. Si juegas, juega con responsabilidad.</small>
+    </main>
+    <script is:inline define:vars={{ destination }}>
+      window.setTimeout(function () { window.location.replace(destination); }, 250);
+    </script>
+  </body>
+</html>
