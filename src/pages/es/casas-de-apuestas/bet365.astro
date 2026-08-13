@@ -5,11 +5,13 @@ import {
   absoluteOddstipsUrl,
   spanishPagesNoindex,
 } from "@/lib/spanish";
+
+const updatedDate = "13 de agosto de 2026";
 ---
 
 <BaseLayout
-  title="Bet365 España: oferta para nuevos clientes y análisis | Oddstips"
-  description="Información sobre Bet365 España, su oferta de hasta 200€ en créditos de apuesta, condiciones, licencia y herramientas de juego seguro."
+  title="bet365 opiniones 2026: análisis de Bet365 España | Oddstips"
+  description="Opiniones y análisis independiente de Bet365 España: oferta de hasta 200€ en créditos, licencia DGOJ, apuestas, pagos, retiradas y juego seguro."
   canonical={absoluteOddstipsUrl("/es/casas-de-apuestas/bet365/")}
   locale="es-ES"
   noindex={spanishPagesNoindex}
@@ -19,46 +21,213 @@ import {
   ]}
   xDefault={absoluteOddstipsUrl("/reviews/bet365/")}
 >
-  <nav class="breadcrumbs"><a href="/es/">Inicio</a><span>/</span><span>Casas de apuestas</span><span>/</span><span>Bet365</span></nav>
-  <section class="bookie-hero">
-    <div>
-      <p class="eyebrow">Publicidad · Socio comercial</p>
-      <h1>Bet365 España</h1>
-      <p>Resumen factual de la oferta facilitada para nuevos clientes, el acceso mediante nuestro enlace de afiliado y los aspectos que deben comprobarse antes de registrarse.</p>
+  <nav class="breadcrumbs" aria-label="Migas de pan">
+    <a href="/es/">Inicio</a><span>/</span><span>Casas de apuestas</span><span>/</span><span>Bet365</span>
+  </nav>
+
+  <header class="bookie-hero">
+    <div class="bookie-hero__copy">
+      <p class="eyebrow">Publicidad · Análisis independiente</p>
+      <h1>bet365 opiniones 2026: análisis de Bet365 España</h1>
+      <p class="bookie-hero__lede">Bet365 combina una oferta deportiva amplia con una plataforma especialmente orientada a las apuestas en directo. Su promoción para nuevos clientes puede alcanzar 200€ en créditos de apuesta, pero no es dinero retirable y exige completar apuestas válidas dentro de unos plazos concretos.</p>
+      <p class="bookie-hero__meta">Revisado el {updatedDate} · Solo para mayores de 18 años</p>
     </div>
-    <span class="bookie-hero__mark">bet365</span>
-  </section>
+    <div class="bookie-hero__brand" aria-label="Bet365">
+      <span>bet</span><strong>365</strong>
+    </div>
+  </header>
 
   <div class="bookie-layout">
-    <div class="bookie-main">
-      <SpanishBet365Offer location="es_bet365_review" />
-
-      <section class="bookie-panel">
-        <h2>Resumen</h2>
-        <p>Bet365 ofrece apuestas deportivas y otros productos de juego a clientes elegibles en España. La DGOJ publica dominios españoles de Bet365 dentro de su relación de operadores autorizados y señala que el operador cuenta con autorización para desarrollar actividades publicitarias.</p>
-        <p>La disponibilidad de una promoción depende de la residencia, la elegibilidad, la fecha de alta y las condiciones vigentes. Lee la información completa en Bet365 antes de ingresar dinero.</p>
+    <article class="bookie-main">
+      <section class="verdict" aria-labelledby="veredicto-title">
+        <div class="verdict__lead">
+          <p class="section-kicker">Veredicto de Oddstips</p>
+          <h2 id="veredicto-title">Una plataforma completa, con una oferta que hay que leer bien</h2>
+          <p>Bet365 encaja mejor con quien valora una gran agenda deportiva, mercados durante el partido y herramientas integradas en el cupón. El principal punto de atención es la promoción: el titular es atractivo, pero los créditos solo se liberan después de cumplir los requisitos y caducan siete días después de abonarse.</p>
+          <p>Este es un análisis documental, no un relato de apuestas personales. Oddstips no ha usado una cuenta para apostar, probar retiradas ni medir beneficios. Hemos contrastado la oferta, la licencia, los pagos y las herramientas de control con las páginas oficiales de Bet365 España y la DGOJ.</p>
+        </div>
+        <dl class="fact-grid">
+          <div><dt>Situación en España</dt><dd>Operador autorizado por la DGOJ</dd></div>
+          <div><dt>Oferta publicada</dt><dd>100% hasta 200€ en créditos</dd></div>
+          <div><dt>Ingreso mínimo de la oferta</dt><dd>5€</dd></div>
+          <div><dt>Relación con Oddstips</dt><dd>Enlace de afiliado publicitario</dd></div>
+        </dl>
       </section>
 
-      <section class="bookie-panel">
-        <h2>Puntos que debes comprobar</h2>
+      <section class="pros-cons" aria-label="Ventajas y desventajas de Bet365">
+        <div class="pros-cons__card pros-cons__card--pros">
+          <h2>Lo mejor</h2>
+          <ul>
+            <li>Dominio español y licencias de apuestas publicados por la DGOJ.</li>
+            <li>Buena profundidad para fútbol, tenis, baloncesto y apuestas en directo.</li>
+            <li>Funciones como Crear apuesta, cierre de apuesta cuando está disponible y seguimiento en vivo.</li>
+            <li>Ingreso mínimo de 5€ para optar a la promoción de bienvenida.</li>
+            <li>Límites, alertas de actividad, pausas y autoexclusión.</li>
+          </ul>
+        </div>
+        <div class="pros-cons__card pros-cons__card--cons">
+          <h2>Lo que debes valorar</h2>
+          <ul>
+            <li>Los créditos de apuesta no se pueden retirar como efectivo.</li>
+            <li>Hay requisitos de apuestas válidas, cuota mínima, plazos y exclusiones.</li>
+            <li>El importe apostado con créditos no se incluye en las ganancias.</li>
+            <li>La cuenta debe estar completamente verificada antes de retirar.</li>
+            <li>El streaming, el cierre y algunas funciones no están disponibles en todos los eventos.</li>
+          </ul>
+        </div>
+      </section>
+
+      <SpanishBet365Offer location="es_bet365_review_top" />
+
+      <section class="bookie-panel" id="oferta">
+        <p class="section-kicker">Promoción para nuevos clientes</p>
+        <h2>Cómo funciona la oferta de hasta 200€ en créditos de apuesta</h2>
+        <p>Bet365 publica para nuevos clientes residentes en España una igualación del 100% de un ingreso válido, desde 5€ y hasta un máximo de 200€, en forma de créditos de apuesta. No recibes el crédito simplemente por ingresar: primero debes solicitar la oferta y completar apuestas válidas con el dinero depositado.</p>
+
+        <ol class="steps">
+          <li><strong>Abre una cuenta y realiza un ingreso válido.</strong><span>El mínimo es de 5€. El ingreso que cuenta es el mayor realizado durante los siete días anteriores a solicitar la oferta, con un máximo computable de 200€.</span></li>
+          <li><strong>Solicita la promoción.</strong><span>Debes hacerlo dentro de los 30 días posteriores al registro.</span></li>
+          <li><strong>Completa apuestas válidas por el valor del ingreso.</strong><span>Las apuestas deben incluir al menos una selección a cuota 1.50 o superior y quedar determinadas dentro de los 30 días posteriores a solicitar la oferta.</span></li>
+          <li><strong>Recibe y utiliza los créditos.</strong><span>Los créditos no son retirables y caducan siete días después de abonarse. Si una apuesta con créditos gana, el saldo retirable no incluye el importe del crédito apostado.</span></li>
+        </ol>
+
+        <div class="plain-example">
+          <h3>Ejemplo sencillo</h3>
+          <p>Si ingresas 20€ y cumples los requisitos con 20€ en apuestas válidas, puedes recibir 20€ en créditos. Si después apuestas 10€ de esos créditos a cuota 3.00 y ganas, el retorno no incluye los 10€ de crédito utilizados como importe de la apuesta. Comprueba siempre el cálculo y las exclusiones en las condiciones vigentes del operador.</p>
+        </div>
+
+        <h3>Condiciones que no conviene pasar por alto</h3>
         <ul>
-          <li>Que la oferta siga disponible para nuevos clientes residentes en España.</li>
-          <li>El ingreso mínimo y el importe máximo que puede convertirse en créditos.</li>
-          <li>Las apuestas válidas necesarias para liberar los créditos y sus plazos.</li>
-          <li>Las cuotas mínimas, exclusiones de mercados y métodos de pago admitidos.</li>
-          <li>La caducidad de los créditos y que su importe no se incluye en las ganancias.</li>
+          <li>Solo está disponible para clientes nuevos que cumplan los criterios de residencia y elegibilidad.</li>
+          <li>Las apuestas cerradas, anuladas, gratuitas, con determinadas cuotas aumentadas y otros productos excluidos no cuentan para liberar los créditos.</li>
+          <li>Solo cuenta la apuesta acumulativa más alta realizada sobre una misma combinación de mercado y encuentro.</li>
+          <li>Los métodos de ingreso o productos admitidos pueden estar sujetos a exclusiones adicionales.</li>
+          <li>La oferta puede cambiar; la versión de Bet365 es siempre la que prevalece.</li>
         </ul>
+        <p class="source-note">Fuente comprobada: <a href="https://www.bet365.es/promos/es-es/home/open-account-global-offer" rel="nofollow noopener" target="_blank">condiciones oficiales de la oferta de nuevo cliente de Bet365 España</a>.</p>
       </section>
 
-      <section class="bookie-panel">
-        <h2>Juego seguro</h2>
-        <p>Bet365 ofrece límites, pausas y herramientas de autoexclusión. Si necesitas dejar de jugar en operadores regulados en España, consulta el RGIAJ de la DGOJ. Más información en nuestra página de <a href="/es/juego-seguro/">juego seguro</a>.</p>
+      <section class="bookie-panel" id="legalidad">
+        <p class="section-kicker">Licencia y seguridad</p>
+        <h2>¿Es Bet365 legal y fiable en España?</h2>
+        <p>Sí, Bet365 aparece en el registro público de la Dirección General de Ordenación del Juego. La actividad de apuestas se vincula a <strong>Hillside New Media Malta, PLC</strong>, que figura con licencia general de apuestas y licencias singulares para apuestas deportivas, hípicas y otras apuestas de contrapartida. El registro identifica <strong>www.bet365.es</strong> como dominio autorizado y confirma autorización para realizar actividades publicitarias.</p>
+        <p>Los productos de casino y otros juegos aparecen además vinculados en el registro a <strong>Hillside España Leisure, S.A.</strong>. Esta distinción importa: una reseña responsable no debería limitarse a decir que una marca “es segura”, sino indicar qué entidades y actividades aparecen autorizadas por el regulador español.</p>
+
+        <div class="licence-box">
+          <div><span>Operador de apuestas</span><strong>Hillside New Media Malta, PLC</strong></div>
+          <div><span>Regulador</span><strong>Dirección General de Ordenación del Juego</strong></div>
+          <div><span>Dominio publicado</span><strong>www.bet365.es</strong></div>
+          <div><span>Licencias</span><strong>General de apuestas y singulares de contrapartida</strong></div>
+        </div>
+
+        <p>Que un operador tenga licencia no convierte ninguna apuesta en segura ni garantiza beneficios. La licencia regula al operador y sus sistemas; el resultado de una apuesta sigue siendo incierto.</p>
+        <p class="source-note">Consulta directa: <a href="https://www.ordenacionjuego.es/operadores-juego/operadores-licencia/operadores/hillside-new-media-malta-plc" rel="nofollow noopener" target="_blank">Hillside New Media Malta en la DGOJ</a> y <a href="https://www.ordenacionjuego.es/operadores-juego/operadores-licencia/operadores/hillside-espana-leisure-sa" rel="nofollow noopener" target="_blank">Hillside España Leisure en la DGOJ</a>.</p>
       </section>
-    </div>
-    <aside class="bookie-aside">
-      <div><strong>+18</strong><span>Solo para personas adultas</span></div>
-      <div><strong>DGOJ</strong><span>Comprueba la autorización vigente</span></div>
-      <div><strong>Afiliado</strong><span>Oddstips puede recibir comisión</span></div>
+
+      <section class="bookie-panel" id="apuestas">
+        <p class="section-kicker">Producto deportivo</p>
+        <h2>Qué ofrece Bet365 para apuestas deportivas</h2>
+        <p>La principal fortaleza de Bet365 no es únicamente la cantidad de deportes, sino la combinación de mercados anticipados y en directo dentro de una misma interfaz. En fútbol suele haber mercados de resultado, goles, hándicaps, jugadores y combinaciones; tenis y baloncesto también ocupan un lugar destacado en la navegación.</p>
+        <div class="feature-grid">
+          <div><h3>Apuestas en directo</h3><p>Cuotas y mercados que se actualizan durante el evento, junto con marcador, cronología y datos disponibles. Las cuotas cambian rápidamente y una selección puede suspenderse en cualquier momento.</p></div>
+          <div><h3>Crear apuesta</h3><p>Permite combinar selecciones compatibles de un mismo encuentro cuando el mercado lo admite. Añadir selecciones suele aumentar tanto la cuota como la probabilidad de perder toda la apuesta.</p></div>
+          <div><h3>Cierre de apuesta</h3><p>Puede permitir cerrar una apuesta antes del resultado final. No está garantizado para todos los eventos, mercados o momentos, y el importe ofrecido puede cambiar.</p></div>
+          <div><h3>Imágenes y seguimiento</h3><p>Algunos eventos incluyen retransmisión o visualización en directo sujeta a condiciones. No debe asumirse que todos los partidos estarán disponibles.</p></div>
+        </div>
+
+        <h3>Nuestra opinión sobre las cuotas</h3>
+        <p>No asignamos una nota fija a las cuotas porque cambian por partido, mercado y momento. La forma útil de valorar el precio es comparar exactamente la misma selección en varios operadores autorizados justo antes de apostar. Una cuota más alta ofrece un retorno potencial mayor, pero no hace que el pronóstico sea más probable ni elimina el riesgo.</p>
+        <p>Cuando Oddstips describe una selección como de “buen valor”, se trata de una valoración editorial entre probabilidad estimada y precio publicado. No es una garantía de acierto o rentabilidad, y Oddstips no realiza esas apuestas.</p>
+      </section>
+
+      <section class="bookie-panel" id="pagos">
+        <p class="section-kicker">Ingresos, retiradas y verificación</p>
+        <h2>Métodos de pago y retiradas en Bet365 España</h2>
+        <p>La ayuda oficial de Bet365 muestra opciones como tarjetas, transferencia bancaria, Apple Pay, Google Pay, Bizum, PayPal, Skrill, Neteller y paysafecard. La disponibilidad, los límites y el método de retirada dependen de la cuenta y del medio utilizado.</p>
+        <div class="payment-notes">
+          <div><strong>Ingresos</strong><span>Las tarjetas y varios monederos se muestran como instantáneos. Para tarjeta, el mínimo publicado es de 5€.</span></div>
+          <div><strong>Retiradas</strong><span>Bet365 intenta devolver los fondos al mismo método utilizado para ingresar siempre que sea posible.</span></div>
+          <div><strong>Verificación</strong><span>La cuenta debe estar completamente verificada antes de retirar fondos.</span></div>
+          <div><strong>Plazos</strong><span>El plazo publicado es el procesamiento de Bet365; el banco o proveedor puede añadir tiempo adicional.</span></div>
+        </div>
+        <p>La verificación de identidad no debe presentarse como un fallo particular de Bet365: es una parte normal de operar en un mercado regulado y de los controles contra fraude, suplantación y blanqueo de capitales. Para evitar retrasos, los datos de la cuenta y del método de pago deben coincidir con la documentación del titular.</p>
+        <p class="source-note">Información vigente: <a href="https://help.bet365.es/s/es-es/payments/deposit-methods" rel="nofollow noopener" target="_blank">métodos de ingreso</a>, <a href="https://help.bet365.es/s/es-es/payments/withdrawal-methods" rel="nofollow noopener" target="_blank">métodos de retirada</a> y <a href="https://help.bet365.es/s/es-es/payments/withdrawal-issues" rel="nofollow noopener" target="_blank">requisitos para retirar</a>.</p>
+      </section>
+
+      <section class="bookie-panel" id="juego-seguro">
+        <p class="section-kicker">Control de la actividad</p>
+        <h2>Herramientas de juego seguro</h2>
+        <p>Bet365 publica límites de ingreso predeterminados de 600€ en 24 horas, 1.500€ en siete días y 3.000€ en 31 días. El usuario puede reducirlos inmediatamente y también dispone de alertas de actividad, límites de sesión, periodos de descanso y autoexclusión.</p>
+        <p>Estos máximos legales no son un presupuesto recomendado. Un límite personal debería basarse en una cantidad cuya pérdida total no afecte al alquiler, facturas, ahorro o deudas. No persigas pérdidas, no pidas dinero prestado para apostar y no utilices las apuestas como fuente de ingresos.</p>
+        <p>La autoexclusión de Bet365 impide reabrir la cuenta durante el periodo elegido. Para una prohibición que afecte al juego online regulado en España, la DGOJ mantiene el Registro General de Interdicciones de Acceso al Juego (RGIAJ).</p>
+        <div class="safe-actions">
+          <a href="/es/juego-seguro/">Guía de juego seguro de Oddstips</a>
+          <a href="https://juegoresponsable.bet365.es/stay-in-control/limit-your-account" rel="nofollow noopener" target="_blank">Controles de Bet365</a>
+          <a href="https://www.ordenacionjuego.es/participantes-juego/juego-seguro/rgiaj" rel="nofollow noopener" target="_blank">Autoprohibición RGIAJ</a>
+        </div>
+      </section>
+
+      <section class="bookie-panel" id="metodologia">
+        <p class="section-kicker">Transparencia editorial</p>
+        <h2>Cómo hemos elaborado este análisis</h2>
+        <p>Revisamos las preguntas que dominan los resultados españoles para “bet365 opiniones”: legalidad, promoción, variedad deportiva, apuestas en directo, pagos, retiradas, verificación y juego responsable. Esos resultados nos sirvieron para identificar qué necesita resolver la página, no como fuente para copiar afirmaciones o puntuaciones.</p>
+        <p>Los datos verificables de esta reseña proceden de Bet365 España y del registro público de la DGOJ. No reproducimos supuestas experiencias de depósito o retirada, no publicamos una tasa de ganancias y no recomendamos apostar para obtener ingresos. Si una condición cambia, prevalece siempre la información del operador.</p>
+        <p><strong>Divulgación:</strong> Oddstips mantiene una relación de afiliación con Bet365. Podemos recibir una comisión si visitas Bet365 mediante determinados enlaces y abres una cuenta o utilizas una oferta. Esto no cambia el precio para ti. La relación comercial no convierte una valoración editorial en garantía y no nos da acceso a tu cuenta.</p>
+      </section>
+
+      <section class="bookie-panel faq" id="preguntas">
+        <p class="section-kicker">Preguntas frecuentes</p>
+        <h2>Preguntas sobre Bet365 España</h2>
+        <details open>
+          <summary>¿Bet365 es legal en España?</summary>
+          <p>Sí. La DGOJ incluye a Hillside New Media Malta, PLC como titular de licencias de apuestas y publica www.bet365.es entre sus dominios autorizados.</p>
+        </details>
+        <details>
+          <summary>¿Cuál es la oferta de bienvenida de Bet365?</summary>
+          <p>Bet365 publica una igualación del 100% de un ingreso válido de 5€ o más, hasta 200€, en créditos de apuesta para clientes nuevos que cumplan las condiciones.</p>
+        </details>
+        <details>
+          <summary>¿Puedo retirar directamente los créditos de apuesta?</summary>
+          <p>No. Los créditos no son retirables. Las ganancias obtenidas con ellos pasan al saldo retirable, pero no incluyen el importe del crédito utilizado como apuesta.</p>
+        </details>
+        <details>
+          <summary>¿Qué cuota mínima se exige para liberar los créditos?</summary>
+          <p>Las apuestas válidas deben incluir al menos una selección a cuota 1.50 o superior. También se aplican exclusiones y límites de tiempo.</p>
+        </details>
+        <details>
+          <summary>¿Cuándo caducan los créditos?</summary>
+          <p>Las condiciones oficiales indican que caducan siete días después de abonarse al saldo de créditos de apuesta.</p>
+        </details>
+        <details>
+          <summary>¿Necesito verificar la cuenta para retirar?</summary>
+          <p>Sí. La ayuda de Bet365 indica que la cuenta debe estar completamente verificada antes de solicitar una retirada.</p>
+        </details>
+        <details>
+          <summary>¿Oddstips utiliza una cuenta de Bet365 para apostar sus pronósticos?</summary>
+          <p>No. Oddstips publica pronósticos con fines informativos y de entretenimiento, pero no apuesta esas selecciones ni las presenta como prueba de rentabilidad.</p>
+        </details>
+      </section>
+
+      <SpanishBet365Offer location="es_bet365_review_bottom" />
+    </article>
+
+    <aside class="bookie-aside" aria-label="Resumen de Bet365">
+      <p class="bookie-aside__label">Resumen rápido</p>
+      <h2>Bet365 España</h2>
+      <div class="aside-fact"><strong>+18</strong><span>Solo para personas adultas</span></div>
+      <div class="aside-fact"><strong>DGOJ</strong><span>Dominio y operador publicados en el registro</span></div>
+      <div class="aside-fact"><strong>Hasta 200€</strong><span>En créditos; se aplican condiciones</span></div>
+      <a class="aside-cta" href="/es/go/bet365/" rel="sponsored nofollow" data-affiliate-location="es_bet365_review_sidebar">Visitar Bet365 <span aria-hidden="true">→</span></a>
+      <p class="aside-disclosure">Publicidad. Oddstips puede recibir una comisión. Las ganancias no incluyen el importe de los créditos de apuesta.</p>
+      <nav class="aside-nav" aria-label="Contenido del análisis">
+        <a href="#oferta">Oferta</a>
+        <a href="#legalidad">Licencia</a>
+        <a href="#apuestas">Apuestas</a>
+        <a href="#pagos">Pagos</a>
+        <a href="#juego-seguro">Juego seguro</a>
+        <a href="#preguntas">Preguntas</a>
+      </nav>
+      <p class="aside-safe"><strong>Si juegas, juega con responsabilidad.</strong> Jugar sin control puede tener consecuencias perjudiciales a nivel psicosocial.</p>
     </aside>
   </div>
 </BaseLayout>
@@ -67,19 +236,73 @@ import {
   .breadcrumbs { color:var(--ot-muted); font-size:.82rem; margin-bottom:1rem; }
   .breadcrumbs a { color:var(--ot-brand-blue); text-decoration:none; }
   .breadcrumbs span { margin-left:.4rem; }
-  .bookie-hero { align-items:center; background:linear-gradient(135deg,#076f3c,#034e2c); border-radius:var(--ot-radius); color:#fff; display:flex; justify-content:space-between; padding:clamp(1.5rem,4vw,2.5rem); }
-  .bookie-hero .eyebrow { color:#dff7e9; }
-  .bookie-hero h1 { color:#fff; }
-  .bookie-hero p:not(.eyebrow) { color:#dff7e9; line-height:1.7; max-width:65ch; }
-  .bookie-hero__mark { background:#fff; border-radius:10px; color:#08783f; font-size:1.5rem; font-weight:900; padding:1rem 1.3rem; }
-  .bookie-layout { align-items:start; display:grid; gap:1.25rem; grid-template-columns:minmax(0,1fr) 280px; margin-top:1.25rem; }
-  .bookie-main { display:grid; gap:1.25rem; }
-  .bookie-panel, .bookie-aside { background:#fff; border:1px solid var(--ot-border); border-radius:var(--ot-radius); padding:1.5rem; }
-  .bookie-panel p, .bookie-panel li { color:var(--ot-text-2); line-height:1.7; }
-  .bookie-aside { display:grid; gap:1rem; position:sticky; top:5rem; }
-  .bookie-aside div { border-bottom:1px solid var(--ot-border); display:flex; flex-direction:column; padding-bottom:1rem; }
-  .bookie-aside div:last-child { border:0; padding:0; }
-  .bookie-aside strong { color:var(--ot-brand-blue); }
-  .bookie-aside span { color:var(--ot-muted); font-size:.82rem; }
-  @media (max-width:780px) { .bookie-layout { grid-template-columns:1fr; } .bookie-aside { position:static; } .bookie-hero__mark { display:none; } }
+  .bookie-hero { align-items:center; background:linear-gradient(135deg,#08783f 0%,#034e2c 68%,#073d29 100%); border-radius:var(--ot-radius); box-shadow:var(--ot-shadow-md); color:#fff; display:flex; gap:2rem; justify-content:space-between; overflow:hidden; padding:clamp(1.6rem,4vw,3rem); position:relative; }
+  .bookie-hero::after { background:rgba(255,255,255,.06); border-radius:50%; content:""; height:280px; position:absolute; right:-90px; top:-110px; width:280px; }
+  .bookie-hero__copy { position:relative; z-index:1; }
+  .bookie-hero .eyebrow { color:#dff7e9; font-size:.72rem; font-weight:900; letter-spacing:.09em; margin:0 0 .7rem; text-transform:uppercase; }
+  .bookie-hero h1 { color:#fff; font-size:clamp(2rem,5vw,3.5rem); line-height:1.05; margin:0; max-width:18ch; }
+  .bookie-hero__lede { color:#e5f5ec; font-size:1.05rem; line-height:1.7; margin:1rem 0 0; max-width:68ch; }
+  .bookie-hero__meta { color:#bfe5d1; font-size:.78rem; margin:.9rem 0 0; }
+  .bookie-hero__brand { align-items:baseline; background:#fff; border-radius:14px; box-shadow:0 18px 50px rgba(0,0,0,.18); display:flex; flex:0 0 auto; font-size:1.9rem; font-weight:900; padding:1.1rem 1.35rem; position:relative; z-index:1; }
+  .bookie-hero__brand span { color:#08783f; }
+  .bookie-hero__brand strong { color:#f5c400; }
+  .bookie-layout { align-items:start; display:grid; gap:1.35rem; grid-template-columns:minmax(0,1fr) 290px; margin-top:1.35rem; }
+  .bookie-main { display:grid; gap:1.35rem; min-width:0; }
+  .verdict, .bookie-panel, .bookie-aside, .pros-cons__card { background:#fff; border:1px solid var(--ot-border); border-radius:var(--ot-radius); padding:clamp(1.25rem,3vw,1.8rem); }
+  .verdict { border-top:4px solid #08783f; }
+  .verdict h2, .bookie-panel h2, .pros-cons h2 { margin-top:0; }
+  .verdict p, .bookie-panel p, .bookie-panel li, .pros-cons li { color:var(--ot-text-2); line-height:1.75; }
+  .section-kicker { color:#08783f !important; font-size:.7rem; font-weight:900; letter-spacing:.1em; margin:0 0 .45rem !important; text-transform:uppercase; }
+  .fact-grid { display:grid; gap:.7rem; grid-template-columns:repeat(2,minmax(0,1fr)); margin:1.3rem 0 0; }
+  .fact-grid div { background:#f4f8f6; border:1px solid #d8e9df; border-radius:10px; padding:.85rem; }
+  .fact-grid dt { color:var(--ot-muted); font-size:.72rem; font-weight:800; margin-bottom:.2rem; text-transform:uppercase; }
+  .fact-grid dd { color:var(--ot-text); font-size:.92rem; font-weight:800; margin:0; }
+  .pros-cons { display:grid; gap:1.35rem; grid-template-columns:1fr 1fr; }
+  .pros-cons__card { padding:1.4rem; }
+  .pros-cons__card h2 { font-size:1.2rem; }
+  .pros-cons__card ul { margin-bottom:0; padding-left:1.25rem; }
+  .pros-cons__card--pros { border-top:4px solid #168453; }
+  .pros-cons__card--cons { border-top:4px solid #d59b20; }
+  .bookie-panel h2 { font-size:clamp(1.45rem,3vw,2rem); }
+  .bookie-panel h3 { font-size:1.1rem; margin-top:1.5rem; }
+  .bookie-panel a { color:var(--ot-brand-blue); }
+  .steps { counter-reset:offer-step; display:grid; gap:.8rem; list-style:none; padding:0; }
+  .steps li { align-items:flex-start; background:#f7faf8; border:1px solid #dfece4; border-radius:10px; counter-increment:offer-step; display:grid; gap:.15rem .8rem; grid-template-columns:2rem 1fr; padding:1rem; }
+  .steps li::before { align-items:center; background:#08783f; border-radius:50%; color:#fff; content:counter(offer-step); display:flex; font-size:.82rem; font-weight:900; grid-row:1/3; height:2rem; justify-content:center; width:2rem; }
+  .steps strong, .steps span { grid-column:2; }
+  .steps span { color:var(--ot-text-2); }
+  .plain-example { background:#fff9e6; border:1px solid #efd98b; border-radius:10px; margin:1.2rem 0; padding:1rem 1.15rem; }
+  .plain-example h3 { margin:0 0 .4rem; }
+  .plain-example p { margin:0; }
+  .source-note { border-top:1px solid var(--ot-border); font-size:.78rem; margin-top:1.3rem; padding-top:1rem; }
+  .licence-box, .payment-notes { display:grid; gap:.7rem; grid-template-columns:repeat(2,minmax(0,1fr)); margin:1.2rem 0; }
+  .licence-box div, .payment-notes div { background:#f5f8fb; border:1px solid var(--ot-border); border-radius:10px; display:flex; flex-direction:column; gap:.25rem; padding:.9rem; }
+  .licence-box span, .payment-notes span { color:var(--ot-muted); font-size:.8rem; line-height:1.55; }
+  .licence-box strong, .payment-notes strong { color:var(--ot-text); }
+  .feature-grid { display:grid; gap:.8rem; grid-template-columns:repeat(2,minmax(0,1fr)); margin:1.2rem 0; }
+  .feature-grid div { border-left:3px solid #08783f; padding:.15rem 0 .15rem 1rem; }
+  .feature-grid h3 { margin:0 0 .3rem; }
+  .feature-grid p { font-size:.9rem; margin:0; }
+  .safe-actions { display:flex; flex-wrap:wrap; gap:.65rem; margin-top:1.1rem; }
+  .safe-actions a { background:#edf6f1; border:1px solid #cce4d6; border-radius:999px; color:#08683a; font-size:.82rem; font-weight:800; padding:.55rem .85rem; text-decoration:none; }
+  .faq details { border-top:1px solid var(--ot-border); padding:.85rem 0; }
+  .faq details:last-child { padding-bottom:0; }
+  .faq summary { color:var(--ot-text); cursor:pointer; font-weight:800; }
+  .faq details p { margin:.65rem 0 0; }
+  .bookie-aside { display:grid; gap:.85rem; position:sticky; top:5rem; }
+  .bookie-aside__label { color:#08783f; font-size:.68rem; font-weight:900; letter-spacing:.1em; margin:0; text-transform:uppercase; }
+  .bookie-aside h2 { font-size:1.4rem; margin:0; }
+  .aside-fact { border-bottom:1px solid var(--ot-border); display:flex; flex-direction:column; padding-bottom:.8rem; }
+  .aside-fact strong { color:#08783f; }
+  .aside-fact span { color:var(--ot-muted); font-size:.8rem; line-height:1.5; }
+  .aside-cta { align-items:center; background:#08783f; border-radius:999px; color:#fff; display:flex; font-weight:900; justify-content:center; padding:.78rem 1rem; text-decoration:none; }
+  .aside-cta:hover { background:#066737; }
+  .aside-disclosure, .aside-safe { color:var(--ot-muted); font-size:.69rem; line-height:1.5; margin:0; }
+  .aside-nav { border-top:1px solid var(--ot-border); display:grid; gap:.45rem; padding-top:.85rem; }
+  .aside-nav a { color:var(--ot-text-2); font-size:.82rem; font-weight:700; text-decoration:none; }
+  .aside-nav a:hover { color:#08783f; }
+  .aside-safe { background:#fff7e5; border-radius:8px; color:#775814; padding:.75rem; }
+  .aside-safe strong { display:block; }
+  @media (max-width:900px) { .bookie-layout { grid-template-columns:1fr; } .bookie-aside { position:static; } .aside-nav { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:680px) { .bookie-hero__brand { display:none; } .pros-cons, .fact-grid, .licence-box, .payment-notes, .feature-grid { grid-template-columns:1fr; } .aside-nav { grid-template-columns:repeat(2,1fr); } }
 </style>
