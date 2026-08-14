@@ -6,4 +6,7 @@ Allow: /
 Disallow: /go/
 Disallow: /es/go/
 
+# Temporary: keep the Spanish localisation out of search until Bet365 signs off.
+Disallow: /es/
+
 Sitemap: https://www.oddstips.co.uk/sitemap-index.xml
