@@ -112,7 +112,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       headline: "Bet \u00a310 Get \u00a350 in Free Bets",
       code: "No code",
       cta: "Claim Betfred offer",
-      terms: "New customers only. Register, deposit with Debit Card, and place first bet \u00a310+ at Evens (2.0)+ on Sports within 7 days to get \u00a330 in Sports Free Bets and \u00a320 in Bet Builder Free Bets within 24 hours of settlement. 7-day expiry. Eligibility and payment exclusions apply. Full T&Cs apply. 18+.",
+      terms: "New customers only. Register, deposit with a Debit Card, and place a first bet of \u00a310+ at Evens (2.0)+ on Sports, to be settled within 7 days, to get \u00a330 in Sports Free Bets and \u00a320 in Bet Builder Free Bets within 24 hours of settlement. 7-day expiry. Eligibility & payment exclusions apply. Full T&Cs apply.18+.",
       wagering: "1x qualifying bet",
       expiry: "7 days",
     },
