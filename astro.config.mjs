@@ -47,6 +47,63 @@ const emptyTombstonesJson = JSON.stringify({
 
 let tombstonesJson = emptyTombstonesJson;
 
+// Pages Functions count against the Workers request quota. The tombstone
+// function must not run for every static pageview, so each build replaces the
+// broad public/_routes.json fallback with compact month/sport patterns derived
+// from the tombstones packaged into that deployment.
+const TOMBSTONE_PATH_PATTERN =
+  /-(\d{2})-(\d{2})-(\d{4})-free-fixed-odds-tip-([a-z0-9-]+)-betting-prediction\/?$/i;
+const MAX_FUNCTION_ROUTE_RULES = 100;
+const MAX_FUNCTION_ROUTE_LENGTH = 100;
+
+function buildTombstoneRoutesJson(rawTombstonesJson) {
+  let parsed;
+  try {
+    parsed = JSON.parse(rawTombstonesJson);
+  } catch {
+    throw new Error("Cannot build Function routes from invalid tombstone JSON.");
+  }
+
+  const paths = Array.isArray(parsed.paths) ? parsed.paths : [];
+  if (paths.length === 0) {
+    return JSON.stringify(
+      { version: 1, include: ["/__tombstone-function-disabled__"], exclude: [] },
+      null,
+      2,
+    );
+  }
+
+  const include = new Set();
+  for (const path of paths) {
+    const match = String(path).match(TOMBSTONE_PATH_PATTERN);
+    if (!match) {
+      throw new Error(`Unsupported tombstone URL format: ${path}`);
+    }
+
+    const [, , month, year, sport] = match;
+    const rule =
+      `/*-*-${month}-${year}-free-fixed-odds-tip-${sport}-betting-prediction*`;
+    const spanishTranslatedRule =
+      `/es/pronosticos/*-pronostico-*-${month}-${year}*`;
+    const spanishFallbackRule =
+      `/es/pronosticos/*-*-${month}-${year}-free-fixed-odds-tip-${sport}-betting-prediction-pronostico*`;
+    for (const generatedRule of [rule, spanishTranslatedRule, spanishFallbackRule]) {
+      if (generatedRule.length > MAX_FUNCTION_ROUTE_LENGTH) {
+        throw new Error(
+          `Generated Function route exceeds 100 characters: ${generatedRule}`,
+        );
+      }
+      include.add(generatedRule);
+    }
+  }
+
+  if (include.size > MAX_FUNCTION_ROUTE_RULES) {
+    throw new Error(`Generated ${include.size} Function routes; Cloudflare permits 100.`);
+  }
+
+  return JSON.stringify({ version: 1, include: [...include], exclude: [] }, null, 2);
+}
+
 // Spanish routes stay out of search until the operator offer, production
 // compliance review, and SEO launch are signed off. Set the variable to true
 // only for the production launch; branch previews should leave it unset.
@@ -308,11 +365,17 @@ const tombstonePrefetchForFunctions = {
         const outDir = typeof dir === "string" ? dir : fileURLToPath(dir);
         const goneDir = join(outDir, "_gone");
         const tombstonesPath = join(goneDir, "oddstips-tombstones.json");
+        const routesPath = join(outDir, "_routes.json");
         await fs.mkdir(goneDir, { recursive: true });
         await fs.writeFile(tombstonesPath, tombstonesJson, "utf8");
+        const routesJson = buildTombstoneRoutesJson(tombstonesJson);
+        await fs.writeFile(routesPath, routesJson, "utf8");
         logger?.info?.(`[tombstones] Wrote tombstone JSON to ${tombstonesPath}.`);
+        logger?.info?.(`[tombstones] Wrote scoped Function routes to ${routesPath}.`);
       } catch (err) {
-        console.warn("[tombstones] Failed to write tombstone JSON:", err);
+        // Fail the build: silently falling back to public/_routes.json would
+        // reintroduce broad Function invocations and the daily quota problem.
+        throw new Error(`[tombstones] Failed to write deployment files: ${err}`);
       }
     },
   },

@@ -1,14 +1,13 @@
 {
   "version": 1,
-  "include": ["/*"],
-  "exclude": [
-    "/_astro/*",
-    "/_gone/*",
-    "/wp-content/*",
-    "/favicon.svg",
-    "/robots.txt",
-    "/sitemap*",
-    "/search-index.json",
-    "/manifest*"
-  ]
+  "include": [
+    "/*-free-fixed-odds-tip-football-betting-prediction*",
+    "/*-free-fixed-odds-tip-tennis-betting-prediction*",
+    "/*-free-fixed-odds-tip-basketball-betting-prediction*",
+    "/*-free-fixed-odds-tip-cricket-betting-prediction*",
+    "/*-free-fixed-odds-tip-darts-betting-prediction*",
+    "/*-free-fixed-odds-tip-snooker-betting-prediction*",
+    "/es/pronosticos/*"
+  ],
+  "exclude": []
 }
