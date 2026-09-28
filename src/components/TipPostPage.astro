@@ -168,7 +168,7 @@ const faqs = [
   {/* Mobile-only inline bookmaker offer card. Sits between the summary strip and the
       tipster's read section so visitors see the offer before scrolling into
       analysis. Hidden on desktop (the same card lives in .tip-sidebar). */}
-  <aside class="bookie-card bookie-card--inline" aria-label={`${bookie.brand} offer`}>
+  <aside class="bookie-card bookie-card--inline" aria-label={`${bookie.brand} offer`} style={`--brand-color:${bookie.color}`}>
     <span class="card-tag">#Ad &middot; New customers</span>
     <p class="card-title">{bookie.bonus.headline}</p>
     <a class="card-cta" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_inline_offer">Claim with {bookie.brand}</a>
@@ -275,7 +275,7 @@ const faqs = [
     </section>
 
     <aside class="tip-sidebar" aria-label="Tip sidebar">
-      <div class="bookie-card bookie-card--sidebar">
+      <div class="bookie-card bookie-card--sidebar" style={`--brand-color:${bookie.color}`}>
         <span class="card-tag">#Ad &middot; New customers</span>
         <p class="card-title">{bookie.bonus.headline}</p>
         <a class="card-cta" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_sidebar_offer">Claim with {bookie.brand}</a>
@@ -748,8 +748,10 @@ const faqs = [
   /* SIDEBAR */
   .tip-sidebar { display: grid; gap: 1rem; position: sticky; top: 5rem; }
 
+  /* Lead bookmaker's brand colour fading into site navy, matching the
+     bookmaker review hero. */
   .bookie-card {
-    background: linear-gradient(135deg, #027a3e 0%, #016a36 100%);
+    background: linear-gradient(135deg, var(--brand-color, var(--ot-ink-2)) 0%, var(--ot-ink) 100%);
     border-radius: var(--ot-radius);
     color: #fff;
     padding: 1.25rem;

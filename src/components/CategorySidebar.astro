@@ -35,7 +35,7 @@ const internationalLinks = menuToLinks(internationalMenu);
 ---
 
 <aside class="cat-sidebar" aria-label="League navigation">
-  <section class="sidebar-offer" aria-label={`${featuredBookmaker.brand} free bet offer`}>
+  <section class="sidebar-offer" aria-label={`${featuredBookmaker.brand} free bet offer`} style={`--brand-color:${featuredBookmaker.color}`}>
     <p class="offer-kicker">#Ad &middot; New customers</p>
     <h2>{featuredBookmaker.bonus.headline}</h2>
     <a class="offer-cta" href={featuredBookmaker.offerHref} rel="nofollow sponsored" data-affiliate-location="category_sidebar_offer">
@@ -116,7 +116,7 @@ const internationalLinks = menuToLinks(internationalMenu);
   }
 
   .sidebar-offer {
-    background: #047a35;
+    background: linear-gradient(135deg, var(--brand-color, var(--ot-ink-2)) 0%, var(--ot-ink) 100%);
     border-radius: var(--ot-radius);
     box-shadow: var(--ot-shadow-sm);
     color: #fff;
