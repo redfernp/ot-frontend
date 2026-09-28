@@ -13,7 +13,7 @@
 // ASCII-only slug suitable for use as a URL path component.
 //
 // Reproducing this in JS rather than fixing paul365 is the pragmatic choice
-// for now: the Bet365 feed names are out of our control, and the encoding
+// for now: odds-feed team names are out of our control, and the encoding
 // bug in WP's pipeline is hard to track down. Cleaning at the Astro layer
 // fixes the public URLs without touching the WordPress data.
 

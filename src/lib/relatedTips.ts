@@ -1,10 +1,10 @@
 import type { WpPost } from "@/lib/graphql";
 
 // Minimal structured body so summarizeTip() can extract pick + odds for the coupon row.
-// Real Paul365 posts include the full body; this just covers Best Bet + Bet365 Odds so
+// Real Paul365 posts include the full body; this just covers Best Bet + Odds so
 // the dev preview renders something realistic.
 function couponContent(pick: string, odds: string): string {
-  return `<h2>Best Bet</h2><p>OddsTips Top Value Bet: ${pick}</p><p>Bet365 Odds At Time Of Publication: ${odds}</p>`;
+  return `<h2>Best Bet</h2><p>OddsTips Top Value Bet: ${pick}</p><p>Odds At Time Of Publication: ${odds}</p>`;
 }
 
 // Placeholder Premier League fixtures for the same matchday as the Sunderland v Chelsea preview.

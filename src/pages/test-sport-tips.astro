@@ -2,7 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import CouponRow from "@/components/CouponRow.astro";
 import { getPost, type WpPost } from "@/lib/graphql";
-import { cleanOdds, extractTime, findFirstLink, splitTipBody, summarizeTip } from "@/lib/tips";
+import { cleanOdds, extractTime, findBookmakerLink, splitTipBody, summarizeTip } from "@/lib/tips";
 
 type SportSample = {
   label: string;
@@ -128,7 +128,7 @@ const samples: SportSample[] = sampleResults.map(({ sport, post, error }) => ({
 
 const panels = samples.map((sample) => {
   const summary = sample.post ? summarizeTip(sample.post) : null;
-  const bet365Url = findFirstLink(sample.post?.content, /bet365/i);
+  const bookmakerUrl = findBookmakerLink(sample.post?.content);
   const odds = cleanOdds(summary?.odds);
   const kickoff = extractTime(summary?.kickoff) || fallbackTime(sample.post?.date);
   const { lede } = splitTipBody(sample.post?.content || "");
@@ -154,8 +154,8 @@ const panels = samples.map((sample) => {
     flags.push("Missing kickoff");
   }
 
-  if (sample.post && !bet365Url) {
-    flags.push("Missing Bet365 link");
+  if (sample.post && !bookmakerUrl) {
+    flags.push("Missing bookmaker link");
   }
 
   if (sample.post && !sample.post.content) {
@@ -165,7 +165,7 @@ const panels = samples.map((sample) => {
   return {
     ...sample,
     summary,
-    bet365Url,
+    bookmakerUrl,
     odds,
     kickoff,
     lede,
@@ -256,8 +256,8 @@ const panels = samples.map((sample) => {
                 <dd>{panel.summary.couponPick || "None"}</dd>
               </div>
               <div>
-                <dt>Bet365 link</dt>
-                <dd>{panel.bet365Url ? "Found" : "Missing"}</dd>
+                <dt>Bookmaker link</dt>
+                <dd>{panel.bookmakerUrl ? "Found" : "Missing"}</dd>
               </div>
             </dl>
 

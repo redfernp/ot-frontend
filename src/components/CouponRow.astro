@@ -1,6 +1,7 @@
 ---
 import type { WpPost } from "@/lib/graphql";
-import { cleanOdds, extractEventDate, extractTime, findFirstLink, summarizeTip } from "@/lib/tips";
+import { cleanOdds, extractEventDate, extractTime, findBookmakerLink, summarizeTip } from "@/lib/tips";
+import { featuredBookmaker } from "@/lib/bookmakers";
 
 type Props = {
   post: WpPost;
@@ -10,12 +11,12 @@ type Props = {
 const { post, tipDate } = Astro.props;
 const href = post.uri || `/${post.slug}/`;
 const summary = summarizeTip(post);
-const bet365Url = findFirstLink(post.content, /bet365/i);
+const bookmakerUrl = findBookmakerLink(post.content);
 
 // Prefer the structured eventStart timestamp from the snapshot (paul365's
 // event_start post_meta). Fall back to the explicit tipDate prop, then to
 // extracting the date from the post HTML. eventStart is the most reliable
-// because it comes straight from the Bet365 feed; HTML extraction is
+// because it comes straight from the odds feed; HTML extraction is
 // fragile and depends on title format.
 function eventStartToIsoDate(eventStart?: string | null): string | null {
   if (!eventStart) return null;
@@ -103,20 +104,20 @@ const eventDateLabel = formatEventDate(eventDate);
     )}
 
     <span class="odds">
-      <span class="odds-label">Bet365</span>
+      <span class="odds-label">Odds</span>
       <span class:list={["odds-value", { "is-empty": !odds }]}>{odds || "-"}</span>
     </span>
 
     <span class="row-arrow" aria-hidden="true">&rarr;</span>
   </a>
 
-  {bet365Url && odds && (
+  {bookmakerUrl && odds && (
     <a
       class="quick-bet"
-      href="/go/bet365/"
+      href={featuredBookmaker.offerHref}
       rel="nofollow sponsored"
       data-affiliate-location="coupon_row_quick_bet"
-      aria-label={`Back ${pickLabel || "this tip"} on Bet365`}
+      aria-label={`Back ${pickLabel || "this tip"} on ${featuredBookmaker.brand}`}
     >
       <span>Bet</span>
     </a>

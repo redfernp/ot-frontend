@@ -1,6 +1,7 @@
 ---
 import { getMenu } from "@/lib/graphql";
 import { cmsLinkToPath } from "@/lib/cmsContent";
+import { featuredBookmaker } from "@/lib/bookmakers";
 
 type Props = {
   showPopularLeagues?: boolean;
@@ -34,14 +35,14 @@ const internationalLinks = menuToLinks(internationalMenu);
 ---
 
 <aside class="cat-sidebar" aria-label="League navigation">
-  <section class="sidebar-offer" aria-label="Bet365 free bet offer">
+  <section class="sidebar-offer" aria-label={`${featuredBookmaker.brand} free bet offer`}>
     <p class="offer-kicker">#Ad &middot; New customers</p>
-    <h2>Bet &pound;10 &amp; Get &pound;30 in Free Bets</h2>
-    <a class="offer-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="category_sidebar_offer">
-      Claim with Bet365
+    <h2>{featuredBookmaker.bonus.headline}</h2>
+    <a class="offer-cta" href={featuredBookmaker.offerHref} rel="nofollow sponsored" data-affiliate-location="category_sidebar_offer">
+      Claim with {featuredBookmaker.brand}
     </a>
     <p class="offer-terms">
-      #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
+      #Ad - {featuredBookmaker.bonus.terms}
     </p>
     <p class="offer-safe">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
   </section>

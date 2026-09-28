@@ -39,12 +39,12 @@ export const placeholderPost: WpPost = {
     <p>Central</p>
     <h2>Best Bet</h2>
     <p>OddsTips Top Value Bet: Chelsea</p>
-    <p>Bet365 Odds At Time Of Publication: <a href="https://www.bet365.com/dl/~offer?affiliate=365_643257" rel="nofollow">1.91</a></p>
+    <p>Odds At Time Of Publication: <a href="/go/betfred/" rel="nofollow">1.91</a></p>
     <h2>Returns</h2>
     <p>A &pound;100 bet on this outcome returns a total of &pound;191, which includes your returned stake.</p>
     <h2>Value</h2>
     <p>Our data indicates that this is a good value bet. For best results, only bet on this outcome if you can get the advised odds or better.</p>
-    <p><a href="https://www.bet365.com/dl/~offer?affiliate=365_643257" rel="nofollow">Back this tip with Bet365.</a></p>
+    <p><a href="/go/betfred/" rel="nofollow">Back this tip with Betfred.</a></p>
     <h2>Related Reading</h2>
     <p><a href="https://www.oddstips.co.uk/best-football-betting-sites-uk/">Best Football Betting Sites UK</a></p>
     <p><a href="/go/footballer-tips-tipstrr/" rel="nofollow">Recommended Football Tipster - NEW TIPSTER ALERT</a></p>

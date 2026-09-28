@@ -1,4 +1,5 @@
 import type { WpPost } from "@/lib/graphql";
+import { featuredBookmaker } from "@/lib/bookmakers";
 
 export type CouponPick = "H" | "D" | "A" | null;
 
@@ -335,43 +336,55 @@ export function cleanTipContentHtml(html = "") {
     .trim();
 }
 
-// Sweep the post body HTML and route every bet365.com link through our
-// /go/bet365/ cloak. This is in addition to the explicit affiliate buttons
-// rendered in TipPostPage/CouponRow (which are already cloaked at template
-// level), and catches inline links that paul365 inserts into the body copy.
+// Sweep the post body HTML and route every bookmaker link through the lead
+// bookmaker's /go/ cloak (featuredBookmaker in bookmakers.ts). This is in
+// addition to the explicit affiliate buttons rendered in TipPostPage/CouponRow,
+// and catches inline links that paul365 inserts into the body copy.
 //
-// Two passes:
-//   1. Replace any bet365.com href value with /go/bet365/.
-//   2. On any anchor now pointing at /go/bet365/, strip target=... so the
-//      link opens in the same tab. Paul wants visitors to stay on-site
-//      through the cloak rather than spawning a new tab.
+// Older paul365 posts (Bet365 feed era) link to bet365.com and say "Bet365
+// Odds At Time Of Publication" / "Back this tip with Bet365." Bet365 is no
+// longer a partner, so those posts are rebranded at render time rather than
+// rewriting thousands of WordPress rows; the retention plugin deletes them
+// after 35 days anyway. Newer posts link to the Betfred affiliate URL.
 //
-// Anchors that aren't bet365 are left untouched.
+// Passes:
+//   1. Replace any bookmaker href (bet365.com, the retired /go/bet365/ cloak,
+//      or a direct Betfred partner URL) with the featured cloak.
+//   2. On any anchor now pointing at the cloak, strip target=... so the link
+//      opens in the same tab. Paul wants visitors to stay on-site through the
+//      cloak rather than spawning a new tab.
+//   3. Rebrand the legacy Bet365 wording. The odds label becomes generic
+//      because the odds are market prices, not the featured bookmaker's.
+//
+// Anchors that aren't bookmaker links are left untouched.
+const BOOKMAKER_HREF_PATTERN =
+  /href=(["'])(?:https?:\/\/(?:www\.)?bet365\.com[^"']*|\/go\/bet365\/?|https?:\/\/bfpartners\.click\/[^"']*)\1/gi;
+
+// True when a post links to a bookmaker at all (legacy Bet365 or current
+// Betfred). Tip templates use it to decide whether to render affiliate CTAs.
+export function findBookmakerLink(html: string | undefined) {
+  return findFirstLink(html, /bet365\.com|\/go\/bet365|bfpartners\.click|\/go\/betfred/i);
+}
+
 export function rewriteAffiliateLinks(html: string): string {
   if (!html) return html;
 
-  // Pass 1: rewrite href values. Matches http(s)://bet365.com or
-  // http(s)://www.bet365.com followed by any path/query, in both quote styles.
-  let out = html.replace(
-    /href=(["'])https?:\/\/(?:www\.)?bet365\.com[^"']*\1/gi,
-    'href="/go/bet365/"',
-  );
+  const cloak = featuredBookmaker.offerHref ?? `/go/${featuredBookmaker.slug}/`;
 
-  // Pass 2: strip target attribute from any anchor that now points at the
-  // cloak. We only touch anchors whose href is exactly /go/bet365/ so we
-  // don't accidentally rewrite unrelated links elsewhere in the body.
+  let out = html.replace(BOOKMAKER_HREF_PATTERN, `href="${cloak}"`);
+
   out = out.replace(
-    /<a\b([^>]*?)href=(["'])\/go\/bet365\/\2([^>]*?)>/gi,
+    new RegExp(`<a\\b([^>]*?)href=(["'])${escapeRegExp(cloak)}\\2([^>]*?)>`, "gi"),
     (_match, before: string, _quote: string, after: string) => {
       const stripTarget = (s: string) =>
         s.replace(/\s*target=(["'])[^"']*\1/gi, "");
-      const cleanBefore = stripTarget(before);
-      const cleanAfter = stripTarget(after);
-      return `<a${cleanBefore}href="/go/bet365/"${cleanAfter}>`;
+      return `<a${stripTarget(before)}href="${cloak}"${stripTarget(after)}>`;
     },
   );
 
-  return out;
+  return out
+    .replace(/Bet365 Odds At Time Of Publication/gi, "Odds At Time Of Publication")
+    .replace(/Back this tip with Bet365\./gi, `Back this tip with ${featuredBookmaker.brand}.`);
 }
 
 function couponPick(tip: string | undefined, homeTeam?: string, awayTeam?: string): CouponPick {
@@ -415,7 +428,7 @@ export function summarizeTip(post: WpPost): TipSummary {
     valueAfter(text, /OddsTips Top Value Bet:\s*([^\n]+)/i) ||
     valueAfter(text, /Top Value Bet:\s*([^\n]+)/i) ||
     fieldAfter(lines, /^Best Bet$/i);
-  const odds = valueAfter(text, /Bet365 Odds At Time Of Publication:\s*([^\n]+)/i);
+  const odds = valueAfter(text, /(?:Bet365 )?Odds At Time Of Publication:\s*([^\n]+)/i);
   const returns = fieldAfter(lines, /^Returns$/i);
   const value = fieldAfter(lines, /^Value$/i);
 

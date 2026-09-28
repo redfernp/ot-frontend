@@ -2,6 +2,20 @@
 /reviews/william-hill /free-bets/ 301
 /reviews/william-hill/ /free-bets/ 301
 
+# Removed Bet365 review (Bet365 dropped as a partner, Sept 2026). Betfred is
+# now the lead bookmaker, so send review traffic to its review. The Bet365
+# cloak has no internal links left; send any cached or external hits to the
+# free bets list.
+/reviews/bet365 /reviews/betfred/ 301
+/reviews/bet365/ /reviews/betfred/ 301
+/go/bet365 /free-bets/ 301
+/go/bet365/ /free-bets/ 301
+
+# Spanish localisation removed (Sept 2026). It was never indexed; send any
+# remaining hits to the English homepage.
+/es / 301
+/es/* / 301
+
 # Legacy flat football URLs that Google still has indexed. paul365 moved to
 # /football/<country>/<league>/ but these old paths still receive crawler
 # hits; without a redirect CF Pages was serving the homepage HTML for them,
@@ -109,7 +123,7 @@
 /football/international/vietnam-v-league-2/ /football/vietnam/vietnam-v-league-2/ 301
 
 # Legacy review URL structure. /recommends/<bookmaker>/ moved to /reviews/<bookmaker>/.
-/recommends/bet365/ /reviews/bet365/ 301
+/recommends/bet365/ /reviews/betfred/ 301
 
 # Page slug rename: "responsible-gambling" → "safer-gambling".
 /responsible-gambling/ /safer-gambling/ 301

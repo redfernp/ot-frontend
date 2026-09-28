@@ -1,7 +1,8 @@
 ---
 import type { WpPost } from "@/lib/graphql";
 import RelatedTips from "@/components/RelatedTips.astro";
-import { findFirstLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
+import { findBookmakerLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
+import { featuredBookmaker } from "@/lib/bookmakers";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
 
 type Props = {
@@ -15,7 +16,8 @@ const activePick = summary.couponPick;
 const published = post.date
   ? new Date(post.date).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })
   : null;
-const bet365Url = findFirstLink(post.content, /bet365/i);
+const bookmakerUrl = findBookmakerLink(post.content);
+const bookie = featuredBookmaker;
 // Lede + relatedReading come from WP post HTML. Run through rewriteCmsHtml so
 // any internal links the WP editor inserted with the Cloudways host get
 // swapped for the public origin before set:html.
@@ -59,7 +61,7 @@ const breadcrumb = [
 const faqs = [
   summary.tip && summary.odds && {
     q: `What's the best tip for ${summary.fixture || "this match"}?`,
-    a: `Our tipster recommends ${summary.tip} at odds of ${summary.odds} with Bet365.`,
+    a: `Our tipster recommends ${summary.tip}, priced at ${summary.odds} at the time of publication.`,
   },
   summary.kickoff && {
     q: "What time does the match kick off?",
@@ -67,7 +69,7 @@ const faqs = [
   },
   {
     q: "Where can I bet on this tip?",
-    a: "We recommend Bet365 for competitive pre-match odds. New customers can claim a free bet using the link in the tip card above.",
+    a: `We recommend ${bookie.brand}. New customers can claim ${bookie.bonus.headline} using the link in the tip card above. Always check the current price before placing a bet.`,
   },
 ].filter((faq): faq is { q: string; a: string } => Boolean(faq));
 ---
@@ -148,9 +150,9 @@ const faqs = [
       )}
       {summary.odds && (
         <div>
-          <span class="label">Bet365 odds</span>
-          {bet365Url
-            ? <a class="odds-link" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_summary_odds">{summary.odds}</a>
+          <span class="label">Odds</span>
+          {bookmakerUrl
+            ? <a class="odds-link" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_summary_odds">{summary.odds}</a>
             : <strong>{summary.odds}</strong>}
         </div>
       )}
@@ -163,15 +165,15 @@ const faqs = [
     </section>
   )}
 
-  {/* Mobile-only inline Bet365 card. Sits between the summary strip and the
+  {/* Mobile-only inline bookmaker offer card. Sits between the summary strip and the
       tipster's read section so visitors see the offer before scrolling into
       analysis. Hidden on desktop (the same card lives in .tip-sidebar). */}
-  <aside class="bet365-card bet365-card--inline" aria-label="Bet365 offer">
+  <aside class="bookie-card bookie-card--inline" aria-label={`${bookie.brand} offer`}>
     <span class="card-tag">#Ad &middot; New customers</span>
-    <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
-    {bet365Url && <a class="card-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_inline_offer">Claim with Bet365</a>}
+    <p class="card-title">{bookie.bonus.headline}</p>
+    <a class="card-cta" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_inline_offer">Claim with {bookie.brand}</a>
     <p class="card-terms">
-      #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
+      #Ad - {bookie.bonus.terms}
     </p>
     <p class="card-be">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
   </aside>
@@ -210,9 +212,9 @@ const faqs = [
           <h2 id="bet-panel-heading">
             {summary.tip || "View the recommended bet"}
             {summary.odds && (
-              bet365Url
-                ? <a class="bet-odds" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_value_odds">{summary.odds} <small>Bet365</small></a>
-                : <span class="bet-odds is-static">{summary.odds} <small>Bet365</small></span>
+              bookmakerUrl
+                ? <a class="bet-odds" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_value_odds">{summary.odds} <small>Odds</small></a>
+                : <span class="bet-odds is-static">{summary.odds} <small>Odds</small></span>
             )}
           </h2>
 
@@ -238,9 +240,9 @@ const faqs = [
             <p class="bet-value">{summary.value}</p>
           )}
 
-          {bet365Url && (
-            <a class="bet-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_main_cta">
-              Back this tip on Bet365
+          {bookmakerUrl && (
+            <a class="bet-cta" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_main_cta">
+              Back this tip on {bookie.brand}
               <span aria-hidden="true">&rarr;</span>
             </a>
           )}
@@ -273,12 +275,12 @@ const faqs = [
     </section>
 
     <aside class="tip-sidebar" aria-label="Tip sidebar">
-      <div class="bet365-card bet365-card--sidebar">
+      <div class="bookie-card bookie-card--sidebar">
         <span class="card-tag">#Ad &middot; New customers</span>
-        <p class="card-title">Bet &pound;10 &amp; Get &pound;30 in Free Bets</p>
-        {bet365Url && <a class="card-cta" href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="tip_sidebar_offer">Claim with Bet365</a>}
+        <p class="card-title">{bookie.bonus.headline}</p>
+        <a class="card-cta" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="tip_sidebar_offer">Claim with {bookie.brand}</a>
         <p class="card-terms">
-          #Ad - Bet &pound;10 &amp; Get &pound;30 in Free Bets for new customers at bet365. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of bets to value of qualifying deposit. Min odds, bet and payment method exclusions apply. Returns exclude Bet Credits stake. Time limits and T&amp;Cs apply. Registration required.
+          #Ad - {bookie.bonus.terms}
         </p>
         <p class="card-be">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
       </div>
@@ -307,8 +309,8 @@ const faqs = [
     <strong>{summary.tip || "Home win"}</strong>
   </div>
   <span class="sticky-odds">{summary.odds || "2.10"}</span>
-  {bet365Url ? (
-    <a href="/go/bet365/" rel="nofollow sponsored" data-affiliate-location="sticky_cta">Bet on Bet365</a>
+  {bookmakerUrl ? (
+    <a href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location="sticky_cta">Bet on {bookie.brand}</a>
   ) : (
     <a href="/free-bets/">View offers</a>
   )}
@@ -746,7 +748,7 @@ const faqs = [
   /* SIDEBAR */
   .tip-sidebar { display: grid; gap: 1rem; position: sticky; top: 5rem; }
 
-  .bet365-card {
+  .bookie-card {
     background: linear-gradient(135deg, #027a3e 0%, #016a36 100%);
     border-radius: var(--ot-radius);
     color: #fff;
@@ -758,7 +760,7 @@ const faqs = [
      job there. Shown on mobile (the same media-query breakpoint that stacks
      the sidebar below the analysis), and the sidebar copy is then hidden
      so visitors don't see the same card twice. */
-  .bet365-card--inline {
+  .bookie-card--inline {
     display: none;
   }
   .card-tag {
@@ -863,10 +865,10 @@ const faqs = [
     .pick-row { grid-template-columns: 1fr; }
     .sticky-cta { display: flex; }
 
-    /* Mobile: show the inline Bet365 card (above tipster's read) and hide
+    /* Mobile: show the inline offer card (above tipster's read) and hide
        the sidebar copy so it doesn't render twice. */
-    .bet365-card--inline { display: block; }
-    .bet365-card--sidebar { display: none; }
+    .bookie-card--inline { display: block; }
+    .bookie-card--sidebar { display: none; }
   }
 
   @media (max-width: 640px) {

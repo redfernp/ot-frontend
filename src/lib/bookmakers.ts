@@ -9,99 +9,12 @@
 import type { Bookmaker } from "@/components/BookmakerReviewPage.astro";
 
 export const bookmakers: Record<string, Bookmaker> = {
-  bet365: {
-    slug: "bet365",
-    brand: "Bet365",
-    color: "#027a3e",
-    offerHref: "/go/bet365/",
-    rating: 4.8,
-    tagline: "The benchmark UK sportsbook for market depth, in-play betting and live streaming.",
-    established: "2000",
-    license: "UKGC, MGA",
-    minDeposit: "\u00a35-\u00a310",
-    payout: "1 to 3 business days",
-    payments: ["Visa", "Mastercard", "PayPal", "Apple Pay", "Bank Transfer", "Skrill", "Neteller"],
-    bonus: {
-      headline: "Bet \u00a310 & Get \u00a330 in Free Bets",
-      code: "No code",
-      cta: "Claim \u00a330 free bets",
-      terms: "New customers only. Min deposit requirement. Free Bets are paid as Bet Credits and are available for use upon settlement of qualifying bets. Min odds, bet and payment exclusions apply. Returns exclude Bet Credits stake. Time limits and T&Cs apply. 18+.",
-      wagering: "1x qualifying bet",
-      expiry: "Time limits apply",
-    },
-    pros: [
-      "Huge football, racing, tennis, basketball, cricket and darts coverage",
-      "Excellent in-play product with Bet Builder, Cash Out and live streaming",
-      "Simple welcome offer compared with many bonus-heavy rivals",
-      "Strong mobile app ratings and a stable betting experience",
-    ],
-    cons: [
-      "Interface can feel dense for new bettors",
-      "Not the biggest headline welcome bonus in the market",
-      "Some experienced customers report stake restrictions",
-    ],
-    scores: [
-      { label: "Odds quality", value: 4.8 },
-      { label: "Market depth", value: 4.9 },
-      { label: "Welcome offer", value: 4.4 },
-      { label: "Mobile app", value: 4.8 },
-      { label: "Customer support", value: 4.5 },
-      { label: "Banking", value: 4.5 },
-    ],
-    sections: [
-      {
-        id: "quick-verdict",
-        title: "Quick verdict",
-        body: `<p>Bet365 is still the easiest UK bookmaker to recommend when the priority is product quality rather than the biggest possible sign-up figure. It is strongest for bettors who want deep football markets, fast in-play betting, live streaming and a familiar app that works well under pressure.</p><p>The trade-off is that Bet365 is not a novelty brand. The site is packed with markets and features, which is great once you know your way around but a little heavy for complete beginners.</p>`,
-      },
-      {
-        id: "offer-analysis",
-        title: "Welcome offer analysis",
-        body: `<p>The current Oddstips-listed offer is Bet &pound;10 and get &pound;30 in Free Bets. The value is lower than some rivals, but the structure is more straightforward than deposit-match bonuses with heavy rollover. Free bets are normally paid as Bet Credits after qualifying bets settle, so check the eligible payment methods, minimum odds and expiry before placing the first bet.</p><p>No bonus code is needed for the offer listed here. That matters because many searchers look for a Bet365 bonus code even though the main sports welcome offer is usually applied through the tracked sign-up journey.</p>`,
-      },
-      {
-        id: "markets",
-        title: "Sports, odds and features",
-        body: `<p>Bet365's main advantage is breadth. Premier League and Champions League fixtures carry extensive pre-match and in-play markets, while tennis, horse racing, basketball, cricket, darts, snooker and US sports are all well supported. Bet Builder, Each Way Extra, Early Payout, live stats and Cash Out give regular bettors more control than most mainstream rivals.</p><p>Oddstips readers using match previews or value tips will usually find the selection they need here quickly. The main caution is price comparison: Bet365 is competitive, but no single bookmaker is best price on every market.</p>`,
-      },
-      {
-        id: "app",
-        title: "App and in-play betting",
-        body: `<p>The Bet365 app remains one of the strongest betting apps in the UK. Navigation is fast, markets refresh cleanly in-play, and live streaming is integrated into the same account experience. During busy football windows, the app's stability is a major reason many bettors keep Bet365 even after claiming the welcome offer.</p><p>The layout can be information-heavy, so beginners should use search and favourites rather than scrolling through every coupon.</p>`,
-      },
-      {
-        id: "payments",
-        title: "Payments, safety and support",
-        body: `<p>Bet365 is licensed for UK players and supports the usual UK payment mix, including debit cards, PayPal and bank transfer options. Deposits are quick and withdrawals are usually method-dependent, with e-wallets typically faster than card or bank withdrawals.</p><p>As with all UK bookmakers, identity checks can be requested before withdrawal. Upload documents early if prompted, keep deposit methods in your own name and use the responsible gambling tools before you start staking regularly.</p>`,
-      },
-    ],
-    faqs: [
-      {
-        q: "Is Bet365 legit in the UK?",
-        a: "Yes. Bet365 is a long-running, UK-licensed bookmaker and one of the largest online sportsbooks in the market.",
-      },
-      {
-        q: "Do I need a Bet365 bonus code?",
-        a: "No code is listed for the main Oddstips Bet365 welcome offer. Use the tracked offer link and check that the promotion is visible before depositing.",
-      },
-      {
-        q: "What is Bet365 best for?",
-        a: "Bet365 is best for in-play betting, live streaming, football market depth and a reliable mobile experience.",
-      },
-      {
-        q: "Are Bet365 free bets paid as cash?",
-        a: "No. They are normally paid as Bet Credits or free bet tokens, and the stake is not included in returns.",
-      },
-    ],
-    verdict: `Bet365 earns a 4.8 on the Oddstips scorecard because it is the strongest all-round sportsbook in this set. It is not the biggest bonus headline, but for football tips, in-play markets and regular betting usability it remains the standard most rivals are chasing. Compare other options on our <a href="/free-bets/">free bets page</a> if welcome-bonus size matters more than product depth.`,
-  },
-
   betfred: {
     slug: "betfred",
     brand: "Betfred",
     color: "#092c74",
     offerHref: "/go/betfred/",
-    rating: 4.5,
+    rating: 4.8,
     tagline: "A heritage UK bookmaker with a large free-bet bundle and strong racing credentials.",
     established: "1967",
     license: "UKGC",
@@ -128,18 +41,18 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Odds are not always as sharp as the market leaders",
     ],
     scores: [
-      { label: "Odds quality", value: 4.2 },
-      { label: "Market depth", value: 4.5 },
-      { label: "Welcome offer", value: 4.8 },
-      { label: "Mobile app", value: 4.5 },
-      { label: "Customer support", value: 4.4 },
-      { label: "Banking", value: 4.6 },
+      { label: "Odds quality", value: 4.5 },
+      { label: "Market depth", value: 4.8 },
+      { label: "Welcome offer", value: 5.0 },
+      { label: "Mobile app", value: 4.8 },
+      { label: "Customer support", value: 4.7 },
+      { label: "Banking", value: 4.9 },
     ],
     sections: [
       {
         id: "quick-verdict",
         title: "Quick verdict",
-        body: `<p>Betfred is the best fit in this list for bettors who want a recognisable UK bookmaker, a chunky free-bet bundle and a familiar racing-first feel. It is not as slick as Bet365 in every area, but it scores well for reliability, horse racing, football promotions and payment choice.</p><p>The welcome offer is attractive, but the 7-day clock matters. If you are unlikely to use several free bet tokens quickly, a smaller but simpler offer may suit you better.</p>`,
+        body: `<p>Betfred is the best fit in this list for bettors who want a recognisable UK bookmaker, a chunky free-bet bundle and a familiar racing-first feel. It is not the slickest sportsbook in every area, but it scores well for reliability, horse racing, football promotions and payment choice.</p><p>The welcome offer is attractive, but the 7-day clock matters. If you are unlikely to use several free bet tokens quickly, a smaller but simpler offer may suit you better.</p>`,
       },
       {
         id: "offer-analysis",
@@ -149,7 +62,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "markets",
         title: "Sports, odds and features",
-        body: `<p>Betfred covers the usual UK staples well: football, horse racing, greyhounds, rugby league, rugby union, darts, snooker and cricket. The brand's heritage shows most clearly in racing, where Betfred tends to feel more comfortable than many newer app-led bookmakers.</p><p>Football market depth is strong enough for most Oddstips match previews, with Bet Builder, Cash Out and in-play markets available on major fixtures. Prices should still be checked against Bet365, Betway and exchanges before taking short odds.</p>`,
+        body: `<p>Betfred covers the usual UK staples well: football, horse racing, greyhounds, rugby league, rugby union, darts, snooker and cricket. The brand's heritage shows most clearly in racing, where Betfred tends to feel more comfortable than many newer app-led bookmakers.</p><p>Football market depth is strong enough for most Oddstips match previews, with Bet Builder, Cash Out and in-play markets available on major fixtures. Prices should still be checked against Betway, Spreadex and exchanges before taking short odds.</p>`,
       },
       {
         id: "app",
@@ -180,7 +93,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "Betfred suits racing bettors, football Bet Builder and acca fans, and users who prefer an established UK brand over a new challenger site.",
       },
     ],
-    verdict: `Betfred earns a 4.5 because the offer is strong and the underlying sportsbook is reliable. It is especially good for racing fans, Bet Builder players and acca bettors, but the short token expiry means you should only claim it when you are ready to use the free bets. Compare alternatives on our <a href="/free-bets/">free bets page</a> before choosing solely by headline value.`,
+    verdict: `Betfred earns a 4.8 because the offer is strong and the underlying sportsbook is reliable. It is especially good for racing fans, Bet Builder players and acca bettors, but the short token expiry means you should only claim it when you are ready to use the free bets. Compare alternatives on our <a href="/free-bets/">free bets page</a> before choosing solely by headline value.`,
   },
 
   betway: {
@@ -188,7 +101,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "Betway",
     color: "#111111",
     offerHref: "/go/betway/",
-    rating: 4.2,
+    rating: 4.5,
     tagline: "A polished in-play and football sportsbook with a simple free-bet-token offer.",
     established: "2006",
     license: "UKGC, MGA",
@@ -215,12 +128,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Odds can be less competitive outside high-liquidity markets",
     ],
     scores: [
-      { label: "Odds quality", value: 4.0 },
-      { label: "Market depth", value: 4.3 },
-      { label: "Welcome offer", value: 4.4 },
-      { label: "Mobile app", value: 4.5 },
-      { label: "Customer support", value: 3.8 },
-      { label: "Banking", value: 4.0 },
+      { label: "Odds quality", value: 4.3 },
+      { label: "Market depth", value: 4.6 },
+      { label: "Welcome offer", value: 4.7 },
+      { label: "Mobile app", value: 4.8 },
+      { label: "Customer support", value: 4.1 },
+      { label: "Banking", value: 4.3 },
     ],
     sections: [
       {
@@ -267,7 +180,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "Betway's main weaknesses are inconsistent customer feedback, payment restrictions on promotions and odds that are not always best-in-market.",
       },
     ],
-    verdict: `Betway earns a 4.2 because it is a capable football and in-play sportsbook with a decent token-based welcome offer. The product is better than its Trustpilot score suggests, but the complaints are serious enough that Oddstips would not frame Betway as a no-caveats pick. Compare it with Bet365 and Betfred on our <a href="/free-bets/">free bets page</a>.`,
+    verdict: `Betway earns a 4.5 because it is a capable football and in-play sportsbook with a decent token-based welcome offer. The product is better than its Trustpilot score suggests, but the complaints are serious enough that Oddstips would not frame Betway as a no-caveats pick. Compare it with Betfred and Spreadex on our <a href="/free-bets/">free bets page</a>.`,
   },
 
   quinnbet: {
@@ -275,7 +188,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "QuinnBet",
     color: "#103b7a",
     offerHref: "/go/quinnbet/",
-    rating: 4.1,
+    rating: 4.4,
     tagline: "A racing-leaning UK and Ireland bookmaker with a loss-back style welcome offer.",
     established: "2017",
     license: "UKGC, Gibraltar",
@@ -302,18 +215,18 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Betting margins can be higher than sharper rivals",
     ],
     scores: [
-      { label: "Odds quality", value: 3.8 },
-      { label: "Market depth", value: 4.0 },
-      { label: "Welcome offer", value: 3.8 },
-      { label: "Mobile app", value: 4.0 },
-      { label: "Customer support", value: 4.3 },
-      { label: "Banking", value: 3.8 },
+      { label: "Odds quality", value: 4.1 },
+      { label: "Market depth", value: 4.3 },
+      { label: "Welcome offer", value: 4.1 },
+      { label: "Mobile app", value: 4.3 },
+      { label: "Customer support", value: 4.6 },
+      { label: "Banking", value: 4.1 },
     ],
     sections: [
       {
         id: "quick-verdict",
         title: "Quick verdict",
-        body: `<p>QuinnBet is a better fit for racing and promotion hunters than for bettors who want the simplest sign-up offer. Its strengths are clear: horse racing appeal, a busy promotions area and decent customer feedback, balanced by limited banking choice and less competitive margins in some markets.</p><p>If you bet racing most weeks, QuinnBet is worth a look. If you just want a quick football free bet, Bet365, Betfred or Betway may feel easier.</p>`,
+        body: `<p>QuinnBet is a better fit for racing and promotion hunters than for bettors who want the simplest sign-up offer. Its strengths are clear: horse racing appeal, a busy promotions area and decent customer feedback, balanced by limited banking choice and less competitive margins in some markets.</p><p>If you bet racing most weeks, QuinnBet is worth a look. If you just want a quick football free bet, Betfred or Betway may feel easier.</p>`,
       },
       {
         id: "offer-analysis",
@@ -328,7 +241,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "app",
         title: "App and in-play betting",
-        body: `<p>The QuinnBet app and mobile site are straightforward, with enough in-play depth for regular bettors. It will not feel as feature-rich as Bet365, but the basics are easy to find and the racing areas are prominent.</p><p>User-review scores are healthier than many operators in this category, but complaints still mention verification, payment and bonus misunderstandings. That makes QuinnBet a good example of why the terms need to be read before depositing.</p>`,
+        body: `<p>The QuinnBet app and mobile site are straightforward, with enough in-play depth for regular bettors. It will not feel as feature-rich as Betfred, but the basics are easy to find and the racing areas are prominent.</p><p>User-review scores are healthier than many operators in this category, but complaints still mention verification, payment and bonus misunderstandings. That makes QuinnBet a good example of why the terms need to be read before depositing.</p>`,
       },
       {
         id: "payments",
@@ -354,7 +267,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "Check the loss-back rules, payment options, minimum odds, three-bet requirement and 7-day free bet expiry.",
       },
     ],
-    verdict: `QuinnBet earns a 4.1 because it has a clear niche: racing, UK and Ireland coverage, and ongoing promotions. The welcome offer is useful but not beginner-simple, so it suits bettors who are happy to plan their first day carefully. For easier bet-and-get options, compare the rest of our <a href="/free-bets/">free bets list</a>.`,
+    verdict: `QuinnBet earns a 4.4 because it has a clear niche: racing, UK and Ireland coverage, and ongoing promotions. The welcome offer is useful but not beginner-simple, so it suits bettors who are happy to plan their first day carefully. For easier bet-and-get options, compare the rest of our <a href="/free-bets/">free bets list</a>.`,
   },
 
   spreadex: {
@@ -362,7 +275,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "Spreadex",
     color: "#003f2e",
     offerHref: "/go/spreadex/",
-    rating: 4.4,
+    rating: 4.7,
     tagline: "A unique fixed-odds and spread-betting operator with a high-value mixed free-bet package.",
     established: "1999",
     license: "UKGC, FCA",
@@ -389,12 +302,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Separate products and apps can feel less simple for beginners",
     ],
     scores: [
-      { label: "Odds quality", value: 4.3 },
-      { label: "Market depth", value: 4.1 },
-      { label: "Welcome offer", value: 4.6 },
-      { label: "Mobile app", value: 4.4 },
-      { label: "Customer support", value: 4.3 },
-      { label: "Banking", value: 3.8 },
+      { label: "Odds quality", value: 4.6 },
+      { label: "Market depth", value: 4.4 },
+      { label: "Welcome offer", value: 4.9 },
+      { label: "Mobile app", value: 4.7 },
+      { label: "Customer support", value: 4.6 },
+      { label: "Banking", value: 4.1 },
     ],
     sections: [
       {
@@ -410,7 +323,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "markets",
         title: "Sports, odds and features",
-        body: `<p>Spreadex covers key UK sports such as football, horse racing, tennis, cricket and darts, but its sports menu is not as wide as Bet365 or NetBet. What it lacks in breadth, it replaces with unique fixed-odds and spread-betting options.</p><p>For Oddstips readers, Spreadex is best used when you want competitive fixed odds plus the option to explore specialist spread markets. It is less ideal if you simply want every niche sport in one coupon.</p>`,
+        body: `<p>Spreadex covers key UK sports such as football, horse racing, tennis, cricket and darts, but its sports menu is not as wide as Betfred or NetBet. What it lacks in breadth, it replaces with unique fixed-odds and spread-betting options.</p><p>For Oddstips readers, Spreadex is best used when you want competitive fixed odds plus the option to explore specialist spread markets. It is less ideal if you simply want every niche sport in one coupon.</p>`,
       },
       {
         id: "app",
@@ -441,7 +354,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "It combines fixed-odds sports betting, sports spread betting and financial trading, which is unusual in the UK market.",
       },
     ],
-    verdict: `Spreadex earns a 4.4 because it has a genuine point of difference and a strong welcome package. It is a good Oddstips recommendation for experienced bettors who understand risk, but the spread-betting warning needs to stay prominent on every review and offer card. For standard free-bet offers, see the full <a href="/free-bets/">Oddstips free bets comparison</a>.`,
+    verdict: `Spreadex earns a 4.7 because it has a genuine point of difference and a strong welcome package. It is a good Oddstips recommendation for experienced bettors who understand risk, but the spread-betting warning needs to stay prominent on every review and offer card. For standard free-bet offers, see the full <a href="/free-bets/">Oddstips free bets comparison</a>.`,
   },
 
   betwright: {
@@ -449,7 +362,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "BetWright",
     color: "#18224a",
     offerHref: "/go/betwright/",
-    rating: 3.6,
+    rating: 3.9,
     tagline: "A newer Playbook-powered UK sportsbook focused on rewards, football and racing.",
     established: "2024",
     license: "UKGC",
@@ -477,18 +390,18 @@ export const bookmakers: Record<string, Bookmaker> = {
       "No traditional high-value bet-and-get welcome offer",
     ],
     scores: [
-      { label: "Odds quality", value: 3.9 },
-      { label: "Market depth", value: 3.7 },
-      { label: "Welcome offer", value: 3.0 },
-      { label: "Mobile app", value: 3.6 },
-      { label: "Customer support", value: 3.0 },
-      { label: "Banking", value: 3.2 },
+      { label: "Odds quality", value: 4.2 },
+      { label: "Market depth", value: 4.0 },
+      { label: "Welcome offer", value: 3.3 },
+      { label: "Mobile app", value: 3.9 },
+      { label: "Customer support", value: 3.3 },
+      { label: "Banking", value: 3.5 },
     ],
     sections: [
       {
         id: "quick-verdict",
         title: "Quick verdict",
-        body: `<p>BetWright is the challenger brand in this set. The fair Oddstips view is that BetWright has a usable core product, but it is not yet as proven as Bet365, Betfred or Betway.</p><p>It suits curious bettors who like trying newer books, especially for football and racing. It is less suitable if you want broad banking, a huge welcome bonus or a long track record.</p>`,
+        body: `<p>BetWright is the challenger brand in this set. The fair Oddstips view is that BetWright has a usable core product, but it is not yet as proven as Betfred, Betway or Spreadex.</p><p>It suits curious bettors who like trying newer books, especially for football and racing. It is less suitable if you want broad banking, a huge welcome bonus or a long track record.</p>`,
       },
       {
         id: "offer-analysis",
@@ -503,7 +416,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "app",
         title: "App and in-play betting",
-        body: `<p>The app and mobile experience are simple and modern, but app-store and Trustpilot volumes are still low compared with established brands. That makes real-world reliability harder to judge.</p><p>In-play betting is good enough for regular football and racing use, but BetWright is not yet a feature-for-feature rival to Bet365. Treat it as a secondary account rather than your only bookmaker.</p>`,
+        body: `<p>The app and mobile experience are simple and modern, but app-store and Trustpilot volumes are still low compared with established brands. That makes real-world reliability harder to judge.</p><p>In-play betting is good enough for regular football and racing use, but BetWright is not yet a feature-for-feature rival to Betfred. Treat it as a secondary account rather than your only bookmaker.</p>`,
       },
       {
         id: "payments",
@@ -529,7 +442,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "Watch payment method limits, verification, promotion rules and the shorter customer-review history.",
       },
     ],
-    verdict: `BetWright earns a 3.6 because the sportsbook has promise but the brand is still young. Oddstips should frame it as a secondary option for football and racing bettors, not a main-account recommendation. Bonus hunters may prefer the clearer deals on our <a href="/free-bets/">free bets page</a>.`,
+    verdict: `BetWright earns a 3.9 because the sportsbook has promise but the brand is still young. Oddstips should frame it as a secondary option for football and racing bettors, not a main-account recommendation. Bonus hunters may prefer the clearer deals on our <a href="/free-bets/">free bets page</a>.`,
   },
 
   fafabet: {
@@ -537,7 +450,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "Fafabet",
     color: "#7a0026",
     offerHref: "/go/fafabet/",
-    rating: 2.7,
+    rating: 3.0,
     tagline: "A high-caution sportsbook and casino review because availability and user sentiment need checking.",
     established: "2021",
     license: "UKGC",
@@ -565,12 +478,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Withdrawal and verification complaints appear repeatedly in user reviews",
     ],
     scores: [
-      { label: "Odds quality", value: 3.4 },
-      { label: "Market depth", value: 3.4 },
-      { label: "Welcome offer", value: 3.5 },
-      { label: "Mobile app", value: 2.8 },
-      { label: "Customer support", value: 2.2 },
-      { label: "Banking", value: 2.4 },
+      { label: "Odds quality", value: 3.7 },
+      { label: "Market depth", value: 3.7 },
+      { label: "Welcome offer", value: 3.8 },
+      { label: "Mobile app", value: 3.1 },
+      { label: "Customer support", value: 2.5 },
+      { label: "Banking", value: 2.7 },
     ],
     sections: [
       {
@@ -591,7 +504,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "app",
         title: "App and mobile experience",
-        body: `<p>Fafabet's mobile experience is serviceable if the site is available, but it does not have the same depth of positive app feedback as Bet365, Betfred, Spreadex or 10Bet. For a review page, that should be called out plainly.</p><p>Use small stakes first, avoid leaving unnecessary balances on the account and make sure verification is complete before relying on the bookmaker for regular betting.</p>`,
+        body: `<p>Fafabet's mobile experience is serviceable if the site is available, but it does not have the same depth of positive app feedback as Betfred, Spreadex or 10Bet. For a review page, that should be called out plainly.</p><p>Use small stakes first, avoid leaving unnecessary balances on the account and make sure verification is complete before relying on the bookmaker for regular betting.</p>`,
       },
       {
         id: "payments",
@@ -617,7 +530,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "Oddstips would treat it as a cautious secondary option only after confirming the account, offer and withdrawal process are working smoothly.",
       },
     ],
-    verdict: `Fafabet earns a 2.7 because there are too many caution signals to recommend it ahead of cleaner UK offers. The offer can be written up, but the review should be honest: verify availability, read every term and do not rank it above stronger alternatives unless the live product improves. Safer mainstream options are listed on our <a href="/free-bets/">free bets page</a>.`,
+    verdict: `Fafabet earns a 3.0 because there are too many caution signals to recommend it ahead of cleaner UK offers. The offer can be written up, but the review should be honest: verify availability, read every term and do not rank it above stronger alternatives unless the live product improves. Safer mainstream options are listed on our <a href="/free-bets/">free bets page</a>.`,
   },
 
   netbet: {
@@ -625,7 +538,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "NetBet",
     color: "#004b9b",
     offerHref: "/go/netbet-50/",
-    rating: 4.0,
+    rating: 4.3,
     tagline: "A broad mid-sized sportsbook with strong payments, good support signals and mixed app feedback.",
     established: "2001",
     license: "UKGC, MGA",
@@ -653,12 +566,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Offer requires a larger qualifying stake than many rivals",
     ],
     scores: [
-      { label: "Odds quality", value: 4.0 },
-      { label: "Market depth", value: 4.2 },
-      { label: "Welcome offer", value: 3.6 },
-      { label: "Mobile app", value: 3.4 },
-      { label: "Customer support", value: 4.2 },
-      { label: "Banking", value: 4.4 },
+      { label: "Odds quality", value: 4.3 },
+      { label: "Market depth", value: 4.5 },
+      { label: "Welcome offer", value: 3.9 },
+      { label: "Mobile app", value: 3.7 },
+      { label: "Customer support", value: 4.5 },
+      { label: "Banking", value: 4.7 },
     ],
     sections: [
       {
@@ -679,7 +592,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "app",
         title: "App and in-play betting",
-        body: `<p>The mobile website is generally easier to recommend than the app story. NetBet's platform is clean enough for everyday use, but app quality and Android availability are weaker points.</p><p>In-play betting is usable and supported by match stats, but NetBet is not a Bet365-style streaming hub. Use it for price checks, mainstream markets and bonuses rather than as your only live-betting app.</p>`,
+        body: `<p>The mobile website is generally easier to recommend than the app story. NetBet's platform is clean enough for everyday use, but app quality and Android availability are weaker points.</p><p>In-play betting is usable and supported by match stats, but NetBet is not a dedicated live-streaming hub. Use it for price checks, mainstream markets and bonuses rather than as your only live-betting app.</p>`,
       },
       {
         id: "payments",
@@ -705,7 +618,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "NetBet suits bettors who want a broad sportsbook, good payment choice and a split sports/casino offer.",
       },
     ],
-    verdict: `NetBet earns a 4.0 because it is reliable in the middle of the pack: broad, practical and payment-friendly, but not best in class for app quality or live streaming. The short free-bet expiry is the main offer drawback. Compare it with larger welcome offers on our <a href="/free-bets/">free bets page</a>.`,
+    verdict: `NetBet earns a 4.3 because it is reliable in the middle of the pack: broad, practical and payment-friendly, but not best in class for app quality or live streaming. The short free-bet expiry is the main offer drawback. Compare it with larger welcome offers on our <a href="/free-bets/">free bets page</a>.`,
   },
 
   "10bet": {
@@ -713,7 +626,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "10Bet",
     color: "#101820",
     offerHref: "/go/10bet/",
-    rating: 3.9,
+    rating: 4.2,
     tagline: "A long-running sportsbook with decent markets, regular boosts and a wagering-led welcome bonus.",
     established: "2003",
     license: "UKGC",
@@ -741,12 +654,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Bonus terms use payment exclusions and a code requirement",
     ],
     scores: [
-      { label: "Odds quality", value: 3.9 },
-      { label: "Market depth", value: 4.0 },
-      { label: "Welcome offer", value: 3.3 },
-      { label: "Mobile app", value: 3.7 },
-      { label: "Customer support", value: 3.9 },
-      { label: "Banking", value: 4.0 },
+      { label: "Odds quality", value: 4.2 },
+      { label: "Market depth", value: 4.3 },
+      { label: "Welcome offer", value: 3.6 },
+      { label: "Mobile app", value: 4.0 },
+      { label: "Customer support", value: 4.2 },
+      { label: "Banking", value: 4.3 },
     ],
     sections: [
       {
@@ -757,7 +670,7 @@ export const bookmakers: Record<string, Bookmaker> = {
       {
         id: "offer-analysis",
         title: "Welcome offer analysis",
-        body: `<p>The Oddstips-listed 10Bet offer is a 100% match up to &pound;50 using bonus code PLAY10, with a 5x wagering requirement on deposit plus bonus. That is fundamentally different from a free bet: you must clear wagering before bonus winnings become real money.</p><p>This can be worthwhile for users comfortable with rollover terms, but beginners should compare it with Bet365, Betfred or Betway if they prefer a cleaner bet-and-get route.</p>`,
+        body: `<p>The Oddstips-listed 10Bet offer is a 100% match up to &pound;50 using bonus code PLAY10, with a 5x wagering requirement on deposit plus bonus. That is fundamentally different from a free bet: you must clear wagering before bonus winnings become real money.</p><p>This can be worthwhile for users comfortable with rollover terms, but beginners should compare it with Betfred or Betway if they prefer a cleaner bet-and-get route.</p>`,
       },
       {
         id: "markets",
@@ -793,7 +706,7 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "The welcome bonus is more complex than bet-and-get offers, and some app feedback mentions bugs or logouts.",
       },
     ],
-    verdict: `10Bet earns a 3.9 because it is a legitimate, useful sportsbook, but the welcome bonus is not as beginner-friendly as a free-bet-token deal. It is worth reviewing for bonus-code searches, especially because PLAY10 gives the page a clear keyword angle. For simpler offers, compare the rest of our <a href="/free-bets/">free bets page</a>.`,
+    verdict: `10Bet earns a 4.2 because it is a legitimate, useful sportsbook, but the welcome bonus is not as beginner-friendly as a free-bet-token deal. It is worth reviewing for bonus-code searches, especially because PLAY10 gives the page a clear keyword angle. For simpler offers, compare the rest of our <a href="/free-bets/">free bets page</a>.`,
   },
 
   mrplaysport: {
@@ -801,7 +714,7 @@ export const bookmakers: Record<string, Bookmaker> = {
     brand: "mr.playSPORT",
     color: "#ff6a00",
     offerHref: "/go/mrplay/",
-    rating: 3.3,
+    rating: 3.6,
     tagline: "A smaller sportsbook with a simple welcome offer but weaker customer and app signals.",
     established: "2019",
     license: "UKGC, MGA",
@@ -829,12 +742,12 @@ export const bookmakers: Record<string, Bookmaker> = {
       "Smaller headline offer than most Oddstips alternatives",
     ],
     scores: [
-      { label: "Odds quality", value: 3.5 },
-      { label: "Market depth", value: 3.6 },
-      { label: "Welcome offer", value: 3.0 },
-      { label: "Mobile app", value: 2.8 },
-      { label: "Customer support", value: 3.0 },
-      { label: "Banking", value: 3.7 },
+      { label: "Odds quality", value: 3.8 },
+      { label: "Market depth", value: 3.9 },
+      { label: "Welcome offer", value: 3.3 },
+      { label: "Mobile app", value: 3.1 },
+      { label: "Customer support", value: 3.3 },
+      { label: "Banking", value: 4.0 },
     ],
     sections: [
       {
@@ -881,6 +794,11 @@ export const bookmakers: Record<string, Bookmaker> = {
         a: "It may suit users who want a small welcome offer and broad payment options, but it is not our first choice for regular betting.",
       },
     ],
-    verdict: `mr.playSPORT earns a 3.3 because the offer is simple but the brand has too many caveats to rank near the top. Oddstips should make the app quality and customer-feedback weaknesses obvious rather than presenting it as a primary sportsbook. Stronger offers are available on our <a href="/free-bets/">free bets page</a>.`,
+    verdict: `mr.playSPORT earns a 3.6 because the offer is simple but the brand has too many caveats to rank near the top. Oddstips should make the app quality and customer-feedback weaknesses obvious rather than presenting it as a primary sportsbook. Stronger offers are available on our <a href="/free-bets/">free bets page</a>.`,
   },
 };
+
+// Lead bookmaker for sitewide offer blocks and tip CTAs (tip pages, coupon
+// rows, category sidebar). Offer headline and terms come from its entry above,
+// so swapping the lead partner is a one-line change here.
+export const featuredBookmaker = bookmakers.betfred;

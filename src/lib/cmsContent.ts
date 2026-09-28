@@ -139,8 +139,29 @@ function rewriteCmsLinksInHtml(html: string) {
 // Apply this everywhere WP HTML is rendered via <... set:html={...} />, i.e.
 // GenericPage, TipPostPage's lede/relatedReading, and category SEO copy.
 export function rewriteCmsHtml(html = "") {
-  return rewriteAffiliateLinksInHtml(
-    rewriteCmsLinksInHtml(rewriteCmsAssetUrls(html)),
+  return rewriteLegacyBookmakerCopy(
+    rewriteAffiliateLinksInHtml(
+      rewriteCmsLinksInHtml(rewriteCmsAssetUrls(html)),
+    ),
+  );
+}
+
+// Bet365 stopped being a partner in Sept 2026, but ~2,500 category SEO blocks
+// in WordPress were generated with boilerplate like "...home and away records
+// and Bet365 odds." or "Current Bet365 price from our odds data sources." The
+// odds now come from a market feed, so neutralise those phrases at render
+// time. Hand-written editorial copy that recommends Bet365 is not touched
+// here; it needs rewriting in WordPress.
+const legacyBookmakerPhrases: Array<[RegExp, string]> = [
+  [/\ba Bet365 odds feed\b/gi, "a third-party odds feed"],
+  [/\bBet365 odds\b/gi, "current odds"],
+  [/\bBet365 (prices?)\b/gi, "$1"],
+];
+
+function rewriteLegacyBookmakerCopy(html: string): string {
+  return legacyBookmakerPhrases.reduce(
+    (out, [pattern, replacement]) => out.replace(pattern, replacement),
+    html,
   );
 }
 

@@ -83,18 +83,10 @@ function buildTombstoneRoutesJson(rawTombstonesJson) {
     const [, , month, year, sport] = match;
     const rule =
       `/*-*-${month}-${year}-free-fixed-odds-tip-${sport}-betting-prediction*`;
-    const spanishTranslatedRule =
-      `/es/pronosticos/*-pronostico-*-${month}-${year}*`;
-    const spanishFallbackRule =
-      `/es/pronosticos/*-*-${month}-${year}-free-fixed-odds-tip-${sport}-betting-prediction-pronostico*`;
-    for (const generatedRule of [rule, spanishTranslatedRule, spanishFallbackRule]) {
-      if (generatedRule.length > MAX_FUNCTION_ROUTE_LENGTH) {
-        throw new Error(
-          `Generated Function route exceeds 100 characters: ${generatedRule}`,
-        );
-      }
-      include.add(generatedRule);
+    if (rule.length > MAX_FUNCTION_ROUTE_LENGTH) {
+      throw new Error(`Generated Function route exceeds 100 characters: ${rule}`);
     }
+    include.add(rule);
   }
 
   if (include.size > MAX_FUNCTION_ROUTE_RULES) {
@@ -103,13 +95,6 @@ function buildTombstoneRoutesJson(rawTombstonesJson) {
 
   return JSON.stringify({ version: 1, include: [...include], exclude: [] }, null, 2);
 }
-
-// Spanish routes stay out of search until the operator offer, production
-// compliance review, and SEO launch are signed off. Set the variable to true
-// only for the production launch; branch previews should leave it unset.
-const spanishIndexingEnabled = /^(1|true|yes)$/i.test(
-  process.env.PUBLIC_SPANISH_INDEXING ?? "",
-);
 
 // (broken mojibake URI -> clean ASCII URI). paul365 stores some slugs with
 // the fingerprint `a%c2%XX` from a known UTF-8/Latin-1 encoding bug; the
@@ -436,8 +421,6 @@ export default defineConfig({
         try {
           const url = new URL(page);
           if (url.pathname.startsWith("/go/")) return false;
-          if (url.pathname.startsWith("/es/go/")) return false;
-          if (!spanishIndexingEnabled && url.pathname.startsWith("/es/")) return false;
           if (sitemapData.noindexUris.has(normalizeUri(url.pathname))) return false;
           return true;
         } catch {
@@ -489,12 +472,6 @@ export default defineConfig({
         access: "public",
         optional: true,
         default: "",
-      }),
-      PUBLIC_SPANISH_INDEXING: envField.string({
-        context: "server",
-        access: "public",
-        optional: true,
-        default: "false",
       }),
     },
   },

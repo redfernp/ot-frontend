@@ -24,7 +24,7 @@ export const categorySeoCopy: Record<string, CategorySeoCopy> = {
     `.trim(),
   },
   football: {
-    top: `<p>Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with Bet365 odds, value angles and accumulator picks. Pick a league below or browse the latest predictions.</p>`,
+    top: `<p>Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with odds, value angles and accumulator picks. Pick a league below or browse the latest predictions.</p>`,
     bottom: `
 <h2>What Is 1x2 Betting?</h2>
 <p>In football betting, 1x2 is the simplest market around:</p>

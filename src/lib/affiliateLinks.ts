@@ -2,7 +2,7 @@
 // a self-hosted /go/{slug}/ redirector so we can fire a GA4 affiliate_click event
 // before the browser leaves Oddstips.
 //
-// Destinations point at the partner network directly (Bet365, Betway, Tipstrr
+// Destinations point at the partner network directly (Betfred, Betway, Tipstrr
 // etc), bypassing the EveryTip /go/ middleman. Affiliate IDs baked into the URLs
 // route commission to the correct (EveryTip) account; the redirects.txt source
 // of truth lives on the EveryTip server and we mirror the relevant slugs here.
@@ -23,13 +23,6 @@ export type AffiliateLink = {
 };
 
 export const affiliateLinks: Record<string, AffiliateLink> = {
-  "bet365": {
-    // Affiliate ID 365_643257 confirmed by Paul as the live tracked link.
-    // Earlier this slug pointed at /hub/en-gb/open-account-offer with a
-    // different affiliate ID (365_371786); that has been retired.
-    destination: "https://www.bet365.com/hub/aff/open-account?affiliate=365_643257",
-    brand: "Bet365",
-  },
   "betfred": {
     destination: "https://bfpartners.click/o/t9b-WJ?lpage=dRMZ-2&site_id=54649&r_id=332",
     brand: "Betfred",
