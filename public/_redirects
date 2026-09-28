@@ -10,6 +10,8 @@
 /reviews/bet365/ /reviews/betfred/ 301
 /go/bet365 /free-bets/ 301
 /go/bet365/ /free-bets/ 301
+/bet365-world-cup-offer /free-bets/ 301
+/bet365-world-cup-offer/ /free-bets/ 301
 
 # Spanish localisation removed (Sept 2026). It was never indexed; send any
 # remaining hits to the English homepage.
