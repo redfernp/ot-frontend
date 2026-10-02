@@ -7,6 +7,8 @@ import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderTennisTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import JsonLd from "@/components/JsonLd.astro";
+import { breadcrumbNode, collectionPageNode } from "@/lib/schema";
 
 // Simple sport hub mirrors the football hub layout without country or league blocks.
 // SEO text comes from ACF Pro category_top_seo_text + category_bottom_seo_text.
@@ -47,7 +49,19 @@ const sportLabel = categoryName.toLowerCase();
 const heroLede =
   topSeo ||
   `<p>Today's best ${sportLabel} predictions, scored through Oddstips' 38-section value algorithm. Scan the picks below or jump straight into a match.</p>`;
+
+const schemaNodes = [
+  breadcrumbNode([{ label: "Home", href: "/" }, { label: categoryName }], Astro.url.pathname),
+  collectionPageNode({
+    name: `${categoryName} Betting Tips`,
+    path: Astro.url.pathname,
+    posts,
+    sportName: categoryName,
+  }),
+];
 ---
+
+<JsonLd nodes={schemaNodes} />
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   <a href="/">Home</a>

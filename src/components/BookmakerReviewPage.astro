@@ -1,4 +1,7 @@
 ---
+import JsonLd from "@/components/JsonLd.astro";
+import { breadcrumbNode } from "@/lib/schema";
+
 export type Bookmaker = {
   slug: string;
   brand: string;
@@ -38,7 +41,15 @@ const isExternalOffer = /^https?:\/\//.test(offerHref);
 const offerRel = isExternalOffer ? "nofollow sponsored noopener" : "nofollow";
 const offerTarget = isExternalOffer ? "_blank" : undefined;
 const verdictCopy = bookmaker.verdict ?? `${bookmaker.brand} earns a ${bookmaker.rating.toFixed(1)} on the Oddstips scorecard. It is a strong option for the markets and audience covered above. If the welcome offer suits you, claim it via the button below; otherwise compare alternatives on our free bets page.`;
+
+const reviewBreadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Bookmaker reviews", href: "/reviews/" },
+  { label: bookmaker.brand },
+];
 ---
+
+<JsonLd nodes={[breadcrumbNode(reviewBreadcrumbs, Astro.url.pathname)]} />
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   <a href="/">Home</a>

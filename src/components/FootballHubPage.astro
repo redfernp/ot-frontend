@@ -8,6 +8,8 @@ import { getInternationalTips, type WpCategory, type WpPost } from "@/lib/graphq
 import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import JsonLd from "@/components/JsonLd.astro";
+import { breadcrumbNode, collectionPageNode } from "@/lib/schema";
 
 // Reads ACF Pro fields category_top_seo_text + category_bottom_seo_text from WP.
 // Falls back to src/lib/categorySeoCopy for dev preview / unpopulated categories.
@@ -55,7 +57,21 @@ const heroLede =
   topSeo ||
   category.description ||
   "<p>Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with odds, value angles and accumulator picks. Browse the latest predictions below.</p>";
+
+const schemaNodes = [
+  breadcrumbNode([{ label: "Home", href: "/" }, { label: categoryName }], Astro.url.pathname),
+  collectionPageNode({
+    name: `${categoryName} 1x2 Betting Tips & Predictions`,
+    path: Astro.url.pathname,
+    posts: [...internationalPosts, ...posts].filter(
+      (post, i, all) => all.findIndex((other) => other.id === post.id) === i,
+    ),
+    sportName: "Football",
+  }),
+];
 ---
+
+<JsonLd nodes={schemaNodes} />
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   <a href="/">Home</a>

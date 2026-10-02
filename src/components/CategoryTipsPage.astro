@@ -8,6 +8,8 @@ import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import JsonLd from "@/components/JsonLd.astro";
+import { breadcrumbNode, collectionPageNode } from "@/lib/schema";
 
 type CategoryWithPosts = WpCategory & {
   posts?: {
@@ -86,7 +88,14 @@ const descriptionLede = category.description
   ? (/^\s*<\w+/.test(category.description) ? category.description : `<p>${category.description}</p>`)
   : "";
 const heroLede = topSeo || descriptionLede || "";
+
+const schemaNodes = [
+  breadcrumbNode(breadcrumb, Astro.url.pathname),
+  collectionPageNode({ name: heading, path: Astro.url.pathname, posts, sportName }),
+];
 ---
+
+<JsonLd nodes={schemaNodes} />
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   {breadcrumb.map((crumb, i) => (
