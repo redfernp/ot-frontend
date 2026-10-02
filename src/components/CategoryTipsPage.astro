@@ -1,9 +1,10 @@
 ---
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import CategoryChildrenList from "@/components/CategoryChildrenList.astro";
-import DateRail from "@/components/DateRail.astro";
 import HubHero from "@/components/HubHero.astro";
-import TipListSection from "@/components/TipListSection.astro";
+import DateJumpRail from "@/components/DateJumpRail.astro";
+import UpcomingTipList from "@/components/UpcomingTipList.astro";
+import { CATEGORY_PAGE_SIZE, buildTipList, jumpRailLinks } from "@/lib/tipLists";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderRelatedTips } from "@/lib/relatedTips";
 import { getCategorySeoCopy } from "@/lib/categorySeoCopy";
@@ -89,9 +90,23 @@ const descriptionLede = category.description
   : "";
 const heroLede = topSeo || descriptionLede || "";
 
+// Today's and upcoming tips, grouped by date, first page only. The rest live
+// on {category}/page/N/. Nothing is rendered hidden, so the HTML is the page.
+const tipList = buildTipList(posts);
+const railLinks = jumpRailLinks(tipList, category.uri || Astro.url.pathname, 1);
+const hasUpcoming = tipList.mode === "upcoming";
+
 const schemaNodes = [
   breadcrumbNode(breadcrumb, Astro.url.pathname),
-  collectionPageNode({ name: heading, path: Astro.url.pathname, posts, sportName }),
+  collectionPageNode({
+    name: heading,
+    path: Astro.url.pathname,
+    // Exactly the tips visible on this page, in page order.
+    posts: tipList.posts.slice(0, CATEGORY_PAGE_SIZE),
+    sportName,
+    upcomingOnly: false,
+    limit: CATEGORY_PAGE_SIZE,
+  }),
 ];
 ---
 
@@ -114,15 +129,15 @@ const schemaNodes = [
 
 <div class="cat-layout">
   <main class="cat-main">
-    {posts.length > 0 && <DateRail />}
+    {hasUpcoming && <DateJumpRail links={railLinks} />}
 
-    <TipListSection
-      posts={posts}
-      eyebrow="Latest predictions"
+    <UpcomingTipList
+      list={tipList}
+      baseUri={category.uri || Astro.url.pathname}
+      eyebrow={hasUpcoming ? "Upcoming predictions" : "Latest predictions"}
       heading={`${category.name || "Latest"} tips`}
       headingId="latest-heading"
       emptyText="No current tips are available for this competition. Check back when new fixtures are published."
-      groupByDate
     />
 
     <CategoryChildrenList parent={category} />

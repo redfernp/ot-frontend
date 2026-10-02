@@ -1,11 +1,13 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import CategoryListPage from "@/components/CategoryListPage.astro";
 import CategoryTipsPage from "@/components/CategoryTipsPage.astro";
 import FootballHubPage from "@/components/FootballHubPage.astro";
 import GenericPage from "@/components/GenericPage.astro";
 import TennisHubPage from "@/components/TennisHubPage.astro";
 import TipPostPage from "@/components/TipPostPage.astro";
 import { WPGRAPHQL_ENDPOINT } from "astro:env/server";
+import { buildTipList, categoryPageCount } from "@/lib/tipLists";
 import {
   getAllCategorySlugs,
   getAllPostSlugs,
@@ -32,11 +34,13 @@ export const prerender = true;
 
 const simpleSportHubSlugs = new Set(["tennis", "cricket", "snooker", "darts", "basketball"]);
 
-type RouteKind = "category" | "post" | "page";
+type RouteKind = "category" | "categoryPage" | "post" | "page";
 type RouteProps = {
   kind: RouteKind;
   slug?: string;
   uri?: string;
+  // categoryPage only: which page of the category's tip list.
+  page?: number;
 };
 
 export async function getStaticPaths() {
@@ -78,6 +82,21 @@ export async function getStaticPaths() {
   // Categories preserve their full WP uri (e.g. football/united-kingdom/england-premier-league).
   categories.forEach((cat) => add(cat.uri, { kind: "category", slug: cat.slug, uri: cat.uri }));
 
+  // Pagination for categories whose tip list runs past one page:
+  // {category}/page/2/, /3/ ... The football hub has its own /football/page/N/
+  // route (src/pages/football/page/[page].astro), so it's skipped here.
+  const categoryRoutes = paths.filter((entry) => entry.props.kind === "category");
+  for (const entry of categoryRoutes) {
+    const slug = entry.props.slug;
+    if (!slug || slug === "football") continue;
+    const cat = await getCategory(slug, 1000).catch(() => null);
+    if (!cat) continue;
+    const pages = categoryPageCount(buildTipList(cat.posts?.nodes ?? []).posts.length);
+    for (let page = 2; page <= pages; page++) {
+      add(`${entry.params.path}/page/${page}`, { kind: "categoryPage", slug, uri: cat.uri, page });
+    }
+  }
+
   // Posts are flat single-segment slugs.
   posts.forEach((post) => add(post.slug, { kind: "post", slug: post.slug, uri: post.uri }));
 
@@ -104,7 +123,10 @@ let page: WpPost | null = null;
 let relatedPosts: WpPost[] = [];
 let categorySlug = "";
 
-if (route?.kind === "category" || (!route && looksLikeCategory)) {
+if (route?.kind === "categoryPage") {
+  categorySlug = route.slug || "";
+  category = await getCategory(categorySlug, 1000).catch(() => null);
+} else if (route?.kind === "category" || (!route && looksLikeCategory)) {
   categorySlug = route?.slug || lastSegment;
   // Pull every post in the category, not just the most recently published
   // 15. The 15-limit was cutting off today/this-week fixtures whenever the
@@ -140,6 +162,7 @@ if (route?.kind === "category" || (!route && looksLikeCategory)) {
 }
 
 const unresolved = !page && !post && !category;
+const isCategoryPage = route?.kind === "categoryPage";
 
 // In static output an unresolved generated route becomes a real HTML file and
 // Cloudflare serves it as HTTP 200, which is a soft 404. If WP is configured,
@@ -153,6 +176,15 @@ if (unresolved && WPGRAPHQL_ENDPOINT) {
 }
 ---
 
+{isCategoryPage && category ? (
+  <BaseLayout
+    title={`${category.name || "Category"} Betting Tips, Page ${route?.page} | Oddstips`}
+    description={`More ${category.name || ""} betting tips, page ${route?.page}.`}
+    noindex
+  >
+    <CategoryListPage category={category} list={buildTipList(category.posts?.nodes ?? [])} page={route?.page ?? 2} />
+  </BaseLayout>
+) : (
 <BaseLayout
   title={unresolved ? "Page not found | Oddstips" : page?.title || post?.title || `${category?.name || "Category"} Betting Tips`}
   description={unresolved ? "The page you requested isn't here. Browse our latest betting tips by sport instead." : page?.seo?.metaDesc || post?.excerpt || category?.description || ""}
@@ -176,3 +208,4 @@ if (unresolved && WPGRAPHQL_ENDPOINT) {
     </div>
   )}
 </BaseLayout>
+)}

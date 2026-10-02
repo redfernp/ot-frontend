@@ -1,0 +1,281 @@
+---
+// Paginated, date-grouped tip list for league, country and sport category
+// pages. Renders one page of the category's tip list (see lib/tipLists.ts)
+// exactly as visitors see it: nothing ships hidden.
+//
+// "Load more tips" is a plain link to {category}/page/N/. With JS it fetches
+// that page and appends its rows in place, merging into the last date group
+// when a day spans two pages.
+import CouponRow from "@/components/CouponRow.astro";
+import { formatDayHeading, londonTodayIso, postDateKey } from "@/lib/footballHub";
+import type { WpPost } from "@/lib/graphql";
+import {
+  CATEGORY_PAGE_SIZE,
+  type TipList,
+  categoryPageCount,
+  categoryPagePath,
+  dateAnchor,
+} from "@/lib/tipLists";
+
+type Props = {
+  list: TipList;
+  baseUri: string;
+  page?: number;
+  eyebrow: string;
+  eyebrowAccent?: "blue" | "orange";
+  heading: string;
+  headingId: string;
+  featured?: boolean;
+  emptyText: string;
+  unit?: { singular: string; plural: string };
+};
+
+const {
+  list,
+  baseUri,
+  page = 1,
+  eyebrow,
+  eyebrowAccent = "blue",
+  heading,
+  headingId,
+  featured = false,
+  emptyText,
+  unit = { singular: "tip", plural: "tips" },
+} = Astro.props;
+
+const total = list.posts.length;
+const pages = categoryPageCount(total);
+const start = (page - 1) * CATEGORY_PAGE_SIZE;
+const pagePosts = list.posts.slice(start, start + CATEGORY_PAGE_SIZE);
+const shownTo = start + pagePosts.length;
+const today = londonTodayIso();
+const countLabel = (n: number) => `${n} ${n === 1 ? unit.singular : unit.plural}`;
+
+const perDate = new Map<string, number>();
+for (const post of list.posts) {
+  const key = postDateKey(post) ?? "";
+  perDate.set(key, (perDate.get(key) ?? 0) + 1);
+}
+
+const groups: Array<{ date: string; posts: WpPost[] }> = [];
+for (const post of pagePosts) {
+  const key = postDateKey(post) ?? "";
+  const last = groups[groups.length - 1];
+  if (last && last.date === key) last.posts.push(post);
+  else groups.push({ date: key, posts: [post] });
+}
+
+function groupLabel(date: string) {
+  if (!date) return "Date to be confirmed";
+  const label = formatDayHeading(date);
+  return date === today ? `Today, ${label}` : label;
+}
+---
+
+<section
+  class:list={["tip-list", { "is-featured": featured }]}
+  aria-labelledby={headingId}
+  data-upcoming-list
+>
+  <header class="tip-list-head">
+    <p class:list={["eyebrow", { "on-orange": eyebrowAccent === "orange" }]}>{eyebrow}</p>
+    <h2 id={headingId}>{heading}</h2>
+    <p class="tip-list-meta">
+      {countLabel(total)}
+      {pages > 1 && <span data-range-label> &middot; showing {start + 1} to {shownTo}</span>}
+    </p>
+  </header>
+
+  {list.mode === "recent" && (
+    <p class="list-note">No upcoming tips for this competition right now. These are the most recent ones.</p>
+  )}
+
+  {total > 0 ? (
+    <div class="tip-list-rows" data-rows>
+      {groups.map((group) => (
+        <div class="date-group" data-date-group={group.date}>
+          <header class="date-group-head" id={group.date ? dateAnchor(group.date) : undefined}>
+            <span class="date-group-label">{groupLabel(group.date)}</span>
+            <span class="date-group-count">{countLabel(perDate.get(group.date) ?? group.posts.length)}</span>
+          </header>
+          {group.posts.map((post) => <CouponRow post={post} />)}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p class="empty-state">{emptyText}</p>
+  )}
+
+  {pages > 1 && (
+    <nav class="pager" aria-label="More tips">
+      {page > 1 && <a class="pager-prev" href={categoryPagePath(baseUri, page - 1)}>Previous tips</a>}
+      {page < pages && (
+        <a class="load-more" href={categoryPagePath(baseUri, page + 1)} data-load-more-page>Load more tips</a>
+      )}
+    </nav>
+  )}
+</section>
+
+<script is:inline>
+  (() => {
+    if (window.__otUpcomingListReady) return;
+    window.__otUpcomingListReady = true;
+
+    document.addEventListener("click", async (event) => {
+      const link = event.target.closest("[data-load-more-page]");
+      if (!link) return;
+      const section = link.closest("[data-upcoming-list]");
+      if (!section) return;
+      event.preventDefault();
+
+      try {
+        link.setAttribute("aria-busy", "true");
+        const res = await fetch(link.href);
+        if (!res.ok) throw new Error(String(res.status));
+        const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+        const incoming = doc.querySelector("[data-upcoming-list]");
+        if (!incoming) throw new Error("no list");
+
+        const rows = section.querySelector("[data-rows]");
+        incoming.querySelectorAll("[data-date-group]").forEach((group) => {
+          const date = group.dataset.dateGroup;
+          const last = rows.lastElementChild;
+          if (last && last.dataset.dateGroup === date) {
+            // Same day continues from the previous page: append its rows only.
+            group.querySelectorAll(".coupon-row").forEach((row) => last.appendChild(document.importNode(row, true)));
+          } else {
+            rows.appendChild(document.importNode(group, true));
+          }
+        });
+
+        const range = section.querySelector("[data-range-label]");
+        if (range) {
+          range.textContent = ` · showing 1 to ${rows.querySelectorAll(".coupon-row").length}`;
+        }
+
+        const next = incoming.querySelector("[data-load-more-page]");
+        if (next) {
+          link.href = next.getAttribute("href");
+          link.removeAttribute("aria-busy");
+        } else {
+          link.remove();
+        }
+      } catch {
+        // Fall back to the plain pagination link.
+        window.location.href = link.href;
+      }
+    });
+  })();
+</script>
+
+<style>
+  .tip-list {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .tip-list.is-featured { border-top: 4px solid var(--ot-brand-orange); }
+
+  .tip-list-head {
+    align-items: end;
+    background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    justify-content: space-between;
+    padding: 1.1rem 1.25rem;
+  }
+  .tip-list-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+    width: 100%;
+  }
+  .tip-list-head .eyebrow.on-orange { color: var(--ot-brand-orange); }
+  .tip-list-head h2 {
+    color: var(--ot-text);
+    font-size: 1.15rem;
+    margin: 0.2rem 0 0;
+  }
+  .tip-list-meta {
+    color: var(--ot-muted);
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  .list-note {
+    background: #fff8f1;
+    border-bottom: 1px solid var(--ot-border);
+    color: var(--ot-text-2);
+    font-size: 0.9rem;
+    margin: 0;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .tip-list-rows { display: grid; }
+  .date-group { display: contents; }
+  .date-group-head {
+    align-items: baseline;
+    background: linear-gradient(180deg, #eaf2ff 0%, #f5f9ff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    border-top: 1px solid var(--ot-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.7rem 1.25rem;
+    scroll-margin-top: 90px;
+  }
+  .date-group:first-child .date-group-head { border-top: 0; }
+  .date-group-label {
+    color: var(--ot-brand-blue-dark);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .date-group-count {
+    color: var(--ot-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .empty-state {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .pager {
+    border-top: 1px solid var(--ot-border);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    padding: 1rem 1.25rem;
+  }
+  .pager a {
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 0.65rem 1.4rem;
+    text-decoration: none;
+  }
+  .load-more {
+    background: var(--ot-brand-blue);
+    color: #fff;
+  }
+  .load-more:hover { background: var(--ot-brand-blue-dark); }
+  .load-more[aria-busy="true"] { opacity: 0.6; }
+  .pager-prev {
+    border: 1px solid var(--ot-border-strong);
+    color: var(--ot-brand-blue);
+  }
+</style>
