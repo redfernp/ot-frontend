@@ -4,6 +4,7 @@ import DateRail from "@/components/DateRail.astro";
 import FootballDirectory from "@/components/FootballDirectory.astro";
 import HubHero from "@/components/HubHero.astro";
 import LeagueTipList from "@/components/LeagueTipList.astro";
+import OfferBanner from "@/components/OfferBanner.astro";
 import TipListSection from "@/components/TipListSection.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/relatedTips";
@@ -55,13 +56,13 @@ const bottomSeo = rewriteCmsHtml(
 const categoryName = category.name || "Football";
 
 // Page order (top to bottom), identical with and without JavaScript:
-//   1. H1 + first paragraph of the top SEO copy in the hero
-//   2. The rest of the top SEO copy, collapsible
+//   1. H1 + top SEO copy in the hero
+//   2. Featured bookmaker offer
 //   3. Date rail
 //   4. Every upcoming international in the rail window
 //   5. Today's league tips, top PAGE_SIZE, then /football/page/N/
 //   6. Bottom SEO copy
-//   7. League links (formerly the sidebar), then the country directory
+//   7. Search and league links (formerly the sidebar), then the country directory
 const today = londonTodayIso();
 const liveLeagueTips = await getLeagueTipsForDate(today).catch(() => []);
 const leagueTips = liveLeagueTips.length || hasWpGraphQL ? liveLeagueTips : placeholderRelatedTips;
@@ -81,17 +82,11 @@ const availableDates = (
   )
 ).filter((date): date is string => Boolean(date));
 
-// The first paragraph of the top copy sits in the hero; everything after it
-// goes in the collapsible intro panel below.
-function splitLede(html: string) {
-  const match = html.match(/^\s*(<p\b[\s\S]*?<\/p>)([\s\S]*)$/i);
-  if (!match) return { lede: html, more: "" };
-  return { lede: match[1], more: match[2].trim() };
-}
-
 const defaultLede =
   "<p>Looking for today's best Football 1x2 betting tips and predictions? Oddstips covers every major league, cup and international fixture with odds, value angles and accumulator picks. Browse the latest predictions below.</p>";
-const { lede: heroLede, more: introMore } = splitLede(topSeo || category.description || defaultLede);
+// The top SEO field is the hero intro: short and entity-rich, so the tips
+// start high on the page. Longer guide copy belongs in the bottom field.
+const heroLede = topSeo || category.description || defaultLede;
 
 const schemaNodes = [
   breadcrumbNode([{ label: "Home", href: "/" }, { label: categoryName }], Astro.url.pathname),
@@ -122,14 +117,7 @@ const schemaNodes = [
 />
 
 <div class="hub-main">
-  {introMore && (
-    <section class="seo-content hub-intro" aria-label="About our football tips" data-collapsible>
-      <div class="seo-prose" id="hub-intro-prose" set:html={introMore} />
-      <button type="button" class="read-more" data-read-more aria-controls="hub-intro-prose" hidden>
-        Read more
-      </button>
-    </section>
-  )}
+  <OfferBanner />
 
   <DateRail
     daysBefore={RAIL_DAYS_BEFORE}
@@ -166,32 +154,12 @@ const schemaNodes = [
   )}
 
   <div class="hub-links">
-    <CategorySidebar currentPath={category.uri} />
+    <CategorySidebar currentPath={category.uri} showOffer={false} />
   </div>
 
   <FootballDirectory />
 </div>
 
-<script is:inline>
-  // Collapse the long intro copy once JS is running. The full text is always
-  // in the HTML (and fully visible without JS); this only clips it visually.
-  (() => {
-    document.querySelectorAll("[data-collapsible]").forEach((panel) => {
-      const prose = panel.querySelector(".seo-prose");
-      const button = panel.querySelector("[data-read-more]");
-      if (!prose || !button || prose.scrollHeight < 420) return;
-
-      panel.classList.add("is-collapsed");
-      button.hidden = false;
-      button.setAttribute("aria-expanded", "false");
-      button.addEventListener("click", () => {
-        const collapsed = panel.classList.toggle("is-collapsed");
-        button.setAttribute("aria-expanded", String(!collapsed));
-        button.textContent = collapsed ? "Read more" : "Show less";
-      });
-    });
-  })();
-</script>
 
 <style>
   .breadcrumbs {
@@ -203,30 +171,18 @@ const schemaNodes = [
   .breadcrumbs a:hover { text-decoration: underline; }
   .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
 
-  .hub-intro.is-collapsed .seo-prose {
-    max-height: 16rem;
-    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
-    overflow: hidden;
-  }
-  .read-more {
-    background: none;
-    border: 1px solid var(--ot-border-strong);
-    border-radius: 999px;
-    color: var(--ot-brand-blue);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 800;
-    margin-top: 0.75rem;
-    padding: 0.55rem 1.25rem;
-  }
-  .read-more[hidden] { display: none; }
-  .read-more:hover { border-color: var(--ot-brand-blue); }
-
-  /* Former sidebar, now a full-width band below the guide copy. */
+  /* Former sidebar, now a full-width band below the guide copy: search on
+     its own row, then the link lists side by side. */
   .hub-links :global(.cat-sidebar) {
+    align-items: start;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .hub-links :global(.sidebar-search),
+  .hub-links :global(.sidebar-be) {
+    grid-column: 1 / -1;
+  }
+  .hub-links :global(.sidebar-search) {
+    max-width: 560px;
   }
 
   .hub-main {
