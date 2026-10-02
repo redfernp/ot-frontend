@@ -7,3 +7,7 @@
 /_gone/*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: public, max-age=300
+
+# Date fragments fetched by the /football/ date rail. Not pages.
+/data/*
+  X-Robots-Tag: noindex

@@ -128,15 +128,21 @@ export function collectionPageNode(opts: {
   posts: WpPost[];
   sportName?: string;
   limit?: number;
+  // false = list the posts exactly as given (when they mirror what the page
+  // shows). true = pick the soonest upcoming fixtures.
+  upcomingOnly?: boolean;
 }): JsonLdNode {
-  const { name, path, description, posts, sportName, limit = 20 } = opts;
+  const { name, path, description, posts, sportName, limit = 20, upcomingOnly = true } = opts;
   const now = Date.now();
-  const events = posts
-    .filter((post) => {
-      const start = isoStart(post);
-      return start && new Date(start).getTime() >= now - 3 * 60 * 60 * 1000;
-    })
-    .sort((a, b) => (isoStart(a) ?? "").localeCompare(isoStart(b) ?? ""))
+  const pool = upcomingOnly
+    ? posts
+        .filter((post) => {
+          const start = isoStart(post);
+          return start && new Date(start).getTime() >= now - 3 * 60 * 60 * 1000;
+        })
+        .sort((a, b) => (isoStart(a) ?? "").localeCompare(isoStart(b) ?? ""))
+    : posts;
+  const events = pool
     .map((post) => sportsEventNode(post, sportName))
     .filter((node): node is JsonLdNode => Boolean(node))
     .slice(0, limit);

@@ -91,7 +91,7 @@ export type SeoFields = {
 // Snapshot-backed data accessors
 // -----------------------------------------------------------------------------
 
-function postToWp(post: SnapshotPost): WpPost {
+export function postToWp(post: SnapshotPost): WpPost {
   return {
     id: post.id,
     slug: post.slug,

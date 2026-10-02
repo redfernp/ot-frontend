@@ -24,6 +24,10 @@ type Props = {
   // sections with a date header between groups. Used on category pages so
   // visitors can see today's tips first, then upcoming dates underneath.
   groupByDate?: boolean;
+  // When false the date rail leaves this list alone: every group renders and
+  // stays visible, so the HTML and the rendered page match. Used for the
+  // football hub's upcoming internationals.
+  dateFilter?: boolean;
 };
 
 const {
@@ -36,6 +40,7 @@ const {
   emptyText,
   featured = false,
   groupByDate = false,
+  dateFilter = true,
 } = Astro.props;
 
 const count = posts.length;
@@ -110,13 +115,13 @@ if (groupByDate && count > 0) {
 // header instead of straight into future-date content with no context.
 const ssrToday = groupByDate ? londonTodayIso() : null;
 const ssrTodayHasGroup = ssrToday ? groups.some((g) => g.date === ssrToday) : false;
-const placeholderVisible = groupByDate && count > 0 && !ssrTodayHasGroup;
+const placeholderVisible = groupByDate && dateFilter && count > 0 && !ssrTodayHasGroup;
 ---
 
 <section
   class:list={["post-list", { "is-featured": featured }]}
   aria-labelledby={headingId}
-  data-date-filter-section
+  data-date-filter-section={dateFilter ? "" : undefined}
   data-date-grouped={groupByDate ? "true" : undefined}
 >
   <header class="post-list-head">
@@ -130,7 +135,7 @@ const placeholderVisible = groupByDate && count > 0 && !ssrTodayHasGroup;
   </header>
   {count > 0 ? (
     <div class="post-list-rows" data-date-filter-list>
-      {groupByDate && (
+      {groupByDate && dateFilter && (
         // Active-date placeholder. JS in DateRail updates its label and
         // visibility on date change. Ships visible from SSR when today has
         // no real tips group, so Googlebot and JS-disabled visitors see a

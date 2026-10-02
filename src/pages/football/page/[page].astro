@@ -1,0 +1,58 @@
+---
+// /football/page/N/: the rest of today's league tips for crawlers and
+// visitors without JavaScript. With JS, the hub's "Load more tips" button
+// appends these rows in place instead of navigating here.
+//
+// noindex, follow: these exist so Google can reach every tip page, not to rank.
+// No canonical either; a canonical on a noindex page sends mixed signals.
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import LeagueTipList from "@/components/LeagueTipList.astro";
+import { formatDayHeading, getLeagueTipsForDate, londonTodayIso, pageCount } from "@/lib/footballHub";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const today = londonTodayIso();
+  const posts = await getLeagueTipsForDate(today);
+  return Array.from({ length: Math.max(0, pageCount(posts.length) - 1) }, (_, i) => ({
+    params: { page: String(i + 2) },
+    props: { today, posts },
+  }));
+}
+
+const { today, posts } = Astro.props;
+const page = Number(Astro.params.page);
+const dayLabel = formatDayHeading(today);
+---
+
+<BaseLayout
+  title={`Today's Football Betting Tips, Page ${page} | Oddstips`}
+  description={`More free football 1x2 betting tips for ${dayLabel}, page ${page}.`}
+  noindex
+>
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="sep">/</span>
+    <a href="/football/">Football</a>
+    <span class="sep">/</span>
+    <span aria-current="page">Page {page}</span>
+  </nav>
+
+  <h1 class="page-title">Today's Football Betting Tips: Page {page}</h1>
+
+  <LeagueTipList
+    posts={posts}
+    date={today}
+    page={page}
+    heading={`Football Betting Predictions for ${dayLabel}`}
+    headingId="league-tips-heading"
+  />
+</BaseLayout>
+
+<style>
+  .breadcrumbs { color: var(--ot-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .breadcrumbs a { color: var(--ot-brand-blue); text-decoration: none; }
+  .breadcrumbs a:hover { text-decoration: underline; }
+  .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
+  .page-title { font-size: clamp(1.5rem, 3vw, 2.1rem); margin-bottom: 1.25rem; }
+</style>

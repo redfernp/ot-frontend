@@ -3,12 +3,16 @@ type Props = {
   label?: string;
   daysBefore?: number;
   daysAfter?: number;
+  // Dates that have tips, when the tips are not all in the DOM (the football
+  // hub only ships today and fetches other days on click).
+  availableDates?: string[];
 };
 
 const {
   label = "Match date selector",
   daysBefore = 28,
   daysAfter = 6,
+  availableDates,
 } = Astro.props;
 
 function londonTodayIso() {
@@ -80,6 +84,7 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
   data-date-rail
   data-days-before={daysBefore}
   data-days-after={daysAfter}
+  data-available-dates={availableDates ? availableDates.join(",") : undefined}
 >
   <div class="date-list">
     {items.map((item) => (
@@ -173,6 +178,11 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
     }
 
     function availableDates() {
+      const declared = document.querySelector("[data-date-rail][data-available-dates]");
+      if (declared) {
+        return new Set(declared.dataset.availableDates.split(",").filter((date) => isoPattern.test(date)));
+      }
+
       const rows = Array.from(document.querySelectorAll("[data-date-filter-section] [data-tip-date]"));
 
       return new Set(
@@ -406,6 +416,9 @@ const items = Array.from({ length: daysBefore + daysAfter + 1 }, (_, index) => {
       if (updateUrl) {
         syncDateQuery(activeDate);
       }
+
+      // Lists that load their own data (LeagueTipList) listen for this.
+      document.dispatchEvent(new CustomEvent("ot:datechange", { detail: { date: activeDate } }));
 
       window.requestAnimationFrame(revealActiveDate);
     }
