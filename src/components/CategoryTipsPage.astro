@@ -2,6 +2,7 @@
 import CategorySidebar from "@/components/CategorySidebar.astro";
 import CategoryChildrenList from "@/components/CategoryChildrenList.astro";
 import HubHero from "@/components/HubHero.astro";
+import OfferBanner from "@/components/OfferBanner.astro";
 import DateJumpRail from "@/components/DateJumpRail.astro";
 import UpcomingTipList from "@/components/UpcomingTipList.astro";
 import { CATEGORY_PAGE_SIZE, buildTipList, jumpRailLinks } from "@/lib/tipLists";
@@ -127,32 +128,33 @@ const schemaNodes = [
   ledeHtml={heroLede}
 />
 
-<div class="cat-layout">
-  <main class="cat-main">
-    {hasUpcoming && <DateJumpRail links={railLinks} />}
+<div class="cat-main">
+  <OfferBanner location="category_offer_banner" />
 
-    <UpcomingTipList
-      list={tipList}
-      baseUri={category.uri || Astro.url.pathname}
-      eyebrow={hasUpcoming ? "Upcoming predictions" : "Latest predictions"}
-      heading={`${category.name || "Latest"} tips`}
-      headingId="latest-heading"
-      emptyText="No current tips are available for this competition. Check back when new fixtures are published."
-    />
+  {hasUpcoming && <DateJumpRail links={railLinks} />}
 
-    <CategoryChildrenList parent={category} />
+  <UpcomingTipList
+    list={tipList}
+    baseUri={category.uri || Astro.url.pathname}
+    eyebrow={hasUpcoming ? "Upcoming predictions" : "Latest predictions"}
+    heading={`${category.name || "Latest"} tips`}
+    headingId="latest-heading"
+    emptyText="No current tips are available for this competition. Check back when new fixtures are published."
+  />
 
-    {bottomSeo && (
-      <section class="cat-bottom-seo" aria-label="Category guide">
-        <div class="seo-prose" set:html={bottomSeo} />
-      </section>
-    )}
-  </main>
+  <CategoryChildrenList parent={category} />
 
+  {bottomSeo && (
+    <section class="cat-bottom-seo" aria-label="Category guide">
+      <div class="seo-prose" set:html={bottomSeo} />
+    </section>
+  )}
   <CategorySidebar
     currentPath={category.uri}
     showInternational={isFootballCategory}
     showPopularLeagues={isFootballCategory}
+    showOffer={false}
+    layout="band"
   />
 </div>
 
@@ -166,11 +168,6 @@ const schemaNodes = [
   .breadcrumbs a:hover { text-decoration: underline; }
   .breadcrumbs .sep { color: var(--ot-muted-2); margin: 0 0.35rem; }
 
-  .cat-layout {
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: minmax(0, 1fr) 300px;
-  }
 
   .cat-main {
     display: flex;
@@ -227,7 +224,4 @@ const schemaNodes = [
   }
   .seo-prose :global(ul), .seo-prose :global(ol) { margin: 0 0 1.25rem; padding-left: 1.4rem; }
 
-  @media (max-width: 880px) {
-    .cat-layout { grid-template-columns: 1fr; }
-  }
 </style>

@@ -9,10 +9,13 @@ type Props = {
   // Off where the page shows the offer elsewhere (the football hub puts it
   // above the listings).
   showOffer?: boolean;
+  // "column": the original right-hand sidebar. "band": full width below the
+  // page's SEO copy, with search on its own row and link lists side by side.
+  layout?: "column" | "band";
   currentPath?: string;
 };
 
-const { showPopularLeagues = true, showInternational = true, showOffer = true, currentPath } = Astro.props;
+const { showPopularLeagues = true, showInternational = true, showOffer = true, layout = "column", currentPath } = Astro.props;
 
 // Pull menus from WordPress (Appearance > Menus). Slugs are auto-generated from
 // the menu name; they must stay in sync with WP. The getMenu helper caches the
@@ -37,7 +40,7 @@ const popularLeaguesLinks = menuToLinks(popularLeaguesMenu);
 const internationalLinks = menuToLinks(internationalMenu);
 ---
 
-<aside class="cat-sidebar" aria-label="League navigation">
+<aside class:list={["cat-sidebar", { "is-band": layout === "band" }]} aria-label="League navigation">
   {showOffer && (
   <section class="sidebar-offer" aria-label={`${featuredBookmaker.brand} free bet offer`} style={`--brand-color:${featuredBookmaker.color}`}>
     <p class="offer-kicker">#Ad &middot; New customers</p>
@@ -108,6 +111,19 @@ const internationalLinks = menuToLinks(internationalMenu);
     align-self: start;
     display: grid;
     gap: 1rem;
+  }
+
+  .cat-sidebar.is-band {
+    align-items: start;
+    align-self: stretch;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .cat-sidebar.is-band .sidebar-search,
+  .cat-sidebar.is-band .sidebar-be {
+    grid-column: 1 / -1;
+  }
+  .cat-sidebar.is-band .sidebar-search {
+    max-width: 560px;
   }
 
   .sr-only {
