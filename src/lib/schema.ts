@@ -86,53 +86,29 @@ function isoStart(post: WpPost): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-// Sports where the "teams" in a fixture title are individual players.
-const INDIVIDUAL_SPORTS = new Set(["tennis", "darts", "snooker"]);
-
-// SportsEvent for a single tip. Only emitted when the fixture parses into two
-// teams and has a real kickoff timestamp; a half-filled event is worse than
-// none. No venue data exists in the feed, so location is left out.
-export function sportsEventNode(post: WpPost, sportName?: string, competition?: string): JsonLdNode | null {
+// Tips are listed as plain ListItems (name + URL), not SportsEvents. Google
+// validates any SportsEvent against its Event rich result rules, which require
+// a venue ("location"). The feed has no venue data, so every event failed as
+// "Missing field location". Re-add SportsEvent once real venues are available.
+function tipName(post: WpPost): string {
   const summary = summarizeTip(post);
-  const startDate = isoStart(post);
-  if (!summary.homeTeam || !summary.awayTeam || !startDate) return null;
-
-  const url = absoluteUrl(post.uri || `/${post.slug}/`);
-  const individual = INDIVIDUAL_SPORTS.has((sportName || "").toLowerCase());
-  const team = (name: string): JsonLdNode => ({
-    "@type": individual ? "Person" : "SportsTeam",
-    name,
-    ...(sportName && !individual ? { sport: sportName } : {}),
-  });
-
-  return {
-    "@type": "SportsEvent",
-    "@id": `${url}#event`,
-    name: `${summary.homeTeam} v ${summary.awayTeam}`,
-    url,
-    startDate,
-    ...(sportName ? { sport: sportName } : {}),
-    ...(competition ? { superEvent: { "@type": "SportsEvent", name: competition } } : {}),
-    homeTeam: team(summary.homeTeam),
-    awayTeam: team(summary.awayTeam),
-    competitor: [team(summary.homeTeam), team(summary.awayTeam)],
-  };
+  if (summary.homeTeam && summary.awayTeam) return `${summary.homeTeam} v ${summary.awayTeam}`;
+  return summary.fixture || post.title || "Betting tip";
 }
 
-// CollectionPage for a hub/category listing, with an ItemList of the soonest
-// upcoming fixtures. Capped so the hub HTML does not balloon.
+// CollectionPage for a hub/category listing, with an ItemList of its tips.
+// Capped so the hub HTML does not balloon.
 export function collectionPageNode(opts: {
   name: string;
   path: string;
   description?: string;
   posts: WpPost[];
-  sportName?: string;
   limit?: number;
   // false = list the posts exactly as given (when they mirror what the page
   // shows). true = pick the soonest upcoming fixtures.
   upcomingOnly?: boolean;
 }): JsonLdNode {
-  const { name, path, description, posts, sportName, limit = 20, upcomingOnly = true } = opts;
+  const { name, path, description, posts, limit = 20, upcomingOnly = true } = opts;
   const now = Date.now();
   const pool = upcomingOnly
     ? posts
@@ -142,10 +118,7 @@ export function collectionPageNode(opts: {
         })
         .sort((a, b) => (isoStart(a) ?? "").localeCompare(isoStart(b) ?? ""))
     : posts;
-  const events = pool
-    .map((post) => sportsEventNode(post, sportName))
-    .filter((node): node is JsonLdNode => Boolean(node))
-    .slice(0, limit);
+  const items = pool.slice(0, limit);
 
   const url = absoluteUrl(path);
   return {
@@ -157,15 +130,16 @@ export function collectionPageNode(opts: {
     inLanguage: "en-GB",
     isPartOf: { "@id": websiteId() },
     publisher: { "@id": organizationId() },
-    ...(events.length
+    ...(items.length
       ? {
           mainEntity: {
             "@type": "ItemList",
-            numberOfItems: events.length,
-            itemListElement: events.map((event, i) => ({
+            numberOfItems: items.length,
+            itemListElement: items.map((post, i) => ({
               "@type": "ListItem",
               position: i + 1,
-              item: event,
+              name: tipName(post),
+              url: absoluteUrl(post.uri || `/${post.slug}/`),
             })),
           },
         }

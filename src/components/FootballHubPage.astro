@@ -95,7 +95,6 @@ const schemaNodes = [
     path: Astro.url.pathname,
     // Exactly the tips visible in the HTML, in page order.
     posts: [...internationalPosts, ...leagueTips.slice(0, PAGE_SIZE)],
-    sportName: "Football",
     upcomingOnly: false,
     limit: internationalPosts.length + PAGE_SIZE,
   }),
