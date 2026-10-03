@@ -1,0 +1,98 @@
+---
+// Date rail for league, country and sport category pages. Each day with tips
+// is a plain link to that day's group in the list (on whichever page it
+// starts); days without tips are greyed out. No script: the rail only
+// navigates, it never hides content, so the HTML and the rendered page match.
+// The /football/ hub uses DateRail instead, which loads other days on demand.
+type Props = {
+  links: Array<{ date: string; offset: number; href: string | null }>;
+  label?: string;
+};
+
+const { links, label = "Jump to match date" } = Astro.props;
+
+function mainLabel(date: string, offset: number) {
+  if (offset === 0) return "Today";
+  if (offset === 1) return "Tomorrow";
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short" }).format(new Date(`${date}T00:00:00Z`));
+}
+
+function shortDate(date: string) {
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(
+    new Date(`${date}T00:00:00Z`),
+  );
+}
+---
+
+<nav class="date-rail" aria-label={label}>
+  <div class="date-list">
+    {links.map((link) =>
+      link.href ? (
+        <a class="date-item" href={link.href}>
+          <strong>{mainLabel(link.date, link.offset)}</strong>
+          <span>{shortDate(link.date)}</span>
+        </a>
+      ) : (
+        <span class="date-item is-empty" title="No tips for this date yet">
+          <strong>{mainLabel(link.date, link.offset)}</strong>
+          <span>{shortDate(link.date)}</span>
+        </span>
+      ),
+    )}
+  </div>
+</nav>
+
+<style>
+  .date-rail {
+    background: #08224d;
+    border: 1px solid #d7dde6;
+    border-radius: 8px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .date-list {
+    display: grid;
+    grid-auto-columns: minmax(94px, 1fr);
+    grid-auto-flow: column;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .date-list::-webkit-scrollbar { display: none; }
+  .date-item {
+    align-items: center;
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    justify-content: center;
+    min-height: 68px;
+    min-width: 94px;
+    padding: 0.65rem 0.55rem 0.55rem;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  a.date-item:hover { background: rgba(255, 255, 255, 0.08); }
+  .date-item.is-empty {
+    color: #7e91b7;
+    opacity: 0.45;
+  }
+  .date-item strong {
+    color: inherit;
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    line-height: 1;
+  }
+  .date-item span {
+    color: #8fa6cf;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    line-height: 1;
+  }
+  @media (max-width: 720px) {
+    .date-list { grid-auto-columns: minmax(82px, 1fr); }
+    .date-item { min-height: 62px; min-width: 82px; }
+    .date-item strong { font-size: 0.7rem; letter-spacing: 0.1em; }
+  }
+</style>
