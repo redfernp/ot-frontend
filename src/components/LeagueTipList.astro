@@ -1,0 +1,355 @@
+---
+// Paginated list of one day's football league tips.
+//
+// Renders the same rows with or without JavaScript: the build picks the day
+// (today in London) and the page, and that slice is what ships in the HTML.
+// Without JS, "Load more tips" is a plain link to /football/page/N/. With JS,
+// the same link appends the next rows from the prebuilt day fragment instead,
+// and the date rail swaps the whole list via an "ot:datechange" event. Nothing
+// is shipped hidden.
+import CouponRow from "@/components/CouponRow.astro";
+import type { WpPost } from "@/lib/graphql";
+import { FRAGMENT_BASE, PAGE_SIZE, formatDayHeading, pageCount, pagePath } from "@/lib/footballHub";
+
+type Props = {
+  // Full ranked list for the day; this component slices out the page.
+  posts: WpPost[];
+  date: string;
+  page?: number;
+  eyebrow?: string;
+  heading: string;
+  headingId: string;
+};
+
+const { posts, date, page = 1, eyebrow = "All predictions", heading, headingId } = Astro.props;
+const total = posts.length;
+const pages = pageCount(total);
+const start = (page - 1) * PAGE_SIZE;
+const pagePosts = posts.slice(start, start + PAGE_SIZE);
+const shownTo = start + pagePosts.length;
+const hasMore = page < pages;
+const unit = (n: number) => `${n} ${n === 1 ? "tip" : "tips"}`;
+---
+
+<section
+  class="league-list"
+  aria-labelledby={headingId}
+  data-league-list
+  data-date={date}
+  data-built-date={date}
+  data-page={page}
+  data-page-size={PAGE_SIZE}
+  data-total={total}
+  data-fragment-base={FRAGMENT_BASE}
+>
+  <header class="league-list-head">
+    <p class="eyebrow">{eyebrow}</p>
+    <h2 id={headingId}>{heading}</h2>
+    <p class="league-list-meta" data-total-label>{unit(total)}</p>
+  </header>
+
+  <div class="day-head">
+    <span class="day-label" data-day-label>{formatDayHeading(date)}</span>
+    {pages > 1 && <span class="day-range" data-range-label>Showing {start + 1} to {shownTo} of {total}</span>}
+  </div>
+
+  <div class="rows" data-rows>
+    {pagePosts.map((post) => <CouponRow post={post} />)}
+  </div>
+
+  <p class="empty-state" data-empty hidden={total > 0}>
+    No tips for this date yet. New tips go up through the day, so check back soon or pick another date.
+  </p>
+
+  {(hasMore || page > 1) && (
+    <nav class="pager" aria-label="More football tips">
+      {page > 1 && (
+        <a class="pager-prev" href={pagePath(page - 1)} data-prev>Previous tips</a>
+      )}
+      {hasMore && (
+        <a class="load-more" href={pagePath(page + 1)} data-load-more>Load more tips</a>
+      )}
+    </nav>
+  )}
+</section>
+
+<script is:inline>
+  (() => {
+    if (window.__otLeagueListReady) return;
+    window.__otLeagueListReady = true;
+
+    const cache = new Map();
+
+    function fetchRows(base, date) {
+      if (!cache.has(date)) {
+        cache.set(
+          date,
+          fetch(`${base}${date}/`)
+            .then((res) => (res.ok ? res.text() : ""))
+            .then((html) => {
+              const tpl = document.createElement("template");
+              tpl.innerHTML = html;
+              return Array.from(tpl.content.querySelectorAll(".coupon-row"));
+            })
+            .catch(() => {
+              cache.delete(date);
+              return null;
+            }),
+        );
+      }
+      return cache.get(date);
+    }
+
+    function formatDay(isoDate) {
+      return new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "long",
+        timeZone: "UTC",
+        weekday: "long",
+      }).format(new Date(`${isoDate}T00:00:00Z`));
+    }
+
+    function pagePath(page) {
+      return page <= 1 ? "/football/" : `/football/page/${page}/`;
+    }
+
+    function ensurePager(section) {
+      let pager = section.querySelector(".pager");
+      if (!pager) {
+        pager = document.createElement("nav");
+        pager.className = "pager";
+        pager.setAttribute("aria-label", "More football tips");
+        section.appendChild(pager);
+      }
+      let more = pager.querySelector("[data-load-more]");
+      if (!more) {
+        more = document.createElement("a");
+        more.className = "load-more";
+        more.dataset.loadMore = "";
+        more.textContent = "Load more tips";
+        pager.appendChild(more);
+      }
+      // Copy the scoped-style attribute from the section so injected nodes
+      // pick up the component CSS.
+      for (const attr of section.getAttributeNames()) {
+        if (attr.startsWith("data-astro-cid")) {
+          pager.setAttribute(attr, "");
+          more.setAttribute(attr, "");
+        }
+      }
+      return { pager, more };
+    }
+
+    function render(section, state) {
+      // shown = index of the last row on screen (1-based), start = index of
+      // the first, both counted against the full day list.
+      const { rows, start, shown, date } = state;
+      const total = rows.length;
+      const size = Number(section.dataset.pageSize) || 20;
+      const builtDate = section.dataset.builtDate;
+
+      section.dataset.date = date;
+      section.dataset.total = String(total);
+      section.querySelector("[data-total-label]").textContent = `${total} ${total === 1 ? "tip" : "tips"}`;
+      section.querySelector("[data-day-label]").textContent = formatDay(date);
+      section.querySelector("[data-empty]").hidden = total > 0;
+
+      let range = section.querySelector("[data-range-label]");
+      if (total > size) {
+        if (!range) {
+          range = document.createElement("span");
+          range.className = "day-range";
+          range.dataset.rangeLabel = "";
+          section.querySelector(".day-head").appendChild(range);
+          for (const attr of section.getAttributeNames()) {
+            if (attr.startsWith("data-astro-cid")) range.setAttribute(attr, "");
+          }
+        }
+        range.textContent = `Showing ${start + 1} to ${shown} of ${total}`;
+      } else if (range) {
+        range.remove();
+      }
+
+      const prev = section.querySelector("[data-prev]");
+      if (prev && date !== builtDate) prev.hidden = true;
+
+      if (shown < total) {
+        const { pager, more } = ensurePager(section);
+        pager.hidden = false;
+        more.hidden = false;
+        // Static pagination pages only exist for the built day. Other dates
+        // page in place, so keep the href pointing somewhere sensible.
+        more.href = date === builtDate
+          ? pagePath(Math.floor(shown / size) + 1)
+          : `/football/?date=${date}`;
+      } else {
+        const more = section.querySelector("[data-load-more]");
+        if (more) more.hidden = true;
+      }
+    }
+
+    const states = new WeakMap();
+
+    function stateFor(section) {
+      if (!states.has(section)) {
+        const list = section.querySelector("[data-rows]");
+        const page = Number(section.dataset.page) || 1;
+        const size = Number(section.dataset.pageSize) || 20;
+        states.set(section, {
+          date: section.dataset.date,
+          // Rows already on the page, offset by the page they came from.
+          offset: (page - 1) * size,
+          shown: list.children.length,
+          rows: null,
+        });
+      }
+      return states.get(section);
+    }
+
+    document.addEventListener("click", async (event) => {
+      const link = event.target.closest("[data-load-more]");
+      if (!link) return;
+      const section = link.closest("[data-league-list]");
+      if (!section) return;
+      event.preventDefault();
+
+      const state = stateFor(section);
+      const size = Number(section.dataset.pageSize) || 20;
+      const rows = state.rows || (await fetchRows(section.dataset.fragmentBase, state.date));
+      if (!rows) {
+        // Fragment unavailable: fall back to the plain pagination link.
+        window.location.href = link.href;
+        return;
+      }
+      state.rows = rows;
+
+      const list = section.querySelector("[data-rows]");
+      const from = state.offset + state.shown;
+      rows.slice(from, from + size).forEach((row) => list.appendChild(row.cloneNode(true)));
+      state.shown = list.children.length;
+      render(section, { rows, start: state.offset, shown: state.offset + state.shown, date: state.date });
+    });
+
+    document.addEventListener("ot:datechange", async (event) => {
+      const date = event.detail && event.detail.date;
+      if (!date) return;
+
+      for (const section of document.querySelectorAll("[data-league-list]")) {
+        const state = stateFor(section);
+        if (date === state.date) continue;
+
+        section.setAttribute("aria-busy", "true");
+        const rows = await fetchRows(section.dataset.fragmentBase, date);
+        section.removeAttribute("aria-busy");
+        const size = Number(section.dataset.pageSize) || 20;
+        const list = section.querySelector("[data-rows]");
+        list.replaceChildren(...(rows || []).slice(0, size).map((row) => row.cloneNode(true)));
+
+        state.date = date;
+        state.rows = rows || [];
+        state.offset = 0;
+        state.shown = list.children.length;
+        render(section, { rows: state.rows, start: 0, shown: state.shown, date });
+      }
+    });
+  })();
+</script>
+
+<style>
+  .league-list {
+    background: var(--ot-surface);
+    border: 1px solid var(--ot-border);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    overflow: hidden;
+  }
+  .league-list[aria-busy="true"] .rows { opacity: 0.5; }
+
+  .league-list-head {
+    align-items: end;
+    background: linear-gradient(180deg, #f3f8fd 0%, #ffffff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    justify-content: space-between;
+    padding: 1.1rem 1.25rem;
+  }
+  .league-list-head .eyebrow {
+    color: var(--ot-brand-blue);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+    width: 100%;
+  }
+  .league-list-head h2 {
+    color: var(--ot-text);
+    font-size: 1.15rem;
+    margin: 0.2rem 0 0;
+  }
+  .league-list-meta {
+    color: var(--ot-muted);
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  .day-head {
+    align-items: baseline;
+    background: linear-gradient(180deg, #eaf2ff 0%, #f5f9ff 100%);
+    border-bottom: 1px solid var(--ot-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.7rem 1.25rem;
+  }
+  .day-label {
+    color: var(--ot-brand-blue-dark);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .day-range {
+    color: var(--ot-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .rows { display: grid; }
+
+  .empty-state {
+    color: var(--ot-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .pager {
+    border-top: 1px solid var(--ot-border);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    padding: 1rem 1.25rem;
+  }
+  .pager[hidden], .pager a[hidden] { display: none; }
+  .pager a {
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 0.65rem 1.4rem;
+    text-decoration: none;
+  }
+  .load-more {
+    background: var(--ot-brand-blue);
+    color: #fff;
+  }
+  .load-more:hover { background: var(--ot-brand-blue-dark); }
+  .pager-prev {
+    border: 1px solid var(--ot-border-strong);
+    color: var(--ot-brand-blue);
+  }
+</style>

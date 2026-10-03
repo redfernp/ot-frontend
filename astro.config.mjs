@@ -421,6 +421,9 @@ export default defineConfig({
         try {
           const url = new URL(page);
           if (url.pathname.startsWith("/go/")) return false;
+          // Date-rail fragments and noindex hub pagination.
+          if (url.pathname.startsWith("/data/")) return false;
+          if (/^\/football\/page\/\d+\/?$/.test(url.pathname)) return false;
           if (sitemapData.noindexUris.has(normalizeUri(url.pathname))) return false;
           return true;
         } catch {

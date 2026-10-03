@@ -1,0 +1,86 @@
+---
+// Full-width featured bookmaker offer, shown above the tip listings on hub
+// pages. Same offer and terms as the sidebar card, laid out horizontally so it
+// doesn't push the tips far down the page. Significant terms stay visible next
+// to the headline, as UK ad rules require.
+import { featuredBookmaker } from "@/lib/bookmakers";
+
+type Props = {
+  // Value for data-affiliate-location so GA4 can tell placements apart.
+  location?: string;
+};
+
+const { location = "hub_offer_banner" } = Astro.props;
+const bookie = featuredBookmaker;
+---
+
+<section
+  class="offer-banner"
+  aria-label={`${bookie.brand} free bet offer`}
+  style={`--brand-color:${bookie.color}`}
+>
+  <div class="offer-main">
+    <p class="offer-kicker">#Ad &middot; New customers</p>
+    <h2>{bookie.bonus.headline}</h2>
+  </div>
+  <a class="offer-cta" href={bookie.offerHref} rel="nofollow sponsored" data-affiliate-location={location}>
+    Claim with {bookie.brand}
+  </a>
+  <p class="offer-terms">#Ad - {bookie.bonus.terms}</p>
+  <p class="offer-safe">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
+</section>
+
+<style>
+  .offer-banner {
+    align-items: center;
+    background: linear-gradient(135deg, var(--brand-color, var(--ot-ink-2)) 0%, var(--ot-ink) 100%);
+    border-radius: var(--ot-radius);
+    box-shadow: var(--ot-shadow-sm);
+    color: #fff;
+    display: grid;
+    gap: 0.75rem 1.5rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 1.25rem 1.5rem;
+  }
+  .offer-kicker {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    margin: 0 0 0.5rem;
+    padding: 0.3rem 0.75rem;
+    text-transform: uppercase;
+  }
+  .offer-banner h2 {
+    color: #fff;
+    font-size: 1.35rem;
+    margin: 0;
+  }
+  .offer-cta {
+    background: var(--ot-gold);
+    border-radius: 999px;
+    color: var(--ot-ink);
+    font-size: 1rem;
+    font-weight: 900;
+    padding: 0.85rem 1.75rem;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .offer-cta:hover { background: #e7bc60; }
+  .offer-terms,
+  .offer-safe {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.76rem;
+    grid-column: 1 / -1;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .offer-safe { font-weight: 700; }
+
+  @media (max-width: 640px) {
+    .offer-banner { grid-template-columns: 1fr; }
+  }
+</style>

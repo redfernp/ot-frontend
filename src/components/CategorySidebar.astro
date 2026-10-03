@@ -6,10 +6,13 @@ import { featuredBookmaker } from "@/lib/bookmakers";
 type Props = {
   showPopularLeagues?: boolean;
   showInternational?: boolean;
+  // Off where the page shows the offer elsewhere (the football hub puts it
+  // above the listings).
+  showOffer?: boolean;
   currentPath?: string;
 };
 
-const { showPopularLeagues = true, showInternational = true, currentPath } = Astro.props;
+const { showPopularLeagues = true, showInternational = true, showOffer = true, currentPath } = Astro.props;
 
 // Pull menus from WordPress (Appearance > Menus). Slugs are auto-generated from
 // the menu name; they must stay in sync with WP. The getMenu helper caches the
@@ -35,6 +38,7 @@ const internationalLinks = menuToLinks(internationalMenu);
 ---
 
 <aside class="cat-sidebar" aria-label="League navigation">
+  {showOffer && (
   <section class="sidebar-offer" aria-label={`${featuredBookmaker.brand} free bet offer`} style={`--brand-color:${featuredBookmaker.color}`}>
     <p class="offer-kicker">#Ad &middot; New customers</p>
     <h2>{featuredBookmaker.bonus.headline}</h2>
@@ -46,6 +50,7 @@ const internationalLinks = menuToLinks(internationalMenu);
     </p>
     <p class="offer-safe">18+ &middot; BeGambleAware.org &middot; GamCare.org.uk</p>
   </section>
+  )}
 
   <form class="sidebar-search" role="search" action="/" method="get">
     <label class="sr-only" for="cat-search">Search latest free tips</label>

@@ -1,0 +1,22 @@
+---
+// Prebuilt list of every league tip for one match day, ranked the same way as
+// the /football/ hub. Not a page for people or search engines: LeagueTipList
+// fetches it when a visitor picks another date on the rail or clicks "Load
+// more tips". Served with X-Robots-Tag: noindex (see public/_headers) and
+// kept out of the sitemap.
+import CouponRow from "@/components/CouponRow.astro";
+import { getLeagueTipsForDate, railDates } from "@/lib/footballHub";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return railDates().map((date) => ({ params: { date } }));
+}
+
+const { date } = Astro.params as { date: string };
+const posts = await getLeagueTipsForDate(date);
+---
+
+<div data-fragment data-date={date}>
+  {posts.map((post) => <CouponRow post={post} />)}
+</div>
