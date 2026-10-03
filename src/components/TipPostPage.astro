@@ -4,6 +4,8 @@ import RelatedTips from "@/components/RelatedTips.astro";
 import { findBookmakerLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
 import { featuredBookmaker } from "@/lib/bookmakers";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import JsonLd from "@/components/JsonLd.astro";
+import { breadcrumbNode, sportsEventNode } from "@/lib/schema";
 
 type Props = {
   post: WpPost;
@@ -72,7 +74,14 @@ const faqs = [
     a: `We recommend ${bookie.brand}. New customers can claim ${bookie.bonus.headline} using the link in the tip card above. Always check the current price before placing a bet.`,
   },
 ].filter((faq): faq is { q: string; a: string } => Boolean(faq));
+
+const schemaNodes = [
+  breadcrumbNode(breadcrumb, Astro.url.pathname),
+  sportsEventNode(post, sportSlug ? sportName : undefined, primaryCategory?.name),
+];
 ---
+
+<JsonLd nodes={schemaNodes} />
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   {breadcrumb.map((crumb, i) => (

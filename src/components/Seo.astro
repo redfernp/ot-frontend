@@ -1,6 +1,8 @@
 ---
 import type { SeoFields } from "@/lib/graphql";
 import { rewriteCmsLink, publicSiteOrigin } from "@/lib/cmsContent";
+import JsonLd from "@/components/JsonLd.astro";
+import { organizationNode, websiteNode } from "@/lib/schema";
 
 type Props = {
   title?: string;
@@ -72,3 +74,4 @@ const ogImage = rewriteCmsLink(seo?.opengraphImage?.sourceUrl);
 {(seo?.twitterDescription || seo?.opengraphDescription || pageDescription) && (
   <meta name="twitter:description" content={seo?.twitterDescription || seo?.opengraphDescription || pageDescription} />
 )}
+<JsonLd nodes={[organizationNode(), websiteNode()]} />

@@ -1,0 +1,12 @@
+---
+import { serializeJsonLd, type JsonLdNode } from "@/lib/schema";
+
+type Props = {
+  nodes: Array<JsonLdNode | null | undefined>;
+};
+
+const { nodes } = Astro.props;
+const hasNodes = nodes.some(Boolean);
+---
+
+{hasNodes && <script type="application/ld+json" is:inline set:html={serializeJsonLd(nodes)} />}

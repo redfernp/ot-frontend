@@ -1,6 +1,8 @@
 ---
 import type { WpPost } from "@/lib/graphql";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import JsonLd from "@/components/JsonLd.astro";
+import { breadcrumbNode } from "@/lib/schema";
 
 type Props = {
   page: WpPost;
@@ -33,6 +35,8 @@ const modified = page.modified
   : null;
 const pageContent = rewriteCmsHtml(page.content || "<p>This page is being updated.</p>");
 ---
+
+<JsonLd nodes={[breadcrumbNode(breadcrumbs, Astro.url.pathname)]} />
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   {breadcrumbs.map((crumb, i) => (
