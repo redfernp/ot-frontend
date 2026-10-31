@@ -5,6 +5,7 @@ import FootballDirectory from "@/components/FootballDirectory.astro";
 import HubHero from "@/components/HubHero.astro";
 import LeagueTipList from "@/components/LeagueTipList.astro";
 import OfferBanner from "@/components/OfferBanner.astro";
+import StrongTipsBand from "@/components/StrongTipsBand.astro";
 import TipListSection from "@/components/TipListSection.astro";
 import type { WpCategory, WpPost } from "@/lib/graphql";
 import { placeholderInternationalTips, placeholderRelatedTips } from "@/lib/relatedTips";
@@ -117,6 +118,8 @@ const schemaNodes = [
 
 <div class="hub-main">
   <OfferBanner />
+
+  <StrongTipsBand heading="Today's Strongest Football Tips" eyebrow="Correct score, goals, BTTS and accas" />
 
   <DateRail
     daysBefore={RAIL_DAYS_BEFORE}

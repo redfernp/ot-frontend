@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import PostListItem from "@/components/PostListItem.astro";
 import WorldCupHero from "@/components/WorldCupHero.astro";
+import StrongTipsBand from "@/components/StrongTipsBand.astro";
 import { getCategoryPostTitles, getMenu } from "@/lib/graphql";
 import { cmsLinkToPath } from "@/lib/cmsContent";
 import { homeLatestSections } from "@/lib/siteNav";
@@ -98,6 +99,8 @@ function toTitleCase(value: string) {
   {/* World Cup hero: renders only while the world-cup category has upcoming
       tips in the snapshot. Disappears automatically after the final. */}
   <WorldCupHero posts={worldCupUpcoming} />
+
+  <StrongTipsBand />
 
   {homeSportTiles.length > 0 && (
     <section class="section sports-band" aria-labelledby="sports-heading">
