@@ -3,6 +3,7 @@
 // (correct score, 1X2, goals, BTTS, acca), each showing today's top pick and
 // its Power Rating when the plugin's export is current. Used on the homepage
 // and the football hub.
+import { cmsLinkToPath } from "@/lib/cmsContent";
 import { isCurrent, loadStrongTips, STRONG_TIP_PAGES } from "@/lib/strongTips";
 
 type Props = {
@@ -16,7 +17,7 @@ const data = await loadStrongTips();
 const current = isCurrent(data) ? data : null;
 
 const cards = STRONG_TIP_PAGES.map((page) => {
-  if (!current) return { ...page, pick: null, sub: null, power: null };
+  if (!current) return { ...page, pick: null, sub: null, power: null, tipHref: null };
   if (page.market === "acca") {
     const acca = current.accas?.all;
     return {
@@ -24,16 +25,19 @@ const cards = STRONG_TIP_PAGES.map((page) => {
       pick: acca ? `${acca.legs.length}-fold @ ${acca.combinedOdds.toFixed(2)}` : null,
       sub: acca ? "Today's acca of the day" : null,
       power: acca ? acca.power : null,
+      tipHref: null,
     };
   }
   const top = current.markets?.[page.market]?.tips?.[0];
-  if (!top) return { ...page, pick: null, sub: null, power: null };
+  if (!top) return { ...page, pick: null, sub: null, power: null, tipHref: null };
   const tip = page.market === "cs" ? `Correct score ${top.tip}` : top.tip;
   return {
     ...page,
     pick: top.fixture,
     sub: top.odds ? `${tip} @ ${top.odds.toFixed(2)}` : tip,
     power: top.power,
+    // The fixture opens the full tip post for that match.
+    tipHref: top.tipUrl ? cmsLinkToPath(top.tipUrl) || top.tipUrl : null,
   };
 });
 
@@ -49,11 +53,13 @@ const band = (power: number) => (power >= 75 ? "high" : power >= 50 ? "mid" : "l
 
   <div class="strong-grid">
     {cards.map((card) => (
-      <a class:list={["strong-card", { "is-acca": card.market === "acca" }]} href={card.href}>
-        <span class="strong-label">{card.label}</span>
+      <div class:list={["strong-card", { "is-acca": card.market === "acca" }]}>
+        <a class="strong-label" href={card.href}>{card.label}</a>
         {card.pick ? (
           <>
-            <span class="strong-pick">{card.pick}</span>
+            {card.tipHref
+              ? <a class="strong-pick" href={card.tipHref}>{card.pick}</a>
+              : <a class="strong-pick" href={card.href}>{card.pick}</a>}
             <span class="strong-sub">{card.sub}</span>
             {card.power !== null && (
               <span class={`strong-power strong-power--${band(card.power)}`} aria-label={`Power Rating ${card.power} out of 100`}>
@@ -65,8 +71,8 @@ const band = (power: number) => (power >= 75 ? "high" : power >= 50 ? "mid" : "l
         ) : (
           <span class="strong-blurb">{card.blurb}</span>
         )}
-        <span class="strong-cta">See all tips <span aria-hidden="true">&rarr;</span></span>
-      </a>
+        <a class="strong-cta" href={card.href}>See all tips <span aria-hidden="true">&rarr;</span></a>
+      </div>
     ))}
   </div>
 </section>
@@ -121,7 +127,9 @@ const band = (power: number) => (power >= 75 ? "high" : power >= 50 ? "mid" : "l
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
-  .strong-pick { color: var(--ot-text); font-size: 1.05rem; font-weight: 900; line-height: 1.25; }
+  .strong-label { text-decoration: none; }
+  .strong-pick { color: var(--ot-text); font-size: 1.05rem; font-weight: 900; line-height: 1.25; text-decoration: none; }
+  .strong-pick:hover { color: var(--ot-brand-blue); text-decoration: underline; }
   .strong-sub { color: var(--ot-text-2); font-size: 0.85rem; }
   .strong-blurb { color: var(--ot-text-2); font-size: 0.9rem; line-height: 1.4; }
 
@@ -140,5 +148,6 @@ const band = (power: number) => (power >= 75 ? "high" : power >= 50 ? "mid" : "l
     margin-top: auto;
     padding-top: 0.4rem;
   }
-  .strong-card:hover .strong-cta { color: var(--ot-brand-orange); }
+  .strong-cta { text-decoration: none; }
+  .strong-cta:hover { color: var(--ot-brand-orange); }
 </style>
