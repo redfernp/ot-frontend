@@ -138,3 +138,8 @@
 
 # wp-json (REST API), wp-login, wp-includes are not exposed via the frontend;
 # editors use the cloudwaysapps URL directly for wp-admin.
+
+# Strong 1X2 tips page renamed to target "best football bets today" (Nov
+# 2026), leaving "1X2 tips" to the /football/ hub.
+/football-1x2-tips /football-best-bets-today/ 301
+/football-1x2-tips/ /football-best-bets-today/ 301

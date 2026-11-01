@@ -27,7 +27,7 @@ export type StrongTipsFile = {
 
 // The six football tips pages, in display order.
 export const STRONG_TIP_PAGES = [
-  { market: "1x2", href: "/football-1x2-tips/", label: "1X2 Tips", blurb: "Home wins, away wins and draws our model rates highest." },
+  { market: "1x2", href: "/football-best-bets-today/", label: "Best Bets of the Day", blurb: "The strongest 1X2 bets our model can find today." },
   { market: "acca", href: "/football-acca-tips/", label: "Acca of the Day", blurb: "Our strongest selections combined into one acca." },
   { market: "btts", href: "/football-btts-tips/", label: "BTTS Tips", blurb: "Matches where both sides should find the net." },
   { market: "o25", href: "/football-over-2-5-goals-tips/", label: "Over 2.5 Goals", blurb: "Fixtures our model expects to have three goals or more." },
