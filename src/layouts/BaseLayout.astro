@@ -84,8 +84,14 @@ const FALLBACK_NAV: NavItem[] = [
   },
 ];
 
+// Betting terms that must stay upper case after title-casing (e.g. "BTTS Tips").
+const KEEP_UPPER = /\b(1x2|btts|uk|uefa|fa|efl|mls)\b/gi;
+
 function toTitleCase(value: string): string {
-  return value.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return value
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(KEEP_UPPER, (word) => word.toUpperCase());
 }
 
 const EVERYTIP_GO = /https?:\/\/(?:www\.)?everytip\.co\.uk\/go\/([a-z0-9-]+)\/?/i;
