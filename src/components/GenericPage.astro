@@ -3,6 +3,8 @@ import type { WpPost } from "@/lib/graphql";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
 import JsonLd from "@/components/JsonLd.astro";
 import { breadcrumbNode } from "@/lib/schema";
+import StrongTipsBand from "@/components/StrongTipsBand.astro";
+import { BEST_BETS_HUB, BEST_BETS_LIST_ID, STRONG_TIP_PAGES } from "@/lib/strongTips";
 
 type Props = {
   page: WpPost;
@@ -34,6 +36,15 @@ const modified = page.modified
   ? new Date(page.modified).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
   : null;
 const pageContent = rewriteCmsHtml(page.content || "<p>This page is being updated.</p>");
+
+// The Best Bets hub: the plugin's intro, then buttons to each market page and
+// the top pick per market, then its 1X2 list. Splits at the plugin's marker.
+const MARKER = "<!-- oddstips-strong-tips:start -->";
+const isHub = page.uri === BEST_BETS_HUB && pageContent.includes(MARKER);
+const [hubIntro, hubRest] = isHub
+  ? [pageContent.slice(0, pageContent.indexOf(MARKER)), pageContent.slice(pageContent.indexOf(MARKER))]
+  : ["", ""];
+const marketButtons = STRONG_TIP_PAGES.filter((p) => p.href !== BEST_BETS_HUB);
 ---
 
 <JsonLd nodes={[breadcrumbNode(breadcrumbs, Astro.url.pathname)]} />
@@ -53,7 +64,24 @@ const pageContent = rewriteCmsHtml(page.content || "<p>This page is being update
     {modified && <p>Last updated {modified}</p>}
   </header>
 
-  <section class="page-content" set:html={pageContent} />
+  {isHub ? (
+    <>
+      <section class="page-content" set:html={hubIntro} />
+
+      <nav class="market-buttons" aria-label="Best bets by market">
+        {marketButtons.map((p) => <a href={p.href}>{p.label}</a>)}
+      </nav>
+
+      <StrongTipsBand heading="Today's Top Pick in Every Market" eyebrow="Best bets by market" tone="light" hub />
+
+      <section class="page-content" aria-labelledby={BEST_BETS_LIST_ID}>
+        <h2 id={BEST_BETS_LIST_ID}>Best Match Result Bets Today</h2>
+        <Fragment set:html={hubRest} />
+      </section>
+    </>
+  ) : (
+    <section class="page-content" set:html={pageContent} />
+  )}
 </article>
 
 <style>
@@ -101,6 +129,33 @@ const pageContent = rewriteCmsHtml(page.content || "<p>This page is being update
   }
 
   .page-content :global(*) { max-width: 100%; }
+  .page-content > h2 {
+    border-bottom: 2px solid var(--ot-brand-blue-soft);
+    color: var(--ot-brand-blue-dark);
+    font-size: 1.35rem;
+    line-height: 1.25;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.35rem;
+  }
+  .generic-page :global(.strong-band) { margin: 0; }
+
+  .market-buttons {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+  }
+  .market-buttons a {
+    background: var(--ot-ink);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 800;
+    padding: 0.75rem 0.8rem;
+    text-align: center;
+    text-decoration: none;
+    transition: background 120ms ease;
+  }
+  .market-buttons a:hover { background: var(--ot-ink-2); color: var(--ot-gold); }
   .page-content :global(h1),
   .page-content :global(h2),
   .page-content :global(h3),

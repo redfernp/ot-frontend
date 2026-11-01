@@ -35,6 +35,11 @@ export const STRONG_TIP_PAGES = [
   { market: "cs", href: "/football-correct-score-tips/", label: "Correct Score Tips", blurb: "The most likely final scores, backed by xG." },
 ] as const;
 
+// The Best Bets hub. It is also the 1X2 page, so on it the band's 1X2 card
+// jumps down to the match result list instead of linking to itself.
+export const BEST_BETS_HUB = "/football-best-bets-today/";
+export const BEST_BETS_LIST_ID = "best-match-result-bets";
+
 let cached: Promise<StrongTipsFile | null> | null = null;
 
 export function loadStrongTips(): Promise<StrongTipsFile | null> {

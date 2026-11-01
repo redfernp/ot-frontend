@@ -4,21 +4,26 @@
 // its Power Rating when the plugin's export is current. Used on the homepage
 // and the football hub.
 import { cmsLinkToPath } from "@/lib/cmsContent";
-import { isCurrent, loadStrongTips, STRONG_TIP_PAGES } from "@/lib/strongTips";
+import { BEST_BETS_HUB, BEST_BETS_LIST_ID, isCurrent, loadStrongTips, STRONG_TIP_PAGES } from "@/lib/strongTips";
 
 type Props = {
   heading?: string;
   eyebrow?: string;
   // "light" for pages where the band sits under another navy block (football hub).
   tone?: "dark" | "light";
+  // On the Best Bets hub itself: market names as labels, 1X2 links down the page.
+  hub?: boolean;
 };
 
-const { heading = "Today's Strongest Football Tips", eyebrow = "Backed by our tips model", tone = "dark" } = Astro.props;
+const { heading = "Today's Strongest Football Tips", eyebrow = "Backed by our tips model", tone = "dark", hub = false } = Astro.props;
 
 const data = await loadStrongTips();
 const current = isCurrent(data) ? data : null;
 
-const cards = STRONG_TIP_PAGES.map((page) => {
+const cards = STRONG_TIP_PAGES.map((entry) => {
+  const page = hub && entry.href === BEST_BETS_HUB
+    ? { ...entry, label: "Match Result", href: `#${BEST_BETS_LIST_ID}` }
+    : entry;
   if (!current) return { ...page, pick: null, sub: null, power: null, tipHref: null };
   if (page.market === "acca") {
     const acca = current.accas?.all;
