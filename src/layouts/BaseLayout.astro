@@ -50,8 +50,8 @@ type NavItem = {
 //   - The "Free Bets" item (matched by path /free-bets/) renders as the gold
 //     pill at the start of the nav, regardless of its position in WP.
 //   - Items with children (parentDatabaseId points at their databaseId) render
-//     as <details> dropdowns. Parents with URL "#" stay non-clickable; parents
-//     with a real URL stay clickable but still open the dropdown via the chev.
+//     as <details> dropdowns, so the parent itself is not a link. A parent
+//     with a real URL (not "#") is added as the first link in its dropdown.
 //
 // If WPGraphQL is unreachable at build time, getMenu returns null and we fall
 // back to a small hardcoded baseline so the header still renders something
@@ -154,6 +154,10 @@ function buildNavFromMenu(menuItems: WpMenuItem[]): NavItem[] {
         external: childUrl.external,
       };
     });
+
+    if (children.length > 0 && href !== "#") {
+      children.unshift({ label, href, external });
+    }
 
     nav.push({
       label,
