@@ -13,9 +13,8 @@
 //   3. Use /go/{slug}/ in any template/data file that links to it
 //   4. The static path is generated automatically by src/pages/go/[slug].astro
 //
-// Two slugs differ from the bookmaker key in bookmakers.ts:
-//   - mrplaysport (bookmaker key) -> /go/mrplay/
-//   - netbet      (bookmaker key) -> /go/netbet-50/
+// One slug differs from the bookmaker key in bookmakers.ts:
+//   - netbet (bookmaker key) -> /go/netbet-50/
 
 export type AffiliateLink = {
   destination: string;
@@ -43,10 +42,6 @@ export const affiliateLinks: Record<string, AffiliateLink> = {
     destination: "https://refer.onyxaffiliates.com/redirect?cid=67ff798c7766cd997e38e84f&oid=644901df3d562de33590ec88&bid=67410b9e621f8bfcbc8e2170&pid=&customParameter=",
     brand: "BetWright",
   },
-  "fafabet": {
-    destination: "https://ffbt.link/o/6lBbK4?lpage=WtX_iY",
-    brand: "Fafabet",
-  },
   "netbet-50": {
     destination: "https://banners.livepartners.com/view.php?z=72193",
     brand: "NetBet",
@@ -54,10 +49,6 @@ export const affiliateLinks: Record<string, AffiliateLink> = {
   "10bet": {
     destination: "https://track.10bet.com/C.ashx?btag=a_52705b_6192c_&affid=1680674&siteid=52705&adid=6192&c=",
     brand: "10Bet",
-  },
-  "mrplay": {
-    destination: "https://online.mrplaypartners.com/promoRedirect?key=ej0yNDAwNDg0MSZsPTI0MDA0Nzk5JnA9MTEzMDk5",
-    brand: "mr.playSPORT",
   },
   "footballer-tips-tipstrr": {
     destination: "https://tipstrr.com/football?via=everytip",

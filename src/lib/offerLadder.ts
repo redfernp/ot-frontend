@@ -8,7 +8,7 @@
 import { bookmakers } from "@/lib/bookmakers";
 
 const PINNED_FIRST = "betfred";
-export const LADDER_ORDER = ["betfred", "betway", "quinnbet", "spreadex", "betwright", "fafabet", "netbet", "10bet", "mrplaysport"];
+export const LADDER_ORDER = ["betfred", "betway", "quinnbet", "spreadex", "betwright", "netbet", "10bet"];
 
 const LOGOS: Record<string, string> = {
   betfred: "https://www.everytip.co.uk/wp-content/uploads/2018/06/betfred-154x40.png",
@@ -16,10 +16,8 @@ const LOGOS: Record<string, string> = {
   quinnbet: "https://www.everytip.co.uk/wp-content/uploads/2024/09/quinnbet-logo-328.png",
   spreadex: "https://www.everytip.co.uk/wp-content/uploads/2024/03/SPX_1_Sports-Primarylogo-WO-11.png",
   betwright: "https://www.everytip.co.uk/wp-content/uploads/2025/04/betwright-logo-light-400px.png",
-  fafabet: "https://www.everytip.co.uk/wp-content/uploads/2024/05/fafabet-logo.png",
   netbet: "https://www.everytip.co.uk/wp-content/uploads/2018/04/NetBet_Logo-2CRev-48px.png",
   "10bet": "https://www.everytip.co.uk/wp-content/uploads/2019/07/new-10bet-150x40-logo.jpg",
-  mrplaysport: "https://www.everytip.co.uk/wp-content/uploads/2021/09/mrplay-sport-logo-blue-150x40-1.png",
 };
 
 const escape = (value: string | undefined) =>

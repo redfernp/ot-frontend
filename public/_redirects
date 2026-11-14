@@ -10,6 +10,17 @@
 /reviews/bet365/ /reviews/betfred/ 301
 /go/bet365 /free-bets/ 301
 /go/bet365/ /free-bets/ 301
+
+# Fafabet and mr.playSPORT closed down (Nov 2026). Reviews and cloaks removed;
+# send any cached or external hits to the free bets list.
+/reviews/fafabet /free-bets/ 301
+/reviews/fafabet/ /free-bets/ 301
+/reviews/mrplaysport /free-bets/ 301
+/reviews/mrplaysport/ /free-bets/ 301
+/go/fafabet /free-bets/ 301
+/go/fafabet/ /free-bets/ 301
+/go/mrplay /free-bets/ 301
+/go/mrplay/ /free-bets/ 301
 /bet365-world-cup-offer /free-bets/ 301
 /bet365-world-cup-offer/ /free-bets/ 301
 
