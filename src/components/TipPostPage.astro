@@ -4,6 +4,7 @@ import RelatedTips from "@/components/RelatedTips.astro";
 import { findBookmakerLink, intensityOf, parseReturns, splitTipBody, summarizeTip } from "@/lib/tips";
 import { featuredBookmaker } from "@/lib/bookmakers";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import { renderOfferLadder } from "@/lib/offerLadder";
 import JsonLd from "@/components/JsonLd.astro";
 import { breadcrumbNode } from "@/lib/schema";
 
@@ -195,6 +196,9 @@ const schemaNodes = [
           <div class="lede" set:html={lede} />
         </section>
       )}
+
+      {/* Offer ladder below the tip itself, so the tip content Google ranks comes first. */}
+      <Fragment set:html={renderOfferLadder({ heading: "Back this tip: today's top betting offers", location: "tip_ladder" })} />
 
       {signals.length >= 3 && (
         <section class="signals" aria-labelledby="signals-heading">

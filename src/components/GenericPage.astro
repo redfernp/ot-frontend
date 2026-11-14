@@ -1,6 +1,7 @@
 ---
 import type { WpPost } from "@/lib/graphql";
 import { rewriteCmsHtml } from "@/lib/cmsContent";
+import { insertLadderBeforePreviousTips } from "@/lib/offerLadder";
 import JsonLd from "@/components/JsonLd.astro";
 import { breadcrumbNode } from "@/lib/schema";
 import StrongTipsBand from "@/components/StrongTipsBand.astro";
@@ -35,7 +36,8 @@ const breadcrumbs = [
 const modified = page.modified
   ? new Date(page.modified).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
   : null;
-const pageContent = rewriteCmsHtml(page.content || "<p>This page is being updated.</p>");
+// Football tips pages: the offer ladder sits under today's tips table, above "Previous tips".
+const pageContent = insertLadderBeforePreviousTips(rewriteCmsHtml(page.content || "<p>This page is being updated.</p>"), "tips_page_ladder");
 
 // The Best Bets hub: the plugin's intro, then buttons to each market page and
 // the top pick per market, then its 1X2 list. Splits at the plugin's marker.

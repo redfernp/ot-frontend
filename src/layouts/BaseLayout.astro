@@ -859,4 +859,31 @@ const ga4Id = PUBLIC_GA4_ID;
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
+
+  /* Offer ladder (src/lib/offerLadder.ts). Global because it is also injected into CMS HTML. */
+  .ot-ladder { background: var(--ot-surface); border: 1px solid var(--ot-border); border-radius: var(--ot-radius); box-shadow: var(--ot-shadow-sm); margin: 1.75rem 0; padding: 1.25rem; }
+  .ot-ladder__head h2 { color: var(--ot-ink); font-size: clamp(1.15rem, 2.4vw, 1.4rem); line-height: 1.25; margin: 0 0 0.2rem; }
+  .ot-ladder__head p { color: var(--ot-muted); font-size: 0.8rem; margin: 0 0 1rem; }
+  .ot-ladder__list { display: grid; gap: 0.6rem; list-style: none; margin: 0; padding: 0; }
+  .ot-ladder__row { align-items: center; background: var(--ot-surface); border: 1px solid var(--ot-border); border-left: 5px solid var(--ladder-brand, var(--ot-ink)); border-radius: var(--ot-radius-sm); display: grid; gap: 0.85rem; grid-template-columns: 2.1rem 9rem minmax(0, 1fr) 10rem; margin: 0; padding: 0.75rem; }
+  .ot-ladder__rank { align-items: center; background: var(--ladder-brand, var(--ot-ink)); border-radius: 50%; color: #fff; display: flex; font-size: 0.95rem; font-weight: 800; height: 2.1rem; justify-content: center; width: 2.1rem; }
+  .ot-ladder__logo { align-items: center; background: var(--ladder-brand, var(--ot-ink)); border-radius: var(--ot-radius-sm); color: #fff; display: flex; justify-content: center; min-height: 3.6rem; padding: 0.45rem; }
+  .ot-ladder__logo img { display: block; height: auto; max-height: 2.8rem; max-width: 100%; object-fit: contain; width: auto; }
+  .ot-ladder__copy h3 { color: var(--ot-ink); font-size: 1rem; line-height: 1.3; margin: 0 0 0.25rem; }
+  .ot-ladder__copy p { color: var(--ot-muted); font-size: 0.72rem; line-height: 1.45; margin: 0; }
+  .ot-ladder__cta { background: var(--ot-gold); border-radius: 999px; color: var(--ot-ink); font-size: 0.85rem; font-weight: 800; justify-self: end; padding: 0.7rem 0.9rem; text-align: center; text-decoration: none; width: 100%; }
+  .ot-ladder__cta:hover { filter: brightness(0.95); }
+  .ot-ladder__more { margin-top: 0.6rem; }
+  .ot-ladder__more summary { color: var(--ot-brand-blue-dark); cursor: pointer; font-size: 0.9rem; font-weight: 800; margin: 0 auto; padding: 0.5rem 0.9rem; text-align: center; width: max-content; }
+  .ot-ladder__more .ot-ladder__hide, .ot-ladder__more[open] .ot-ladder__show { display: none; }
+  .ot-ladder__more[open] .ot-ladder__hide { display: inline; }
+  .ot-ladder__more .ot-ladder__list { margin-top: 0.6rem; }
+  .ot-ladder__foot { color: var(--ot-muted); font-size: 0.75rem; margin: 0.9rem 0 0; text-align: center; }
+  @media (max-width: 720px) {
+    .ot-ladder { padding: 1rem; }
+    .ot-ladder__row { grid-template-columns: 2rem minmax(0, 1fr); }
+    .ot-ladder__logo, .ot-ladder__copy, .ot-ladder__cta { grid-column: 2; }
+    .ot-ladder__logo { justify-content: flex-start; max-width: 11rem; }
+    .ot-ladder__rank { align-self: start; grid-row: 1; }
+  }
 </style>
