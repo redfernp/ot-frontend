@@ -199,9 +199,9 @@ export const bookmakers: Record<string, Bookmaker> = {
       headline: "Get 50% Back In Free Bets Up To \u00a325",
       code: "No code",
       cta: "Claim QuinnBet offer",
-      terms: "18+ New UK Customers Only. Bet \u00a310+ on any sportsbook markets at odds of evens (2.00) or greater. No cash out. Get 50% back of your first day's losses as a Free Bet up to \u00a325, valid for 7 days. Min. 3 bets on different events required, with 2 bets being at least 50% of your largest stake. T&Cs apply.",
+      terms: "18+ New UK Customers Only. Bet \u00a310+ on any sportsbook markets at odds of evens (2.00) or greater. No cash out. Get 50% back of your first day's losses as a Free Bet up to \u00a325, valid for 1 day. Min. 3 bets on different events required, with 2 bets being at least 50% of your largest stake. T&Cs apply.",
       wagering: "No wagering on free bet stake",
-      expiry: "7 days",
+      expiry: "1 day",
     },
     pros: [
       "Strong horse racing focus with useful existing-customer promotions",
